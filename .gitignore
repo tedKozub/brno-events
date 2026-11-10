@@ -21,3 +21,10 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+.venv
+scrapers/.venv
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+

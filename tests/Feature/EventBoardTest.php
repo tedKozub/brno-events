@@ -35,6 +35,15 @@ class EventBoardTest extends TestCase
             ->assertSee('MUNIE');
     }
 
+    public function test_semantic_search_finds_relevant_events(): void
+    {
+        // Dotaz "hudba" by měl najít hudební akce jako Jam & Acoustic Night nebo Fléda Mecheche
+        Livewire::test(\App\Livewire\EventBoard::class)
+            ->set('search', 'hudba')
+            ->assertSee('sémantické hledání')
+            ->assertSee('Jam');
+    }
+
     public function test_livewire_can_open_and_close_event_modal(): void
     {
         $event = Event::published()->first();

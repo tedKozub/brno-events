@@ -224,9 +224,16 @@
 
         {{-- STATUSOVÁ LIŠTA S POČTEM VÝSLEDKŮ --}}
         <div class="flex items-center justify-between px-1 text-xs text-base-content/70">
-            <div>
-                Zobrazeno <strong class="text-base-content font-black">{{ $events->count() }}</strong> z {{ $totalUpcomingCount }} studentských akcí
-                @if(!empty($search) || !empty($selectedCategory) || !empty($selectedUniversity) || $dateFilter !== 'all' || $onlyFree)
+            <div class="flex items-center gap-2 flex-wrap">
+                <span>Zobrazeno <strong class="text-base-content font-black">{{ $events->count() }}</strong> z {{ $totalUpcomingCount }} studentských akcí</span>
+                @if(!empty($search))
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-primary/10 text-primary border border-primary/20">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        sémantické hledání
+                    </span>
+                @elseif(!empty($selectedCategory) || !empty($selectedUniversity) || $dateFilter !== 'all' || $onlyFree)
                     <span class="text-primary font-bold">(filtrováno)</span>
                 @endif
             </div>

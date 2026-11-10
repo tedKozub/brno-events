@@ -37,6 +37,7 @@ class Event extends Model
         'status',
         'is_featured',
         'views_count',
+        'embedding',
     ];
 
     protected $casts = [
@@ -46,6 +47,7 @@ class Event extends Model
         'is_featured' => 'boolean',
         'price_amount' => 'decimal:2',
         'views_count' => 'integer',
+        'embedding' => 'array',
     ];
 
     protected static function booted()
@@ -54,6 +56,14 @@ class Event extends Model
             if (empty($event->slug)) {
                 $baseSlug = Str::slug($event->title);
                 $event->slug = $baseSlug . '-' . Str::random(6);
+            }
+        });
+
+        static::saved(function ($event) {
+            if (empty($event->embedding) && app()->environment() !== 'testing') {
+                try {
+                    app(\App\Services\EmbeddingService::class)->updateEventEmbedding($event);
+                } catch (\Throwable $e) {}
             }
         });
     }

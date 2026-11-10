@@ -120,19 +120,6 @@ class EventBoard extends Component
             ->published()
             ->upcoming();
 
-        // Fulltext vyhledávání
-        if (!empty($this->search)) {
-            $term = '%' . trim($this->search) . '%';
-            $query->where(function (Builder $q) use ($term) {
-                $q->where('title', 'like', $term)
-                  ->orWhere('short_description', 'like', $term)
-                  ->orWhere('description', 'like', $term)
-                  ->orWhere('location_name', 'like', $term)
-                  ->orWhereHas('venue', fn ($vq) => $vq->where('name', 'like', $term)->orWhere('address', 'like', $term))
-                  ->orWhereHas('organization', fn ($oq) => $oq->where('name', 'like', $term));
-            });
-        }
-
         // Časové filtry pro studenty (bez víkendů)
         match ($this->dateFilter) {
             'today' => $query->whereDate('starts_at', Carbon::today()),
@@ -163,22 +150,109 @@ class EventBoard extends Component
             $query->where('price_type', 'free');
         }
 
-        $events = $query->orderBy('starts_at', 'asc')->get();
+        // Vyhledávání: Hybridní (vektorový sémantický embedding + fulltext keyword match)
+        if (!empty($this->search)) {
+            $searchTerm = trim($this->search);
+            $normSearch = mb_strtolower($searchTerm);
+            $keywords = array_filter(explode(' ', $normSearch), fn ($w) => mb_strlen($w) >= 2);
 
-        $this->mapMarkers = $events->filter(fn ($e) => $e->venue && $e->venue->latitude && $e->venue->longitude)
-            ->map(function ($e) {
-                return [
-                    'id' => $e->id,
-                    'slug' => $e->slug,
-                    'title' => $e->title,
-                    'lat' => (float) $e->venue->latitude,
-                    'lng' => (float) $e->venue->longitude,
-                    'venue' => $e->venue->name,
-                    'time' => $e->starts_at->translatedFormat('D d. m. H:i'),
-                    'price' => $e->formatted_price,
-                    'category' => $e->category?->name,
-                ];
-            })->values()->toArray();
+            $embeddingService = app(\App\Services\EmbeddingService::class);
+            $queryVector = $embeddingService->getEmbedding($searchTerm);
+
+            if ($queryVector) {
+                // Načteme kandidáty dle ostatních filtrů
+                $candidates = $query->get();
+                $scored = [];
+
+                foreach ($candidates as $event) {
+                    $semanticSim = 0.0;
+                    if (!empty($event->embedding) && is_array($event->embedding)) {
+                        $semanticSim = \App\Services\EmbeddingService::cosineSimilarity($queryVector, $event->embedding);
+                    }
+
+                    // Klíčová slova – textové shody
+                    $titleNorm = mb_strtolower($event->title ?? '');
+                    $descNorm = mb_strtolower(($event->short_description ?? '') . ' ' . ($event->description ?? ''));
+                    $locNorm = mb_strtolower(($event->location_name ?? '') . ' ' . ($event->venue?->name ?? '') . ' ' . ($event->organization?->name ?? ''));
+
+                    $hasExactTitleMatch = str_contains($titleNorm, $normSearch);
+                    $hasWordTitleMatch = false;
+                    $hasWordBodyMatch = false;
+
+                    foreach ($keywords as $kw) {
+                        if (str_contains($titleNorm, $kw)) {
+                            $hasWordTitleMatch = true;
+                        }
+                        if (str_contains($descNorm, $kw) || str_contains($locNorm, $kw)) {
+                            $hasWordBodyMatch = true;
+                        }
+                    }
+
+                    $keywordBonus = 0.0;
+                    if ($hasExactTitleMatch) {
+                        $keywordBonus += 0.8;
+                    } elseif ($hasWordTitleMatch) {
+                        $keywordBonus += 0.4;
+                    }
+                    if ($hasWordBodyMatch) {
+                        $keywordBonus += 0.2;
+                    }
+
+                    $totalScore = $semanticSim + $keywordBonus;
+
+                    // Zařazení: buď shoda klíčových slov nebo relevantní sémantická podobnost (>= 0.30)
+                    if ($keywordBonus > 0 || $semanticSim >= 0.30) {
+                        $scored[] = [
+                            'event' => $event,
+                            'score' => $totalScore,
+                            'starts_at' => $event->starts_at?->timestamp ?? 0,
+                        ];
+                    }
+                }
+
+                // Seřazení podle relevance skóre sestupně, při těsné shodě dle času začátku
+                usort($scored, function ($a, $b) {
+                    if (abs($a['score'] - $b['score']) > 0.08) {
+                        return $b['score'] <=> $a['score'];
+                    }
+                    return $a['starts_at'] <=> $b['starts_at'];
+                });
+
+                $events = collect(array_column($scored, 'event'));
+            } else {
+                // Fallback na klasické SQL vyhledávání
+                $term = '%' . $searchTerm . '%';
+                $query->where(function (Builder $q) use ($term) {
+                    $q->where('title', 'like', $term)
+                      ->orWhere('short_description', 'like', $term)
+                      ->orWhere('description', 'like', $term)
+                      ->orWhere('location_name', 'like', $term)
+                      ->orWhereHas('venue', fn ($vq) => $vq->where('name', 'like', $term)->orWhere('address', 'like', $term))
+                      ->orWhereHas('organization', fn ($oq) => $oq->where('name', 'like', $term));
+                });
+                $events = $query->orderBy('starts_at', 'asc')->get();
+            }
+        } else {
+            $events = $query->orderBy('starts_at', 'asc')->get();
+        }
+
+        $this->mapMarkers = $events->map(function ($e) {
+            $coords = $e->map_coordinates;
+            if (!$coords) {
+                return null;
+            }
+            return [
+                'id' => $e->id,
+                'slug' => $e->slug,
+                'title' => $e->title,
+                'lat' => (float) $coords['lat'],
+                'lng' => (float) $coords['lng'],
+                'venue' => $coords['title'],
+                'time' => $e->starts_at->translatedFormat('D d. m. H:i'),
+                'price' => $e->formatted_price,
+                'category' => $e->category?->name,
+            ];
+        })->filter()->values()->toArray();
 
         // Informovat front-end (Alpine / Leaflet) o aktualizovaných markerech
         $this->dispatch('markers-updated', markers: $this->mapMarkers);
