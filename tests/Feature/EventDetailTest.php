@@ -21,7 +21,7 @@ class EventDetailTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee($event->title);
-        $response->assertSee('Zpět na akce');
+        $response->assertSee('Zpět na přehled všech akcí');
     }
 
     public function test_event_detail_ical_download(): void

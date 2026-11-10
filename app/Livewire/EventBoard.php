@@ -17,6 +17,7 @@ class EventBoard extends Component
     public bool $onlyFree = false;
     public string $viewMode = 'cards'; // cards, map
     public ?int $selectedEventId = null;
+    public array $mapMarkers = [];
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -164,8 +165,7 @@ class EventBoard extends Component
 
         $events = $query->orderBy('starts_at', 'asc')->get();
 
-        // Data pro Leaflet mapu (místa se souřadnicemi v Brně)
-        $mapMarkers = $events->filter(fn ($e) => $e->venue && $e->venue->latitude && $e->venue->longitude)
+        $this->mapMarkers = $events->filter(fn ($e) => $e->venue && $e->venue->latitude && $e->venue->longitude)
             ->map(function ($e) {
                 return [
                     'id' => $e->id,
@@ -180,6 +180,9 @@ class EventBoard extends Component
                 ];
             })->values()->toArray();
 
+        // Informovat front-end (Alpine / Leaflet) o aktualizovaných markerech
+        $this->dispatch('markers-updated', markers: $this->mapMarkers);
+
         $categories = Category::withCount(['events' => fn ($q) => $q->published()->upcoming()])
             ->orderBy('sort_order', 'asc')
             ->get();
@@ -189,7 +192,7 @@ class EventBoard extends Component
         return view('livewire.event-board', [
             'events' => $events,
             'categories' => $categories,
-            'mapMarkers' => $mapMarkers,
+            'mapMarkers' => $this->mapMarkers,
             'selectedEvent' => $selectedEvent,
             'totalUpcomingCount' => Event::published()->upcoming()->count(),
         ]);

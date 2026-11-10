@@ -19,32 +19,31 @@
                 </div>
             </a>
 
-            {{-- Pravá část: Přepínač témat (Alpine) s vysokým kontrastem ikon --}}
+            {{-- Pravá část: 3-polohový Přepínač témat (Světlý / Systém / Tmavý) --}}
             <div
                 x-data="{
-                    theme: localStorage.getItem('brno_events_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'events-dark' : 'events-light'),
+                    preference: localStorage.getItem('brno_events_theme') || 'system',
                     setTheme(val) {
-                        this.theme = val;
-                        document.documentElement.setAttribute('data-theme', val);
-                        if (val === 'events-dark') {
-                            document.documentElement.classList.add('dark');
-                        } else {
-                            document.documentElement.classList.remove('dark');
-                        }
+                        this.preference = val;
                         localStorage.setItem('brno_events_theme', val);
+                        if (window.applyAppTheme) {
+                            window.applyAppTheme();
+                        }
+                        window.dispatchEvent(new CustomEvent('theme-changed', { detail: val }));
                     }
                 }"
+                @theme-changed.window="preference = $event.detail"
                 class="inline-flex items-center bg-base-200 p-0.5 sm:p-1 rounded-xl border border-base-300"
             >
                 <button
                     type="button"
-                    @click="setTheme('events-light')"
-                    :class="theme === 'events-light' ? 'bg-primary text-white shadow-sm' : 'text-base-content/70 hover:text-base-content'"
-                    class="px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all"
-                    title="Světlý režim"
+                    @click="setTheme('light')"
+                    :class="(preference === 'light' || preference === 'events-light') ? 'bg-primary text-white shadow-sm' : 'text-base-content/70 hover:text-base-content'"
+                    class="px-2 sm:px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all"
+                    title="Vždy světlý režim"
                 >
                     <svg
-                        :class="theme === 'events-light' ? 'text-white' : 'text-amber-500'"
+                        :class="(preference === 'light' || preference === 'events-light') ? 'text-white' : 'text-amber-500'"
                         class="w-4 h-4 shrink-0 transition-colors"
                         fill="none"
                         stroke="currentColor"
@@ -52,17 +51,34 @@
                     >
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
                     </svg>
-                    <span class="hidden sm:inline font-bold">Světlý</span>
+                    <span class="hidden md:inline font-bold">Světlý</span>
                 </button>
                 <button
                     type="button"
-                    @click="setTheme('events-dark')"
-                    :class="theme === 'events-dark' ? 'bg-primary text-white shadow-sm' : 'text-base-content/70 hover:text-base-content'"
-                    class="px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all"
-                    title="Tmavý režim"
+                    @click="setTheme('system')"
+                    :class="preference === 'system' ? 'bg-primary text-white shadow-sm' : 'text-base-content/70 hover:text-base-content'"
+                    class="px-2 sm:px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all"
+                    title="Podle nastavení systému (Auto)"
                 >
                     <svg
-                        :class="theme === 'events-dark' ? 'text-white' : 'text-sky-400'"
+                        class="w-4 h-4 shrink-0 transition-colors"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l2 1h2l2-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                    <span class="hidden md:inline font-bold">Systém</span>
+                </button>
+                <button
+                    type="button"
+                    @click="setTheme('dark')"
+                    :class="(preference === 'dark' || preference === 'events-dark') ? 'bg-primary text-white shadow-sm' : 'text-base-content/70 hover:text-base-content'"
+                    class="px-2 sm:px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all"
+                    title="Vždy tmavý režim"
+                >
+                    <svg
+                        :class="(preference === 'dark' || preference === 'events-dark') ? 'text-white' : 'text-sky-400'"
                         class="w-4 h-4 shrink-0 transition-colors"
                         fill="none"
                         stroke="currentColor"
@@ -70,7 +86,7 @@
                     >
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
                     </svg>
-                    <span class="hidden sm:inline font-bold">Tmavý</span>
+                    <span class="hidden md:inline font-bold">Tmavý</span>
                 </button>
             </div>
         </div>
@@ -171,13 +187,13 @@
 
                     {{-- Vstupné zdarma toggle --}}
                     <div class="flex items-center gap-2">
-                        <label class="cursor-pointer label gap-2 py-0 px-1">
-                            <span class="label-text text-xs font-bold text-base-content/80">Pouze zdarma</span>
+                        <label for="filter-only-free" class="cursor-pointer flex items-center gap-2 py-0 px-1">
+                            <span class="text-xs font-bold text-base-content/80 select-none">Pouze zdarma</span>
                             <input
+                                id="filter-only-free"
                                 type="checkbox"
-                                wire:click="toggleFree"
-                                {{ $onlyFree ? 'checked' : '' }}
-                                class="toggle toggle-primary toggle-sm"
+                                wire:model.live="onlyFree"
+                                class="toggle toggle-primary toggle-sm cursor-pointer"
                             />
                         </label>
                     </div>
@@ -247,7 +263,7 @@
 
                     <div
                         x-data="brnoEventsMap(@js($mapMarkers))"
-                        x-effect="updateMarkers(@js($mapMarkers))"
+                        @markers-updated.window="updateMarkers($event.detail.markers)"
                         class="w-full h-[420px] sm:h-[500px] rounded-xl bg-base-200 border border-base-300 z-10 overflow-hidden relative"
                     >
                         <div x-ref="mapContainer" wire:ignore class="w-full h-full"></div>
@@ -455,7 +471,10 @@
                 });
 
                 this.map = L.map(this.$refs.mapContainer, {
-                    scrollWheelZoom: false
+                    scrollWheelZoom: true,
+                    touchZoom: true,
+                    dragging: true,
+                    tap: true
                 }).setView([49.1951, 16.6068], 13);
 
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
