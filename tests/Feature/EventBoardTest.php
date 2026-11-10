@@ -8,12 +8,13 @@ use App\Models\Organization;
 use App\Models\User;
 use App\Models\Venue;
 use Carbon\Carbon;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Livewire\Livewire;
 use Tests\TestCase;
 
 class EventBoardTest extends TestCase
 {
+    use DatabaseTransactions;
     public function test_homepage_renders_with_events(): void
     {
         $response = $this->get('/');
