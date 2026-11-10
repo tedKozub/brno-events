@@ -422,57 +422,7 @@ class DatabaseSeeder extends Seeder
             'is_featured' => false,
         ]);
 
-        // 6. Scrape Sources
-        \App\Models\ScrapeSource::create([
-            'name' => 'MENDELU Kalendář akcí',
-            'type' => 'web_mendelu',
-            'university' => 'MENDELU',
-            'organization_id' => $mendeluUnie->id,
-            'url' => 'https://mendelu.cz/akce/',
-            'is_active' => true,
-        ]);
-
-        \App\Models\ScrapeSource::create([
-            'name' => 'FIT VUT Kalendář akcí',
-            'type' => 'web_fit_vut',
-            'university' => 'VUT',
-            'organization_id' => $best->id,
-            'url' => 'https://www.fit.vut.cz/fit/calendar/',
-            'is_active' => true,
-        ]);
-
-        \App\Models\ScrapeSource::create([
-            'name' => 'UNOB Kalendář akcí',
-            'type' => 'web_unob',
-            'university' => 'UNOB',
-            'organization_id' => $skUnob->id,
-            'url' => 'https://unob.cz/univerzita/media-a-verejnost/akce-univerzity-obrany/',
-            'is_active' => true,
-        ]);
-
-        \App\Models\ScrapeSource::create([
-            'name' => 'MUNI Kalendář akcí',
-            'type' => 'web_muni',
-            'university' => 'MUNI',
-            'organization_id' => $munie->id,
-            'url' => 'https://www.muni.cz/kalendar',
-            'is_active' => true,
-        ]);
-
-        \App\Models\ScrapeSource::create([
-            'name' => 'Studentský iCal Kalendář (Fixtures / Feeds)',
-            'type' => 'web_ical',
-            'university' => 'OTHER',
-            'url' => 'file:///root/brno-events/scrapers/fixtures/sample_student_events.ics',
-            'is_active' => true,
-        ]);
-
-        \App\Models\ScrapeSource::create([
-            'name' => 'FIT VUT RSS Zprávy a akce',
-            'type' => 'web_rss',
-            'university' => 'VUT',
-            'url' => 'https://www.fit.vut.cz/fit/news-rss/',
-            'is_active' => true,
-        ]);
+        // 6. Scrape Sources (Načtení přímo z config/scrape_sources.yaml)
+        \App\Services\ScrapeSourceManager::syncFromConfig();
     }
 }

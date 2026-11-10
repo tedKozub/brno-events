@@ -19,6 +19,9 @@ class ScrapeEventsCommand extends Command
 
     public function handle(): int
     {
+        // Automaticky synchronizovat zdroje z config/scrape_sources.yaml před během
+        \App\Services\ScrapeSourceManager::syncFromConfig();
+
         $sourceId = $this->argument('source_id');
         $limit = (int) $this->option('limit');
 

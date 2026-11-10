@@ -1,0 +1,80 @@
+# ==============================================================================
+# Konfigurace zdrojů pro scraping studentských akcí v Brně
+# ==============================================================================
+# Tento soubor slouží pro manuální správu scraperů (přidávání, úpravy, odebírání).
+# Po úpravě stačí spustit: php artisan events:scrape (nebo php artisan events:sync-sources).
+#
+# Podporované typy parserů (type):
+#   - web_mendelu : Automatický parser pro mendelu.cz/akce/
+#   - web_fit_vut : Automatický parser pro fit.vut.cz/fit/calendar/
+#   - web_unob    : Automatický parser pro unob.cz/... (akce Univerzity obrany)
+#   - web_muni    : Automatický parser pro muni.cz/kalendar
+#   - web_ical    : Jakýkoliv iCalendar .ics export / feed (např. Google Kalendář)
+#   - web_rss     : Jakýkoliv RSS / Atom feed aktualit
+#   - web_generic : Stránky se Schema.org Event strukturou
+#
+# Podporované univerzity: MUNI, VUT, MENDELU, UNOB, VETUNI, OTHER
+# ==============================================================================
+
+sources:
+  - id_slug: "mendelu-akce"
+    name: "MENDELU Kalendář akcí"
+    type: "web_mendelu"
+    university: "MENDELU"
+    url: "https://mendelu.cz/akce/"
+    is_active: true
+    organization_slug: "unie-studentu-mendelu"
+    description: "Centrální kalendář akcí Mendelovy univerzity v Brně (workshopy, přednášky, konference)."
+
+  - id_slug: "fit-vut-kalendar"
+    name: "FIT VUT Kalendář akcí"
+    type: "web_fit_vut"
+    university: "VUT"
+    url: "https://www.fit.vut.cz/fit/calendar/"
+    is_active: true
+    organization_slug: "best-brno"
+    description: "Kalendář studentských a technologických akcí na FIT VUT (Božetěchova)."
+
+  - id_slug: "fit-vut-rss"
+    name: "FIT VUT RSS Zprávy a akce"
+    type: "web_rss"
+    university: "VUT"
+    url: "https://www.fit.vut.cz/fit/news-rss/"
+    is_active: true
+    organization_slug: "best-brno"
+    description: "RSS kanál aktualit a pozvánek na turnaje z FIT VUT."
+
+  - id_slug: "muni-kalendar"
+    name: "MUNI Kalendář akcí"
+    type: "web_muni"
+    university: "MUNI"
+    url: "https://www.muni.cz/kalendar"
+    is_active: true
+    organization_slug: "munie"
+    description: "Centrální kalendář Masarykovy univerzity (diskuze, přednášky, setkání)."
+
+  - id_slug: "unob-akce"
+    name: "UNOB Kalendář akcí"
+    type: "web_unob"
+    university: "UNOB"
+    url: "https://unob.cz/univerzita/media-a-verejnost/akce-univerzity-obrany/"
+    is_active: true
+    organization_slug: "sk-unob"
+    description: "Veřejné, prezentační a sportovní události studentů Univerzity obrany v Brně."
+
+  - id_slug: "student-ical-feed"
+    name: "Studentský iCal Kalendář (Beerpong, Ligy & Hudba)"
+    type: "web_ical"
+    university: "OTHER"
+    url: "file:///root/brno-events/scrapers/fixtures/sample_student_events.ics"
+    is_active: true
+    description: "iCal feed studentských turnajů, večírků a jam sessions na Flédě a v ArtBaru."
+
+  - id_slug: "vetuni-spolek-feed"
+    name: "VETUNI Kalendář spolku IVSA (iCal Feed)"
+    type: "web_ical"
+    university: "VETUNI"
+    url: "file:///root/brno-events/scrapers/fixtures/sample_vetuni_events.ics"
+    is_active: true
+    organization_slug: "ivsa-vetuni"
+    description: "Feed akcí a workshopů Spolku studentů Veterinární univerzity Brno (IVSA)."

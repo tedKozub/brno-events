@@ -1,0 +1,30 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//VETUNI IVSA Events Feed//CZ
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Akce Spolku studentů VETUNI (IVSA Brno)
+X-WR-TIMEZONE:Europe/Prague
+BEGIN:VEVENT
+UID:vetuni-ical-001@brnoakce.tadeaskozub.com
+DTSTAMP:20261110T120000Z
+DTSTART:20261125T170000
+DTEND:20261125T210000
+SUMMARY:IVSA Brno: Workshop první pomoci pro psy a kočky
+DESCRIPTION:Praktický studentský workshop pořádaný IVSA Brno pro studenty všech fakult. Základy resuscitace malých zvířat, obvazové techniky a krizový management v terénu.
+LOCATION:Kampus VETUNI Palackého, Palackého tř. 1946/1, Brno
+URL:https://vetuni.cz/ivsa/workshop-prvni-pomoc
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:vetuni-ical-002@brnoakce.tadeaskozub.com
+DTSTAMP:20261110T120000Z
+DTSTART:20261202T183000
+DTEND:20261202T220000
+SUMMARY:Studentský Veterinární Svařák & Kvíz o divokých zvířatech
+DESCRIPTION:Předvánoční setkání studentů VETUNI i přátel z MUNI a VUT v areálu kampusu. Horký svařák, týmový kvíz a promítání zážitků ze zahraničních veterinárních misí.
+LOCATION:Kampus VETUNI Palackého, Palackého tř. 1946/1, Brno
+URL:https://vetuni.cz/ivsa/veterinarni-svarak-2026
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR
