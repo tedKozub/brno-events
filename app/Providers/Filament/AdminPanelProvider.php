@@ -34,6 +34,7 @@ class AdminPanelProvider extends PanelProvider
             ->darkMode(true)
             ->sidebarCollapsibleOnDesktop()
             ->spa()
+            ->renderHook('panels::auth.login.form.after', fn() => new \Illuminate\Support\HtmlString('<div class="mt-4 text-center"><a href="/" class="text-sm font-medium text-orange-500 hover:text-orange-600">&larr; Zpět na hlavní stránku</a></div>'))
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
@@ -42,6 +43,8 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
+                \App\Filament\Widgets\EventStatsWidget::class,
+                \App\Filament\Widgets\OrganizationStatsWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

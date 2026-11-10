@@ -11,6 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Str;
 
 class ScrapeSourceResource extends Resource
 {
@@ -141,14 +142,21 @@ class ScrapeSourceResource extends Resource
                     ->icon('heroicon-o-play')
                     ->color('primary')
                     ->action(function (ScrapeSource $record) {
-                        Artisan::call('events:scrape', ['source_id' => $record->id]);
-                        $output = Artisan::output();
-
-                        Notification::make()
-                            ->title("Scraping pro '{$record->name}' dokončen")
-                            ->body(Str::limit($output, 200))
-                            ->success()
-                            ->send();
+                        try {
+                            Artisan::call('events:scrape', ['source_id' => $record->id, '--limit' => '10']);
+                            $output = Artisan::output();
+                            Notification::make()
+                                ->title("Scraping pro '{$record->name}' dokončen")
+                                ->body(Str::limit($output, 300))
+                                ->success()
+                                ->send();
+                        } catch (\Throwable $e) {
+                            Notification::make()
+                                ->title("Chyba při scrapování '{$record->name}'")
+                                ->body(Str::limit($e->getMessage(), 300))
+                                ->danger()
+                                ->send();
+                        }
                     }),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
