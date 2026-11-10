@@ -169,6 +169,7 @@ class EventBoard extends Component
             ->map(function ($e) {
                 return [
                     'id' => $e->id,
+                    'slug' => $e->slug,
                     'title' => $e->title,
                     'lat' => (float) $e->venue->latitude,
                     'lng' => (float) $e->venue->longitude,
