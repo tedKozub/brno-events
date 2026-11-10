@@ -246,10 +246,12 @@
                     </div>
 
                     <div
-                        id="brno-events-map"
-                        data-markers='@json($mapMarkers)'
-                        class="w-full h-[420px] sm:h-[500px] rounded-xl bg-base-200 border border-base-300 z-10"
-                    ></div>
+                        x-data="brnoEventsMap(@js($mapMarkers))"
+                        x-effect="updateMarkers(@js($mapMarkers))"
+                        class="w-full h-[420px] sm:h-[500px] rounded-xl bg-base-200 border border-base-300 z-10 overflow-hidden relative"
+                    >
+                        <div x-ref="mapContainer" wire:ignore class="w-full h-full"></div>
+                    </div>
                 </div>
             </section>
         @endif
@@ -414,96 +416,116 @@
 
 @script
 <script>
-    let leafletMapInstance = null;
+    window.brnoEventsMap = function(initialMarkers) {
+        return {
+            markers: initialMarkers || [],
+            map: null,
+            markersLayer: null,
+            pinIcon: null,
 
-    function renderLeafletMap() {
-        const mapContainer = document.getElementById('brno-events-map');
-        if (!mapContainer || typeof L === 'undefined') return;
+            init() {
+                this.$nextTick(() => {
+                    this.initLeaflet();
+                });
+            },
 
-        if (leafletMapInstance) {
-            leafletMapInstance.remove();
-            leafletMapInstance = null;
-        }
+            initLeaflet() {
+                if (typeof L === 'undefined' || !this.$refs.mapContainer) return;
 
-        let markers = [];
-        try {
-            markers = JSON.parse(mapContainer.getAttribute('data-markers') || '[]');
-        } catch (e) {
-            markers = [];
-        }
+                if (this.map) {
+                    try {
+                        this.map.remove();
+                    } catch (e) {}
+                    this.map = null;
+                }
 
-        // Vytvoření mapy vycentrované na Brno
-        leafletMapInstance = L.map('brno-events-map', {
-            scrollWheelZoom: false
-        }).setView([49.1951, 16.6068], 13);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; OpenStreetMap'
-        }).addTo(leafletMapInstance);
-
-        // Vlastní ostrý oranžový SVG pin (žádné chybějící PNG ikony!)
-        const pinIcon = L.divIcon({
-            className: 'custom-map-pin',
-            html: `
-                <div style="background-color: #ea580c; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,0.35); cursor: pointer;">
-                    <svg style="width: 17px; height: 17px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                </div>
-            `,
-            iconSize: [34, 34],
-            iconAnchor: [17, 34],
-            popupAnchor: [0, -34]
-        });
-
-        const bounds = [];
-
-        markers.forEach(function (item) {
-            if (item.lat && item.lng) {
-                const marker = L.marker([item.lat, item.lng], { icon: pinIcon }).addTo(leafletMapInstance);
-                bounds.push([item.lat, item.lng]);
-
-                const popupHtml = `
-                    <div style="font-family: inherit; font-size: 13px; min-width: 200px; padding: 4px;">
-                        <div style="font-size: 10px; font-weight: 800; color: #ea580c; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">
-                            ${item.category || 'Akce'}
+                this.pinIcon = L.divIcon({
+                    className: 'custom-map-pin',
+                    html: `
+                        <div style="background-color: #ea580c; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,0.35); cursor: pointer;">
+                            <svg style="width: 17px; height: 17px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
                         </div>
-                        <strong style="display: block; font-size: 14px; font-weight: 900; line-height: 1.25; margin-bottom: 4px; color: #0f172a;">
-                            ${item.title}
-                        </strong>
-                        <div style="color: #64748b; font-size: 11px; margin-bottom: 4px;">
-                            ${item.venue}
-                        </div>
-                        <div style="font-weight: 800; font-size: 12px; color: #ea580c; margin-bottom: 8px;">
-                            ${item.time} • ${item.price}
-                        </div>
-                        <a href="/akce/${item.slug || item.id}" style="display: block; text-align: center; text-decoration: none; background: #ea580c; color: #ffffff; padding: 7px 12px; border-radius: 8px; font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer;">
-                            Zobrazit detail akce &rarr;
-                        </a>
-                    </div>
-                `;
-                marker.bindPopup(popupHtml);
+                    `,
+                    iconSize: [34, 34],
+                    iconAnchor: [17, 34],
+                    popupAnchor: [0, -34]
+                });
+
+                this.map = L.map(this.$refs.mapContainer, {
+                    scrollWheelZoom: false
+                }).setView([49.1951, 16.6068], 13);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(this.map);
+
+                this.markersLayer = L.layerGroup().addTo(this.map);
+
+                this.renderMarkers(this.markers);
+
+                setTimeout(() => {
+                    if (this.map) this.map.invalidateSize();
+                }, 200);
+            },
+
+            updateMarkers(newMarkers) {
+                this.markers = newMarkers || [];
+                if (!this.map) {
+                    this.initLeaflet();
+                    return;
+                }
+                this.renderMarkers(this.markers);
+            },
+
+            renderMarkers(markersList) {
+                if (!this.map || !this.markersLayer) return;
+
+                this.markersLayer.clearLayers();
+                const bounds = [];
+
+                (markersList || []).forEach(item => {
+                    if (item.lat && item.lng) {
+                        const marker = L.marker([item.lat, item.lng], { icon: this.pinIcon }).addTo(this.markersLayer);
+                        bounds.push([item.lat, item.lng]);
+
+                        const popupHtml = `
+                            <div style="font-family: inherit; font-size: 13px; min-width: 200px; padding: 4px;">
+                                <div style="font-size: 10px; font-weight: 800; color: #ea580c; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">
+                                    ${item.category || 'Akce'}
+                                </div>
+                                <strong style="display: block; font-size: 14px; font-weight: 900; line-height: 1.25; margin-bottom: 4px; color: #0f172a;">
+                                    ${item.title}
+                                </strong>
+                                <div style="color: #64748b; font-size: 11px; margin-bottom: 4px;">
+                                    ${item.venue}
+                                </div>
+                                <div style="font-weight: 800; font-size: 12px; color: #ea580c; margin-bottom: 8px;">
+                                    ${item.time} • ${item.price}
+                                </div>
+                                <a href="/akce/${item.slug || item.id}" style="display: block; text-align: center; text-decoration: none; background: #ea580c; color: #ffffff; padding: 7px 12px; border-radius: 8px; font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer;">
+                                    Zobrazit detail akce &rarr;
+                                </a>
+                            </div>
+                        `;
+                        marker.bindPopup(popupHtml);
+                    }
+                });
+
+                if (bounds.length > 0) {
+                    this.map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+                } else {
+                    this.map.setView([49.1951, 16.6068], 13);
+                }
+
+                setTimeout(() => {
+                    if (this.map) this.map.invalidateSize();
+                }, 100);
             }
-        });
-
-        if (bounds.length > 0) {
-            leafletMapInstance.fitBounds(bounds, { padding: [40, 40] });
-        }
-
-        setTimeout(function () {
-            if (leafletMapInstance) {
-                leafletMapInstance.invalidateSize();
-            }
-        }, 150);
-    }
-
-    // Inicializace a posluchače
-    document.addEventListener('DOMContentLoaded', renderLeafletMap);
-    document.addEventListener('livewire:navigated', renderLeafletMap);
-    window.addEventListener('initMap', function () {
-        setTimeout(renderLeafletMap, 50);
-    });
+        };
+    };
 </script>
 @endscript
