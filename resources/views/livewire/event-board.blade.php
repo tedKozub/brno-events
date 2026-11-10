@@ -1,7 +1,7 @@
 <div>
     {{-- KOMPAKTNÍ MOBILNÍ NAVBAR --}}
     <header class="border-b border-base-300 bg-base-100/90 backdrop-blur-md sticky top-0 z-30 transition-colors shadow-xs">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-2 sm:gap-4">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-3">
             {{-- Logo --}}
             <a href="/" class="flex items-center gap-2 sm:gap-3 group shrink-0">
                 <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary flex items-center justify-center text-primary-content font-black shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
@@ -9,74 +9,69 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
                 </div>
-                <div>
-                    <div class="flex items-center gap-1.5 sm:gap-2">
-                        <span class="font-black text-base sm:text-xl tracking-tight text-base-content">
-                            AKCE<span class="text-primary">BRNO</span>
-                        </span>
-                        <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20">
-                            Student
-                        </span>
-                    </div>
+                <div class="flex items-center gap-1.5 sm:gap-2">
+                    <span class="font-black text-base sm:text-xl tracking-tight text-base-content">
+                        AKCE<span class="text-primary">BRNO</span>
+                    </span>
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20">
+                        Student
+                    </span>
                 </div>
             </a>
 
-            {{-- Pravá část: Přepínač témat (Alpine) + Vstup pro spolky --}}
-            <div class="flex items-center gap-1.5 sm:gap-3">
-                {{-- Theme Switcher řízený Alpine.js pro 100% spolehlivost při Livewire re-renderu --}}
-                <div
-                    x-data="{
-                        theme: localStorage.getItem('brno_events_theme') || 'events-light',
-                        setTheme(val) {
-                            this.theme = val;
-                            document.documentElement.setAttribute('data-theme', val);
-                            if (val === 'events-dark') {
-                                document.documentElement.classList.add('dark');
-                            } else {
-                                document.documentElement.classList.remove('dark');
-                            }
-                            localStorage.setItem('brno_events_theme', val);
+            {{-- Pravá část: Přepínač témat (Alpine) s vysokým kontrastem ikon --}}
+            <div
+                x-data="{
+                    theme: localStorage.getItem('brno_events_theme') || 'events-light',
+                    setTheme(val) {
+                        this.theme = val;
+                        document.documentElement.setAttribute('data-theme', val);
+                        if (val === 'events-dark') {
+                            document.documentElement.classList.add('dark');
+                        } else {
+                            document.documentElement.classList.remove('dark');
                         }
-                    }"
-                    class="inline-flex items-center bg-base-200 p-0.5 sm:p-1 rounded-xl border border-base-300"
+                        localStorage.setItem('brno_events_theme', val);
+                    }
+                }"
+                class="inline-flex items-center bg-base-200 p-0.5 sm:p-1 rounded-xl border border-base-300"
+            >
+                <button
+                    type="button"
+                    @click="setTheme('events-light')"
+                    :class="theme === 'events-light' ? 'bg-primary text-white shadow-sm' : 'text-base-content/70 hover:text-base-content'"
+                    class="px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all"
+                    title="Světlý režim"
                 >
-                    <button
-                        type="button"
-                        @click="setTheme('events-light')"
-                        :class="theme === 'events-light' ? 'bg-primary text-primary-content shadow-sm' : 'text-base-content/60 hover:text-base-content'"
-                        class="px-2 sm:px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all"
-                        title="Světlý režim"
+                    <svg
+                        :class="theme === 'events-light' ? 'text-white' : 'text-amber-500'"
+                        class="w-4 h-4 shrink-0 transition-colors"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
                     >
-                        <svg class="w-3.5 h-3.5 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                        </svg>
-                        <span class="hidden md:inline">Světlý</span>
-                    </button>
-                    <button
-                        type="button"
-                        @click="setTheme('events-dark')"
-                        :class="theme === 'events-dark' ? 'bg-primary text-primary-content shadow-sm' : 'text-base-content/60 hover:text-base-content'"
-                        class="px-2 sm:px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all"
-                        title="Tmavý režim"
-                    >
-                        <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                        </svg>
-                        <span class="hidden md:inline">Tmavý</span>
-                    </button>
-                </div>
-
-                {{-- Odkaz do administrace pro spolky --}}
-                <a
-                    href="/admin"
-                    class="btn btn-xs sm:btn-sm btn-primary gap-1 sm:gap-1.5 shadow-sm font-bold text-xs uppercase tracking-wider px-2 sm:px-3"
-                >
-                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
                     </svg>
-                    <span class="sm:hidden">Spolky</span>
-                    <span class="hidden sm:inline">Portál spolků</span>
-                </a>
+                    <span class="hidden sm:inline font-bold">Světlý</span>
+                </button>
+                <button
+                    type="button"
+                    @click="setTheme('events-dark')"
+                    :class="theme === 'events-dark' ? 'bg-primary text-white shadow-sm' : 'text-base-content/70 hover:text-base-content'"
+                    class="px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all"
+                    title="Tmavý režim"
+                >
+                    <svg
+                        :class="theme === 'events-dark' ? 'text-white' : 'text-sky-400'"
+                        class="w-4 h-4 shrink-0 transition-colors"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                    <span class="hidden sm:inline font-bold">Tmavý</span>
+                </button>
             </div>
         </div>
     </header>
@@ -529,17 +524,27 @@
         </div>
     @endif
 
-    {{-- FOOTER --}}
-    <footer class="mt-12 border-t border-base-300 bg-base-100 py-6 text-xs text-base-content/60 transition-colors">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-            <div class="flex items-center gap-2">
-                <span class="font-black text-sm tracking-tight text-base-content">AKCE<span class="text-primary">BRNO</span></span>
-                <span>— Studentské akce a spolky v Brně</span>
+    {{-- FOOTER SE VSTUPEM PRO SPOLKY --}}
+    <footer class="mt-14 border-t border-base-300 bg-base-100 py-8 text-xs text-base-content/70 transition-colors">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+            <div class="space-y-1">
+                <div class="flex items-center justify-center sm:justify-start gap-2">
+                    <span class="font-black text-sm tracking-tight text-base-content">AKCE<span class="text-primary">BRNO</span></span>
+                    <span>— Studentské akce a spolky v Brně</span>
+                </div>
+                <p class="text-[11px] text-base-content/50">Otevřená nástěnka pro studentský život na MUNI, VUT i MENDELU.</p>
             </div>
-            <div class="flex items-center gap-3">
-                <a href="/admin" class="hover:text-primary transition-colors font-bold text-base-content/80">Pro spolky</a>
-                <span>•</span>
-                <span>Aktualizováno denně</span>
+
+            <div class="flex flex-col sm:flex-row items-center gap-3">
+                <a
+                    href="/admin"
+                    class="btn btn-sm btn-outline border-base-300 font-bold text-xs gap-2 rounded-xl hover:bg-base-200 text-base-content hover:text-primary transition-all px-4"
+                >
+                    <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                    </svg>
+                    <span>Vstup a přidání akce pro spolky</span>
+                </a>
             </div>
         </div>
     </footer>
