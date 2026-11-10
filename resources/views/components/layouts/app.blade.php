@@ -12,7 +12,13 @@
     <script>
         (function() {
             try {
-                const theme = localStorage.getItem('brno_events_theme') || 'events-light';
+                var saved = localStorage.getItem('brno_events_theme');
+                var theme;
+                if (saved) {
+                    theme = saved;
+                } else {
+                    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'events-dark' : 'events-light';
+                }
                 document.documentElement.setAttribute('data-theme', theme);
                 if (theme === 'events-dark') {
                     document.documentElement.classList.add('dark');

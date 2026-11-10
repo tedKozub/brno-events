@@ -22,7 +22,7 @@
             {{-- Pravá část: Přepínač témat (Alpine) s vysokým kontrastem ikon --}}
             <div
                 x-data="{
-                    theme: localStorage.getItem('brno_events_theme') || 'events-light',
+                    theme: localStorage.getItem('brno_events_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'events-dark' : 'events-light'),
                     setTheme(val) {
                         this.theme = val;
                         document.documentElement.setAttribute('data-theme', val);
@@ -366,51 +366,17 @@
                                 </div>
 
                                 {{-- Tlačítka akcí --}}
-                                <div class="pt-3 border-t border-base-200 flex items-center justify-between gap-2">
+                                <div class="pt-3 border-t border-base-200">
                                     <a
                                         href="/akce/{{ $event->slug }}"
                                         wire:navigate
-                                        class="btn btn-xs sm:btn-sm btn-ghost border border-base-300 hover:btn-primary font-bold text-xs flex-1 rounded-xl"
+                                        class="btn btn-ghost border border-base-300 hover:btn-primary font-bold text-xs w-full rounded-xl gap-1.5 inline-flex items-center justify-center"
                                     >
                                         <span>Detail akce</span>
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                         </svg>
                                     </a>
-
-                                    @if($event->ticket_url)
-                                        <a
-                                            href="{{ $event->ticket_url }}"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            class="btn btn-xs sm:btn-sm btn-primary font-bold text-xs gap-1 rounded-xl"
-                                        >
-                                            <span>Lístky</span>
-                                            <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                            </svg>
-                                        </a>
-                                    @elseif($event->facebook_event_url)
-                                        <a
-                                            href="{{ $event->facebook_event_url }}"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            class="btn btn-xs sm:btn-sm btn-outline border-base-300 font-bold text-xs gap-1 rounded-xl"
-                                        >
-                                            <span>FB Událost</span>
-                                        </a>
-                                    @else
-                                        <button
-                                            wire:click="downloadIcal({{ $event->id }})"
-                                            class="btn btn-xs sm:btn-sm btn-ghost border border-base-300 font-bold text-xs rounded-xl"
-                                            title="Uložit do kalendáře (.ics)"
-                                        >
-                                            <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                            </svg>
-                                            + Kalendář
-                                        </button>
-                                    @endif
                                 </div>
                             </div>
                         </div>
