@@ -4,7 +4,6 @@ namespace App\Livewire;
 
 use App\Models\Category;
 use App\Models\Event;
-use App\Models\Organization;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
@@ -12,7 +11,7 @@ use Livewire\Component;
 class EventBoard extends Component
 {
     public string $search = '';
-    public string $dateFilter = 'all'; // all, today, tomorrow, weekend, week
+    public string $dateFilter = 'all'; // all, today, tomorrow, this_week, next_week
     public string $selectedCategory = '';
     public string $selectedUniversity = '';
     public bool $onlyFree = false;
@@ -84,7 +83,7 @@ class EventBoard extends Component
         $event = Event::with('venue', 'organization')->findOrFail($id);
 
         $start = $event->starts_at->format('Ymd\THis');
-        $end = ($event->ends_at ?: $event->starts_at->addHours(3))->format('Ymd\THis');
+        $end = ($event->ends_at ?: $event->starts_at->copy()->addHours(3))->format('Ymd\THis');
         $title = addcslashes($event->title, ",;\\");
         $desc = addcslashes($event->short_description ?: $event->description ?: '', ",;\\");
         $loc = addcslashes($event->location_display, ",;\\");
@@ -116,7 +115,6 @@ class EventBoard extends Component
     {
         $now = Carbon::now();
 
-        // Základní dotaz pro publikované nadcházející akce
         $query = Event::with(['organization', 'venue', 'category'])
             ->published()
             ->upcoming();
@@ -134,16 +132,18 @@ class EventBoard extends Component
             });
         }
 
-        // Časové filtry
+        // Časové filtry pro studenty (bez víkendů)
         match ($this->dateFilter) {
             'today' => $query->whereDate('starts_at', Carbon::today()),
             'tomorrow' => $query->whereDate('starts_at', Carbon::tomorrow()),
-            'weekend' => $query->where(function ($q) use ($now) {
-                $friday = $now->isFriday() ? $now->copy()->setTime(12, 0) : $now->copy()->next(Carbon::FRIDAY)->setTime(12, 0);
-                $sunday = $friday->copy()->next(Carbon::SUNDAY)->endOfDay();
-                $q->whereBetween('starts_at', [$friday, $sunday]);
-            }),
-            'week' => $query->whereBetween('starts_at', [Carbon::today(), Carbon::today()->addDays(7)->endOfDay()]),
+            'this_week' => $query->whereBetween('starts_at', [
+                Carbon::today()->startOfDay(),
+                $now->copy()->endOfWeek(Carbon::FRIDAY)->setTime(23, 59, 59)
+            ]),
+            'next_week' => $query->whereBetween('starts_at', [
+                $now->copy()->addWeek()->startOfWeek(Carbon::MONDAY)->startOfDay(),
+                $now->copy()->addWeek()->endOfWeek(Carbon::FRIDAY)->setTime(23, 59, 59)
+            ]),
             default => null,
         };
 
@@ -164,7 +164,7 @@ class EventBoard extends Component
 
         $events = $query->orderBy('starts_at', 'asc')->get();
 
-        // Data pro mapu (akce s GPS souřadnicemi z místa)
+        // Data pro Leaflet mapu (místa se souřadnicemi v Brně)
         $mapMarkers = $events->filter(fn ($e) => $e->venue && $e->venue->latitude && $e->venue->longitude)
             ->map(function ($e) {
                 return [
@@ -173,19 +173,11 @@ class EventBoard extends Component
                     'lat' => (float) $e->venue->latitude,
                     'lng' => (float) $e->venue->longitude,
                     'venue' => $e->venue->name,
-                    'time' => $e->starts_at->format('d.m. H:i'),
+                    'time' => $e->starts_at->translatedFormat('D d. m. H:i'),
                     'price' => $e->formatted_price,
                     'category' => $e->category?->name,
                 ];
-            })->values();
-
-        // Zvýrazněné akce
-        $featuredEvents = Event::with(['organization', 'venue', 'category'])
-            ->published()
-            ->upcoming()
-            ->where('is_featured', true)
-            ->limit(3)
-            ->get();
+            })->values()->toArray();
 
         $categories = Category::withCount(['events' => fn ($q) => $q->published()->upcoming()])
             ->orderBy('sort_order', 'asc')
@@ -195,7 +187,6 @@ class EventBoard extends Component
 
         return view('livewire.event-board', [
             'events' => $events,
-            'featuredEvents' => $featuredEvents,
             'categories' => $categories,
             'mapMarkers' => $mapMarkers,
             'selectedEvent' => $selectedEvent,

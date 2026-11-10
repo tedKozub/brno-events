@@ -1,36 +1,50 @@
 <div>
-    {{-- HLAVNÍ HLAVIČKA A NAVBAR --}}
-    <header class="border-b border-base-300 bg-base-100/80 backdrop-blur-md sticky top-0 z-30 transition-colors">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
+    {{-- KOMPAKTNÍ MOBILNÍ NAVBAR --}}
+    <header class="border-b border-base-300 bg-base-100/90 backdrop-blur-md sticky top-0 z-30 transition-colors shadow-xs">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-2 sm:gap-4">
             {{-- Logo --}}
-            <a href="/" class="flex items-center gap-3 group">
-                <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-content font-black shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <a href="/" class="flex items-center gap-2 sm:gap-3 group shrink-0">
+                <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary flex items-center justify-center text-primary-content font-black shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
                 </div>
                 <div>
-                    <div class="flex items-center gap-2">
-                        <span class="font-black text-lg sm:text-xl tracking-tight text-base-content">
+                    <div class="flex items-center gap-1.5 sm:gap-2">
+                        <span class="font-black text-base sm:text-xl tracking-tight text-base-content">
                             AKCE<span class="text-primary">BRNO</span>
                         </span>
-                        <span class="badge badge-sm badge-outline font-bold text-[10px] uppercase tracking-wider text-primary border-primary">
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20">
                             Student
                         </span>
                     </div>
-                    <p class="text-xs text-base-content/60 hidden sm:block">Centralizovaný přehled studentského života v Brně</p>
                 </div>
             </a>
 
-            {{-- Pravá část: Přepínač témat + Vstup pro spolky --}}
-            <div class="flex items-center gap-2.5">
-                {{-- Theme Switcher --}}
-                <div class="join bg-base-200 p-1 rounded-xl border border-base-300">
+            {{-- Pravá část: Přepínač témat (Alpine) + Vstup pro spolky --}}
+            <div class="flex items-center gap-1.5 sm:gap-3">
+                {{-- Theme Switcher řízený Alpine.js pro 100% spolehlivost při Livewire re-renderu --}}
+                <div
+                    x-data="{
+                        theme: localStorage.getItem('brno_events_theme') || 'events-light',
+                        setTheme(val) {
+                            this.theme = val;
+                            document.documentElement.setAttribute('data-theme', val);
+                            if (val === 'events-dark') {
+                                document.documentElement.classList.add('dark');
+                            } else {
+                                document.documentElement.classList.remove('dark');
+                            }
+                            localStorage.setItem('brno_events_theme', val);
+                        }
+                    }"
+                    class="inline-flex items-center bg-base-200 p-0.5 sm:p-1 rounded-xl border border-base-300"
+                >
                     <button
                         type="button"
-                        onclick="switchAppTheme('events-light')"
-                        id="theme-light-btn"
-                        class="btn btn-xs join-item px-2.5 gap-1.5 font-bold"
+                        @click="setTheme('events-light')"
+                        :class="theme === 'events-light' ? 'bg-primary text-primary-content shadow-sm' : 'text-base-content/60 hover:text-base-content'"
+                        class="px-2 sm:px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all"
                         title="Světlý režim"
                     >
                         <svg class="w-3.5 h-3.5 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,9 +54,9 @@
                     </button>
                     <button
                         type="button"
-                        onclick="switchAppTheme('events-dark')"
-                        id="theme-dark-btn"
-                        class="btn btn-xs join-item px-2.5 gap-1.5 font-bold"
+                        @click="setTheme('events-dark')"
+                        :class="theme === 'events-dark' ? 'bg-primary text-primary-content shadow-sm' : 'text-base-content/60 hover:text-base-content'"
+                        class="px-2 sm:px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition-all"
                         title="Tmavý režim"
                     >
                         <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,42 +69,43 @@
                 {{-- Odkaz do administrace pro spolky --}}
                 <a
                     href="/admin"
-                    class="btn btn-sm btn-primary gap-1.5 shadow-sm font-bold text-xs uppercase tracking-wider"
+                    class="btn btn-xs sm:btn-sm btn-primary gap-1 sm:gap-1.5 shadow-sm font-bold text-xs uppercase tracking-wider px-2 sm:px-3"
                 >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
                     </svg>
-                    <span>Portál spolků</span>
+                    <span class="sm:hidden">Spolky</span>
+                    <span class="hidden sm:inline">Portál spolků</span>
                 </a>
             </div>
         </div>
     </header>
 
     {{-- HLAVNÍ OBSAHOVÁ OBLAST --}}
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+    <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-5">
 
-        {{-- HERO FILTROVACÍ PANEL --}}
-        <section class="card bg-base-100 shadow-md border border-base-300 overflow-hidden">
-            <div class="card-body p-4 sm:p-6 space-y-4">
+        {{-- FILTROVACÍ PANEL --}}
+        <section class="card bg-base-100 shadow-sm border border-base-300 overflow-hidden">
+            <div class="card-body p-3.5 sm:p-6 space-y-4">
                 {{-- 1. Vyhledávání a přepínač zobrazení --}}
-                <div class="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                <div class="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
                     {{-- Search Input --}}
                     <div class="relative flex-1">
                         <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-base-content/40">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
                         </div>
                         <input
                             type="text"
                             wire:model.live.debounce.300ms="search"
-                            placeholder="Hledat akci, párty, turnaj, klub, spolek..."
-                            class="input input-bordered w-full pl-11 bg-base-200/50 text-sm font-medium focus:border-primary focus:outline-none"
+                            placeholder="Hledat akci, hospodský kvíz, párty, turnaj..."
+                            class="input input-sm sm:input-md input-bordered w-full pl-10 sm:pl-11 bg-base-200/50 text-xs sm:text-sm font-medium focus:border-primary focus:outline-none rounded-xl"
                         />
                         @if(!empty($search))
                             <button
                                 wire:click="$set('search', '')"
-                                class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-base-content/40 hover:text-base-content"
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-base-content/40 hover:text-base-content"
                             >
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -99,22 +114,22 @@
                         @endif
                     </div>
 
-                    {{-- Přepínač pohledů: Seznam vs Mapa --}}
-                    <div class="join bg-base-200 p-1 rounded-xl border border-base-300 self-end md:self-auto w-full md:w-auto">
+                    {{-- Přepínač pohledů: Karty vs Mapa --}}
+                    <div class="join bg-base-200 p-0.5 sm:p-1 rounded-xl border border-base-300 w-full sm:w-auto shrink-0">
                         <button
                             wire:click="setViewMode('cards')"
-                            class="btn btn-sm join-item flex-1 md:flex-initial gap-1.5 font-bold text-xs {{ $viewMode === 'cards' ? 'btn-primary' : 'btn-ghost' }}"
+                            class="btn btn-xs sm:btn-sm join-item flex-1 sm:flex-initial gap-1.5 font-bold text-xs {{ $viewMode === 'cards' ? 'btn-primary' : 'btn-ghost text-base-content/70' }}"
                         >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
                             </svg>
-                            <span>Přehled karet</span>
+                            <span>Přehled</span>
                         </button>
                         <button
                             wire:click="setViewMode('map')"
-                            class="btn btn-sm join-item flex-1 md:flex-initial gap-1.5 font-bold text-xs {{ $viewMode === 'map' ? 'btn-primary' : 'btn-ghost' }}"
+                            class="btn btn-xs sm:btn-sm join-item flex-1 sm:flex-initial gap-1.5 font-bold text-xs {{ $viewMode === 'map' ? 'btn-primary' : 'btn-ghost text-base-content/70' }}"
                         >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
                             </svg>
                             <span>Mapa Brna</span>
@@ -122,22 +137,22 @@
                     </div>
                 </div>
 
-                {{-- 2. Časové filtry (Dnes / Zítra / Víkend...) --}}
-                <div class="flex items-center gap-2 overflow-x-auto pb-1 pt-1 scrollbar-none">
-                    <span class="text-xs font-bold uppercase tracking-wider text-base-content/50 pr-1 shrink-0">Kdy:</span>
+                {{-- 2. Časové filtry (Bez víkendu – studenti přes víkend akce nemají!) --}}
+                <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-none">
+                    <span class="text-[11px] font-black uppercase tracking-wider text-base-content/50 pr-1 shrink-0">Kdy:</span>
                     @php
                         $dateOptions = [
                             'all' => 'Všechny dny',
                             'today' => 'Dnes',
                             'tomorrow' => 'Zítra',
-                            'weekend' => 'Tento víkend',
-                            'week' => 'Příštích 7 dní',
+                            'this_week' => 'Tento týden',
+                            'next_week' => 'Příští týden',
                         ];
                     @endphp
                     @foreach($dateOptions as $key => $label)
                         <button
                             wire:click="setDateFilter('{{ $key }}')"
-                            class="btn btn-xs sm:btn-sm shrink-0 rounded-lg font-bold transition-all {{ $dateFilter === $key ? 'btn-primary shadow-sm' : 'btn-outline border-base-300 hover:bg-base-200 text-base-content/80' }}"
+                            class="px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer whitespace-nowrap {{ $dateFilter === $key ? 'bg-primary text-primary-content shadow-sm' : 'bg-base-200 text-base-content/80 hover:bg-base-300 border border-base-300' }}"
                         >
                             {{ $label }}
                         </button>
@@ -145,14 +160,14 @@
                 </div>
 
                 {{-- 3. Univerzity a Vstupné --}}
-                <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-base-200">
+                <div class="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-base-200">
                     {{-- Univerzity --}}
-                    <div class="flex items-center gap-1.5 flex-wrap">
-                        <span class="text-xs font-bold uppercase tracking-wider text-base-content/50 pr-1">Škola:</span>
+                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                        <span class="text-[11px] font-black uppercase tracking-wider text-base-content/50 pr-1 shrink-0">Škola:</span>
                         @foreach(['' => 'Všechny', 'MUNI' => 'MUNI', 'VUT' => 'VUT', 'MENDELU' => 'MENDELU'] as $code => $uLabel)
                             <button
                                 wire:click="setUniversity('{{ $code }}')"
-                                class="btn btn-xs rounded-lg font-bold {{ $selectedUniversity === $code ? 'btn-neutral' : 'btn-ghost text-base-content/70' }}"
+                                class="px-3 py-1 rounded-lg text-xs font-bold shrink-0 transition-all cursor-pointer whitespace-nowrap {{ $selectedUniversity === $code ? 'bg-neutral text-neutral-content shadow-xs' : 'bg-base-200/80 text-base-content/70 hover:bg-base-300' }}"
                             >
                                 {{ $uLabel }}
                             </button>
@@ -161,8 +176,8 @@
 
                     {{-- Vstupné zdarma toggle --}}
                     <div class="flex items-center gap-2">
-                        <label class="cursor-pointer label gap-2 py-0">
-                            <span class="label-text text-xs font-bold uppercase tracking-wider text-base-content/80">Pouze akce zdarma</span>
+                        <label class="cursor-pointer label gap-2 py-0 px-1">
+                            <span class="label-text text-xs font-bold text-base-content/80">Pouze zdarma</span>
                             <input
                                 type="checkbox"
                                 wire:click="toggleFree"
@@ -173,22 +188,22 @@
                     </div>
                 </div>
 
-                {{-- 4. Kategorie chips --}}
+                {{-- 4. Kategorie chips s velkorysým paddingem (žádné přetékání!) --}}
                 <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none pt-1">
                     <button
                         wire:click="setCategory('')"
-                        class="badge badge-lg gap-1.5 font-bold cursor-pointer transition-colors {{ empty($selectedCategory) ? 'badge-primary text-primary-content' : 'badge-ghost border-base-300' }}"
+                        class="px-4 py-1.5 rounded-full text-xs font-bold shrink-0 transition-all cursor-pointer whitespace-nowrap border {{ empty($selectedCategory) ? 'bg-primary text-primary-content border-primary shadow-sm' : 'bg-base-200 text-base-content/80 border-base-300 hover:bg-base-300' }}"
                     >
                         Všechny kategorie
                     </button>
                     @foreach($categories as $cat)
                         <button
                             wire:click="setCategory('{{ $cat->slug }}')"
-                            class="badge badge-lg gap-1.5 font-bold cursor-pointer transition-colors {{ $selectedCategory === $cat->slug ? 'badge-primary text-primary-content' : 'badge-ghost border-base-300' }}"
+                            class="px-4 py-1.5 rounded-full text-xs font-bold shrink-0 transition-all cursor-pointer whitespace-nowrap border flex items-center gap-1.5 {{ $selectedCategory === $cat->slug ? 'bg-primary text-primary-content border-primary shadow-sm' : 'bg-base-200 text-base-content/80 border-base-300 hover:bg-base-300' }}"
                         >
                             <span>{{ $cat->name }}</span>
                             @if($cat->events_count > 0)
-                                <span class="opacity-70 text-[10px]">({{ $cat->events_count }})</span>
+                                <span class="opacity-75 text-[11px] font-semibold">({{ $cat->events_count }})</span>
                             @endif
                         </button>
                     @endforeach
@@ -199,44 +214,46 @@
         {{-- STATUSOVÁ LIŠTA S POČTEM VÝSLEDKŮ --}}
         <div class="flex items-center justify-between px-1 text-xs text-base-content/70">
             <div>
-                Zobrazeno <strong class="text-base-content">{{ $events->count() }}</strong> z celkem {{ $totalUpcomingCount }} nadcházejících akcí
+                Zobrazeno <strong class="text-base-content font-black">{{ $events->count() }}</strong> z {{ $totalUpcomingCount }} studentských akcí
                 @if(!empty($search) || !empty($selectedCategory) || !empty($selectedUniversity) || $dateFilter !== 'all' || $onlyFree)
-                    <span class="text-primary font-bold">(aktivní filtry)</span>
+                    <span class="text-primary font-bold">(filtrováno)</span>
                 @endif
             </div>
 
             @if(!empty($search) || !empty($selectedCategory) || !empty($selectedUniversity) || $dateFilter !== 'all' || $onlyFree)
                 <button
                     wire:click="resetFilters"
-                    class="btn btn-ghost btn-xs text-error font-bold gap-1"
+                    class="text-error hover:underline font-bold text-xs flex items-center gap-1"
                 >
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                     </svg>
-                    Zrušit všechny filtry
+                    Zrušit filtry
                 </button>
             @endif
         </div>
 
         {{-- ZOBRAZENÍ: MAPA BRNA --}}
         @if($viewMode === 'map')
-            <section class="card bg-base-100 shadow-md border border-base-300 overflow-hidden">
-                <div class="card-body p-4">
-                    <div class="flex items-center justify-between pb-2">
-                        <h2 class="text-base font-bold flex items-center gap-2">
+            <section class="card bg-base-100 shadow-sm border border-base-300 overflow-hidden">
+                <div class="card-body p-3.5 sm:p-5 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-sm sm:text-base font-bold flex items-center gap-2 text-base-content">
                             <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                             </svg>
-                            Interaktivní mapa míst a klubů v Brně
+                            Místa akcí a kluby v Brně
                         </h2>
-                        <span class="text-xs text-base-content/60">{{ $mapMarkers->count() }} míst se souřadnicemi</span>
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-base-200 text-base-content/80 border border-base-300">
+                            {{ count($mapMarkers) }} míst s akcí
+                        </span>
                     </div>
 
                     <div
                         id="brno-events-map"
-                        wire:ignore
-                        class="w-full h-[500px] rounded-xl bg-base-200 border border-base-300 z-10"
+                        data-markers='@json($mapMarkers)'
+                        class="w-full h-[420px] sm:h-[500px] rounded-xl bg-base-200 border border-base-300 z-10"
                     ></div>
                 </div>
             </section>
@@ -245,25 +262,25 @@
         {{-- ZOBRAZENÍ: SEZNAM KARET --}}
         @if($viewMode === 'cards')
             @if($events->isEmpty())
-                <div class="card bg-base-100 border border-base-300 p-12 text-center">
+                <div class="card bg-base-100 border border-base-300 p-8 sm:p-12 text-center">
                     <div class="max-w-md mx-auto space-y-3">
                         <div class="w-12 h-12 rounded-full bg-base-200 mx-auto flex items-center justify-center text-base-content/40">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                         </div>
-                        <h3 class="text-lg font-bold">Žádná akce neodpovídá zvoleným filtrům</h3>
+                        <h3 class="text-base sm:text-lg font-bold">Žádná akce neodpovídá zvoleným filtrům</h3>
                         <p class="text-xs text-base-content/70">Zkuste rozšířit časové rozmezí nebo vyčistit hledaný výraz.</p>
-                        <button wire:click="resetFilters" class="btn btn-primary btn-sm mt-2 font-bold">
+                        <button wire:click="resetFilters" class="btn btn-primary btn-sm font-bold">
                             Zobrazit všechny nadcházející akce
                         </button>
                     </div>
                 </div>
             @else
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
                     @foreach($events as $event)
-                        <div class="card bg-base-100 shadow-sm hover:shadow-lg border border-base-300 transition-all duration-200 flex flex-col justify-between overflow-hidden group">
-                            {{-- Horní část: Obrázek & Odznaky --}}
+                        <div class="card bg-base-100 shadow-xs hover:shadow-lg border border-base-300 transition-all duration-200 flex flex-col justify-between overflow-hidden group rounded-2xl">
+                            {{-- Horní část: Obrázek & Odznaky s velkorysým paddingem --}}
                             <div class="relative aspect-[16/9] w-full bg-base-300 overflow-hidden">
                                 <img
                                     src="{{ $event->cover_image ?: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80' }}"
@@ -275,27 +292,27 @@
                                 {{-- Odznaky přes obrázek --}}
                                 <div class="absolute top-3 left-3 flex flex-wrap gap-1.5">
                                     @if($event->category)
-                                        <span class="badge badge-sm badge-neutral font-bold backdrop-blur-sm bg-neutral/80 text-neutral-content border-none">
+                                        <span class="px-3 py-1 rounded-lg text-xs font-bold backdrop-blur-md bg-neutral/85 text-neutral-content shadow-sm whitespace-nowrap">
                                             {{ $event->category->name }}
                                         </span>
                                     @endif
 
                                     @if($event->is_featured)
-                                        <span class="badge badge-sm badge-accent font-bold text-accent-content border-none shadow-sm">
-                                            Tip týdne
+                                        <span class="px-3 py-1 rounded-lg text-xs font-bold bg-accent text-accent-content shadow-sm whitespace-nowrap">
+                                            Tip
                                         </span>
                                     @endif
                                 </div>
 
                                 <div class="absolute top-3 right-3">
-                                    <span class="badge badge-sm font-bold border-none shadow-sm {{ $event->price_type === 'free' ? 'badge-success text-success-content' : 'badge-primary text-primary-content' }}">
+                                    <span class="px-3 py-1 rounded-lg text-xs font-bold shadow-sm whitespace-nowrap {{ $event->price_type === 'free' ? 'bg-success text-success-content' : 'bg-primary text-primary-content' }}">
                                         {{ $event->formatted_price }}
                                     </span>
                                 </div>
 
-                                {{-- Datum v rohu --}}
-                                <div class="absolute bottom-2.5 left-2.5 bg-base-100/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-bold text-base-content border border-base-300 shadow-sm flex items-center gap-1.5">
-                                    <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                {{-- Datum v levém dolním rohu --}}
+                                <div class="absolute bottom-2.5 left-2.5 bg-base-100/95 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-bold text-base-content border border-base-300 shadow-sm flex items-center gap-1.5 whitespace-nowrap">
+                                    <svg class="w-3.5 h-3.5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
                                     <span>{{ $event->starts_at->translatedFormat('D d. m. H:i') }}</span>
@@ -303,26 +320,26 @@
                             </div>
 
                             {{-- Tělo karty --}}
-                            <div class="p-5 flex-1 flex flex-col justify-between space-y-3">
+                            <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
                                 <div class="space-y-2">
-                                    {{-- Spolek / Pořadatel --}}
+                                    {{-- Spolek / Pořadatel s jasně čitelným odznakem --}}
                                     <div class="flex items-center gap-2 text-xs">
                                         @if($event->organization)
-                                            <span class="badge badge-xs font-bold {{ $event->organization->university === 'MUNI' ? 'badge-info' : ($event->organization->university === 'VUT' ? 'badge-error' : 'badge-ghost') }}">
+                                            <span class="px-2 py-0.5 rounded text-[11px] font-black uppercase tracking-wider {{ $event->organization->university === 'MUNI' ? 'bg-info/15 text-info' : ($event->organization->university === 'VUT' ? 'bg-error/15 text-error' : 'bg-success/15 text-success') }}">
                                                 {{ $event->organization->university }}
                                             </span>
-                                            <span class="font-medium text-base-content/80 truncate">
+                                            <span class="font-semibold text-base-content/80 truncate">
                                                 {{ $event->organization->name }}
                                             </span>
                                         @else
-                                            <span class="font-medium text-base-content/60">Studentská akce</span>
+                                            <span class="font-semibold text-base-content/60">Studentská akce</span>
                                         @endif
                                     </div>
 
                                     {{-- Titulek --}}
                                     <h3
                                         wire:click="openEventModal({{ $event->id }})"
-                                        class="font-black text-lg leading-snug tracking-tight text-base-content group-hover:text-primary transition-colors cursor-pointer line-clamp-2"
+                                        class="font-black text-base sm:text-lg leading-snug tracking-tight text-base-content group-hover:text-primary transition-colors cursor-pointer line-clamp-2"
                                     >
                                         {{ $event->title }}
                                     </h3>
@@ -337,7 +354,7 @@
                                     </div>
 
                                     {{-- Krátký popis --}}
-                                    <p class="text-xs text-base-content/70 line-clamp-2 pt-1">
+                                    <p class="text-xs text-base-content/70 line-clamp-2 pt-1 leading-relaxed">
                                         {{ $event->short_description ?: strip_tags($event->description) }}
                                     </p>
                                 </div>
@@ -346,7 +363,7 @@
                                 <div class="pt-3 border-t border-base-200 flex items-center justify-between gap-2">
                                     <button
                                         wire:click="openEventModal({{ $event->id }})"
-                                        class="btn btn-sm btn-ghost border border-base-300 font-bold text-xs flex-1"
+                                        class="btn btn-xs sm:btn-sm btn-ghost border border-base-300 font-bold text-xs flex-1 rounded-xl"
                                     >
                                         Detail akce
                                     </button>
@@ -356,10 +373,10 @@
                                             href="{{ $event->ticket_url }}"
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            class="btn btn-sm btn-primary font-bold text-xs gap-1"
+                                            class="btn btn-xs sm:btn-sm btn-primary font-bold text-xs gap-1 rounded-xl"
                                         >
                                             <span>Lístky</span>
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                                             </svg>
                                         </a>
@@ -368,17 +385,17 @@
                                             href="{{ $event->facebook_event_url }}"
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            class="btn btn-sm btn-outline border-base-300 font-bold text-xs gap-1"
+                                            class="btn btn-xs sm:btn-sm btn-outline border-base-300 font-bold text-xs gap-1 rounded-xl"
                                         >
                                             <span>FB Událost</span>
                                         </a>
                                     @else
                                         <button
                                             wire:click="downloadIcal({{ $event->id }})"
-                                            class="btn btn-sm btn-ghost border border-base-300 font-bold text-xs"
-                                            title="Stáhnout do kalendáře (.ics)"
+                                            class="btn btn-xs sm:btn-sm btn-ghost border border-base-300 font-bold text-xs rounded-xl"
+                                            title="Uložit do kalendáře (.ics)"
                                         >
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                             </svg>
                                             + Kalendář
@@ -395,8 +412,8 @@
 
     {{-- MODÁLNÍ OKNO PRO DETAIL AKCE --}}
     @if($selectedEvent)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-            <div class="card bg-base-100 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-base-300">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/65 backdrop-blur-sm">
+            <div class="card bg-base-100 max-w-2xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-base-300 rounded-2xl">
                 <div class="relative aspect-[16/9] w-full bg-base-300">
                     <img
                         src="{{ $selectedEvent->cover_image ?: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=1200&q=80' }}"
@@ -412,26 +429,28 @@
                         </svg>
                     </button>
                     <div class="absolute bottom-3 left-3 flex gap-2">
-                        <span class="badge badge-primary font-bold shadow-sm">
+                        <span class="px-3 py-1.5 rounded-lg text-xs font-bold shadow-md bg-primary text-primary-content whitespace-nowrap">
                             {{ $selectedEvent->formatted_price }}
                         </span>
                         @if($selectedEvent->category)
-                            <span class="badge badge-neutral font-bold backdrop-blur-sm shadow-sm">
+                            <span class="px-3 py-1.5 rounded-lg text-xs font-bold shadow-md backdrop-blur-md bg-neutral/85 text-neutral-content whitespace-nowrap">
                                 {{ $selectedEvent->category->name }}
                             </span>
                         @endif
                     </div>
                 </div>
 
-                <div class="card-body p-6 space-y-4">
+                <div class="card-body p-4 sm:p-6 space-y-4">
                     <div>
-                        <div class="flex items-center gap-2 text-xs text-base-content/60 mb-1">
+                        <div class="flex items-center gap-2 text-xs text-base-content/60 mb-1.5">
                             @if($selectedEvent->organization)
-                                <span class="badge badge-xs font-bold badge-outline">{{ $selectedEvent->organization->university }}</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
+                                    {{ $selectedEvent->organization->university }}
+                                </span>
                                 <span class="font-bold text-primary">{{ $selectedEvent->organization->name }}</span>
                             @endif
                         </div>
-                        <h2 class="text-2xl font-black text-base-content">{{ $selectedEvent->title }}</h2>
+                        <h2 class="text-xl sm:text-2xl font-black text-base-content leading-tight">{{ $selectedEvent->title }}</h2>
                     </div>
 
                     {{-- Klíčové parametry v rámečku --}}
@@ -442,7 +461,7 @@
                             </svg>
                             <div>
                                 <span class="block font-bold text-base-content">Datum a čas:</span>
-                                <span class="text-base-content/80">{{ $selectedEvent->starts_at->translatedFormat('l d. F Y od H:i') }}</span>
+                                <span class="text-base-content/80 font-medium">{{ $selectedEvent->starts_at->translatedFormat('l d. F Y od H:i') }}</span>
                                 @if($selectedEvent->ends_at)
                                     <span class="block text-base-content/60">do {{ $selectedEvent->ends_at->translatedFormat('d. m. H:i') }}</span>
                                 @endif
@@ -456,29 +475,27 @@
                             </svg>
                             <div>
                                 <span class="block font-bold text-base-content">Místo konání:</span>
-                                <span class="text-base-content/80">{{ $selectedEvent->location_display }}</span>
+                                <span class="text-base-content/80 font-medium">{{ $selectedEvent->location_display }}</span>
                             </div>
                         </div>
                     </div>
 
                     {{-- Popis akce --}}
-                    <div class="prose max-w-none text-sm text-base-content/90 whitespace-pre-line py-2">
+                    <div class="text-xs sm:text-sm text-base-content/90 whitespace-pre-line py-2 leading-relaxed">
                         {{ $selectedEvent->description ?: $selectedEvent->short_description }}
                     </div>
 
                     {{-- Tlačítka pro akci --}}
-                    <div class="pt-4 border-t border-base-300 flex flex-wrap items-center justify-between gap-3">
-                        <div class="flex items-center gap-2">
-                            <button
-                                wire:click="downloadIcal({{ $selectedEvent->id }})"
-                                class="btn btn-sm btn-outline border-base-300 font-bold gap-1.5"
-                            >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                </svg>
-                                Stáhnout do iCal / Kalendáře
-                            </button>
-                        </div>
+                    <div class="pt-3 border-t border-base-300 flex flex-wrap items-center justify-between gap-2.5">
+                        <button
+                            wire:click="downloadIcal({{ $selectedEvent->id }})"
+                            class="btn btn-sm btn-outline border-base-300 font-bold gap-1.5 rounded-xl text-xs"
+                        >
+                            <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                            Stáhnout .ics kalendář
+                        </button>
 
                         <div class="flex items-center gap-2">
                             @if($selectedEvent->facebook_event_url)
@@ -486,7 +503,7 @@
                                     href="{{ $selectedEvent->facebook_event_url }}"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    class="btn btn-sm btn-ghost border border-base-300 font-bold text-xs"
+                                    class="btn btn-sm btn-ghost border border-base-300 font-bold text-xs rounded-xl"
                                 >
                                     FB Událost
                                 </a>
@@ -497,10 +514,10 @@
                                     href="{{ $selectedEvent->ticket_url }}"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    class="btn btn-sm btn-primary font-bold text-xs gap-1.5"
+                                    class="btn btn-sm btn-primary font-bold text-xs gap-1.5 rounded-xl"
                                 >
                                     <span>Koupit vstupenku</span>
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                                     </svg>
                                 </a>
@@ -513,113 +530,113 @@
     @endif
 
     {{-- FOOTER --}}
-    <footer class="mt-16 border-t border-base-300 bg-base-100 py-8 text-xs text-base-content/60 transition-colors">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+    <footer class="mt-12 border-t border-base-300 bg-base-100 py-6 text-xs text-base-content/60 transition-colors">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
             <div class="flex items-center gap-2">
                 <span class="font-black text-sm tracking-tight text-base-content">AKCE<span class="text-primary">BRNO</span></span>
-                <span>— Otevřený portál studentských akcí a spolků v Brně</span>
+                <span>— Studentské akce a spolky v Brně</span>
             </div>
-            <div class="flex items-center gap-4">
-                <a href="/admin" class="hover:text-primary transition-colors font-semibold">Administrace pro spolky</a>
+            <div class="flex items-center gap-3">
+                <a href="/admin" class="hover:text-primary transition-colors font-bold text-base-content/80">Pro spolky</a>
                 <span>•</span>
                 <span>Aktualizováno denně</span>
             </div>
         </div>
     </footer>
+</div>
 
 @script
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        initLeafletMap();
-    });
+    let leafletMapInstance = null;
 
-    document.addEventListener('livewire:navigated', function () {
-        initLeafletMap();
-    });
-
-    window.addEventListener('initMap', function () {
-        setTimeout(initLeafletMap, 100);
-    });
-
-    let mapInstance = null;
-
-    function initLeafletMap() {
+    function renderLeafletMap() {
         const mapContainer = document.getElementById('brno-events-map');
         if (!mapContainer || typeof L === 'undefined') return;
 
-        if (mapInstance) {
-            mapInstance.remove();
-            mapInstance = null;
+        if (leafletMapInstance) {
+            leafletMapInstance.remove();
+            leafletMapInstance = null;
         }
 
-        const markersData = $wire.mapMarkers || [];
+        let markers = [];
+        try {
+            markers = JSON.parse(mapContainer.getAttribute('data-markers') || '[]');
+        } catch (e) {
+            markers = [];
+        }
 
-        // Střed Brna
-        mapInstance = L.map('brno-events-map').setView([49.1951, 16.6068], 13);
+        // Vytvoření mapy vycentrované na Brno
+        leafletMapInstance = L.map('brno-events-map', {
+            scrollWheelZoom: false
+        }).setView([49.1951, 16.6068], 13);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 18,
-            attribution: '&copy; OpenStreetMap přispěvatelé'
-        }).addTo(mapInstance);
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(leafletMapInstance);
+
+        // Vlastní ostrý oranžový SVG pin (žádné chybějící PNG ikony!)
+        const pinIcon = L.divIcon({
+            className: 'custom-map-pin',
+            html: `
+                <div style="background-color: #ea580c; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,0.35); cursor: pointer;">
+                    <svg style="width: 17px; height: 17px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </div>
+            `,
+            iconSize: [34, 34],
+            iconAnchor: [17, 34],
+            popupAnchor: [0, -34]
+        });
 
         const bounds = [];
 
-        markersData.forEach(function (item) {
-            const marker = L.marker([item.lat, item.lng]).addTo(mapInstance);
-            bounds.push([item.lat, item.lng]);
+        markers.forEach(function (item) {
+            if (item.lat && item.lng) {
+                const marker = L.marker([item.lat, item.lng], { icon: pinIcon }).addTo(leafletMapInstance);
+                bounds.push([item.lat, item.lng]);
 
-            const popupHtml = `
-                <div style="font-family: inherit; font-size: 13px; min-width: 180px; padding: 2px;">
-                    <strong style="display: block; font-size: 14px; margin-bottom: 3px;">${item.title}</strong>
-                    <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">${item.venue}</div>
-                    <div style="color: #ea580c; font-weight: bold; font-size: 12px; margin-bottom: 6px;">${item.time} • ${item.price}</div>
-                    <button onclick="$wire.openEventModal(${item.id})" style="background: #ea580c; color: white; border: none; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer; width: 100%;">Detail akce</button>
-                </div>
-            `;
-            marker.bindPopup(popupHtml);
+                const popupHtml = `
+                    <div style="font-family: inherit; font-size: 13px; min-width: 200px; padding: 4px;">
+                        <div style="font-size: 10px; font-weight: 800; color: #ea580c; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">
+                            ${item.category || 'Akce'}
+                        </div>
+                        <strong style="display: block; font-size: 14px; font-weight: 900; line-height: 1.25; margin-bottom: 4px; color: #0f172a;">
+                            ${item.title}
+                        </strong>
+                        <div style="color: #64748b; font-size: 11px; margin-bottom: 4px;">
+                            ${item.venue}
+                        </div>
+                        <div style="font-weight: 800; font-size: 12px; color: #ea580c; margin-bottom: 8px;">
+                            ${item.time} • ${item.price}
+                        </div>
+                        <button onclick="$wire.openEventModal(${item.id})" style="background: #ea580c; color: #ffffff; border: none; padding: 6px 12px; border-radius: 8px; font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; width: 100%;">
+                            Zobrazit detail akce
+                        </button>
+                    </div>
+                `;
+                marker.bindPopup(popupHtml);
+            }
         });
 
         if (bounds.length > 0) {
-            mapInstance.fitBounds(bounds, { padding: [40, 40] });
+            leafletMapInstance.fitBounds(bounds, { padding: [40, 40] });
         }
+
+        setTimeout(function () {
+            if (leafletMapInstance) {
+                leafletMapInstance.invalidateSize();
+            }
+        }, 150);
     }
 
-    // Přepínač témat: synchronizace s localStorage a atributem data-theme
-    window.switchAppTheme = function(themeName) {
-        document.documentElement.setAttribute('data-theme', themeName);
-        if (themeName === 'events-dark') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-        localStorage.setItem('brno_events_theme', themeName);
-        updateThemeButtons(themeName);
-    };
-
-    window.updateThemeButtons = function(themeName) {
-        const isDark = themeName === 'events-dark';
-        const lightBtn = document.getElementById('theme-light-btn');
-        const darkBtn = document.getElementById('theme-dark-btn');
-        if (lightBtn && darkBtn) {
-            if (isDark) {
-                darkBtn.classList.add('btn-primary');
-                darkBtn.classList.remove('btn-ghost');
-                lightBtn.classList.add('btn-ghost');
-                lightBtn.classList.remove('btn-primary');
-            } else {
-                lightBtn.classList.add('btn-primary');
-                lightBtn.classList.remove('btn-ghost');
-                darkBtn.classList.add('btn-ghost');
-                darkBtn.classList.remove('btn-primary');
-            }
-        }
-    };
-
-    // Inicializace tématu při načtení
-    (function() {
-        const savedTheme = localStorage.getItem('brno_events_theme') || 'events-light';
-        window.switchAppTheme(savedTheme);
-    })();
+    // Inicializace a posluchače
+    document.addEventListener('DOMContentLoaded', renderLeafletMap);
+    document.addEventListener('livewire:navigated', renderLeafletMap);
+    window.addEventListener('initMap', function () {
+        setTimeout(renderLeafletMap, 50);
+    });
 </script>
 @endscript
-</div>

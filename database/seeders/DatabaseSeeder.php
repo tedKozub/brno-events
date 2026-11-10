@@ -193,10 +193,10 @@ class DatabaseSeeder extends Seeder
             'organization_id' => $best->id,
         ]);
 
-        // 5. Events
+        // 5. Events - pouze všední dny (Po - Pá), studenti o víkendu jezdí domů!
         $now = Carbon::now();
 
-        // Akce 1: Dnes večer
+        // Akce 1: Dnes večer (Středa / Všední den)
         Event::create([
             'organization_id' => $munie->id,
             'venue_id' => $artbar->id,
@@ -215,15 +215,15 @@ class DatabaseSeeder extends Seeder
             'views_count' => 142,
         ]);
 
-        // Akce 2: Zítra
+        // Akce 2: Zítra večer
         Event::create([
             'organization_id' => $esn->id,
             'venue_id' => $vinarska->id,
             'category_id' => $catCulture->id,
             'title' => 'International Meet & Board Games Night',
             'slug' => 'international-meet-and-board-games-night',
-            'short_description' => 'Seznam se se zahraničními studenty z celého světa u deskových her a drinku.',
-            'description' => 'English friendly večer plný her jako Catan, Bang, Codenames i Secret Hitler. Vstup je zcela zdarma, stačí přijít.',
+            'short_description' => 'Seznam se se zahraničními studenty z celého světa u deskových her a drinku na Vinařské.',
+            'description' => 'English friendly večer plný her jako Catan, Bang, Codenames i Secret Hitler. Vstup je zcela zdarma, stačí přijít do menzy na Vinařské.',
             'cover_image' => 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?auto=format&fit=crop&w=1200&q=80',
             'starts_at' => $now->copy()->addDay()->setTime(18, 0),
             'ends_at' => $now->copy()->addDay()->setTime(23, 0),
@@ -233,19 +233,39 @@ class DatabaseSeeder extends Seeder
             'views_count' => 88,
         ]);
 
-        // Akce 3: Tento pátek / víkend
-        $nextFriday = $now->copy()->next(Carbon::FRIDAY);
+        // Akce 3: Studentský Čtvrtek (Koleje PPV – Beerpong Cup)
+        $thisThursday = $now->isThursday() ? $now->copy() : $now->copy()->next(Carbon::THURSDAY);
+        Event::create([
+            'organization_id' => $best->id,
+            'venue_id' => $ppv->id,
+            'category_id' => $catSport->id,
+            'title' => 'Studentský Čtvrtek: Meziuniverzitní Beerpong Cup na PPV',
+            'slug' => 'studentsky-ctvrtek-meziuniverzitni-beerpong-cup-na-ppv',
+            'short_description' => '32 dvoučlenných týmů, oficiální SPPDF stoly, trofej šampionů Brna a večerní afterpárty.',
+            'description' => "Tradiční čtvrteční turnaj na kolejích Pod Palackého vrchem pro studenty MUNI, VUT i MENDELU.\n\nPravidla: Standardní 10 kelímků, pivo Radegast / nealko Birell volitelně.\nStartovné zahrnuje turnajové pivo pro celý tým na všechny zápasy ve skupině i play-off.",
+            'cover_image' => 'https://images.unsplash.com/photo-1543007630-9710e4a00a20?auto=format&fit=crop&w=1200&q=80',
+            'starts_at' => $thisThursday->copy()->setTime(17, 0),
+            'ends_at' => $thisThursday->copy()->setTime(23, 0),
+            'price_type' => 'paid',
+            'price_amount' => 150,
+            'status' => 'published',
+            'is_featured' => true,
+            'views_count' => 310,
+        ]);
+
+        // Akce 4: Páteční rozlučka před odjezdem domů – Fléda
+        $thisFriday = $now->isFriday() ? $now->copy() : $now->copy()->next(Carbon::FRIDAY);
         Event::create([
             'organization_id' => $munie->id,
             'venue_id' => $fleda->id,
             'category_id' => $catParty->id,
             'title' => 'Semestrální Mecheche na Flédě 2026',
             'slug' => 'semestralni-mecheche-na-flede-2026',
-            'short_description' => 'Největší mezifakultní párty podzimu. Dvě stage, akční drinky, DJs z celé ČR.',
+            'short_description' => 'Mezifakultní párty podzimu. Dvě stage, akční drinky, DJs z celé ČR.',
             'description' => "Hlavní stage: Electro, House & Pop anthems.\nDruhá stage: DNB & Bass music.\n\nPředprodej spuštěn přes GoOut za zvýhodněných 150 Kč, na místě 220 Kč. Zákaz vstupu pod 18 let bez ISIC/OP.",
             'cover_image' => 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80',
-            'starts_at' => $nextFriday->copy()->setTime(21, 0),
-            'ends_at' => $nextFriday->copy()->addDay()->setTime(5, 0),
+            'starts_at' => $thisFriday->copy()->setTime(21, 0),
+            'ends_at' => $thisFriday->copy()->addDay()->setTime(4, 30),
             'price_type' => 'paid',
             'price_amount' => 150,
             'ticket_url' => 'https://goout.net',
@@ -255,28 +275,8 @@ class DatabaseSeeder extends Seeder
             'views_count' => 520,
         ]);
 
-        // Akce 4: Sobota víkend – Sport
-        $nextSaturday = $now->copy()->next(Carbon::SATURDAY);
-        Event::create([
-            'organization_id' => $best->id,
-            'venue_id' => $ppv->id,
-            'category_id' => $catSport->id,
-            'title' => 'Meziuniverzitní Beerpong Cup Brno 2026',
-            'slug' => 'meziuniverzitni-beerpong-cup-brno-2026',
-            'short_description' => '32 dvoučlenných týmů, oficiální SPPDF stoly, trofej šampionů Brna a věčná sláva.',
-            'description' => "Turnaj v beerpongu pro studenty MUNI, VUT i MENDELU.\n\nPravidla: Standardní 10 kelímků, pivo Radegast / nealko Birell volitelně.\nStartovné zahrnuje turnajové pivo pro celý tým na všechny zápasy ve skupině i play-off.",
-            'cover_image' => 'https://images.unsplash.com/photo-1543007630-9710e4a00a20?auto=format&fit=crop&w=1200&q=80',
-            'starts_at' => $nextSaturday->copy()->setTime(15, 0),
-            'ends_at' => $nextSaturday->copy()->setTime(21, 0),
-            'price_type' => 'paid',
-            'price_amount' => 200,
-            'status' => 'published',
-            'is_featured' => true,
-            'views_count' => 310,
-        ]);
-
-        // Akce 5: Příští týden – Přednáška
-        $nextTuesday = $now->copy()->addWeek()->startOfWeek()->addDay();
+        // Akce 5: Příští týden (Úterý) – Přednáška Scala
+        $nextTuesday = $now->copy()->addWeek()->startOfWeek(Carbon::MONDAY)->addDay();
         Event::create([
             'organization_id' => $best->id,
             'venue_id' => $scala->id,
@@ -294,7 +294,7 @@ class DatabaseSeeder extends Seeder
             'views_count' => 195,
         ]);
 
-        // Akce 6 & 7: PENDING REVIEW (Scrapované akce pro otestování schvalovací fronty!)
+        // Akce 6 & 7: PENDING REVIEW
         Event::create([
             'organization_id' => $mendeluUnie->id,
             'venue_id' => $luzanky->id,
@@ -302,10 +302,10 @@ class DatabaseSeeder extends Seeder
             'title' => '[Scraped IG] Podzimní studentský swap kytek a oblečení',
             'slug' => 'podzimni-studentsky-swap-kytek-a-obleceni',
             'short_description' => 'Zachyceno z Instagramu @us_mendelu. Přines co nenosíš, odnes si nový kousek nebo řízek monstery.',
-            'description' => 'Automaticky vyextrahováno z letáku na Instagram Stories dne ' . Carbon::now()->format('d.m.Y') . '. Vstup zdarma.',
+            'description' => 'Automaticky vyextrahováno z letáku na Instagram Stories. Vstup zdarma.',
             'cover_image' => 'https://images.unsplash.com/photo-1528740561666-dc2479dc08ab?auto=format&fit=crop&w=1200&q=80',
-            'starts_at' => $now->copy()->addDays(5)->setTime(14, 0),
-            'ends_at' => $now->copy()->addDays(5)->setTime(18, 0),
+            'starts_at' => $now->copy()->addDays(2)->setTime(14, 0),
+            'ends_at' => $now->copy()->addDays(2)->setTime(18, 0),
             'price_type' => 'free',
             'source_type' => 'scraper_instagram',
             'source_url' => 'https://instagram.com/p/example_post',
@@ -322,8 +322,8 @@ class DatabaseSeeder extends Seeder
             'short_description' => 'Zachyceno z Facebook Events. Oheň, hudba, deky a vychlazené drinky.',
             'description' => 'Položeno do schvalovací fronty robotem ze stránky Facebook MUNIE.',
             'cover_image' => 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80',
-            'starts_at' => $now->copy()->addDays(6)->setTime(16, 0),
-            'ends_at' => $now->copy()->addDays(6)->setTime(22, 0),
+            'starts_at' => $now->copy()->addDays(3)->setTime(16, 0),
+            'ends_at' => $now->copy()->addDays(3)->setTime(22, 0),
             'price_type' => 'free',
             'source_type' => 'scraper_facebook',
             'source_url' => 'https://facebook.com/events/example_fb_event',
