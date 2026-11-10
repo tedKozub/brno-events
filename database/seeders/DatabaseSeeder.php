@@ -78,6 +78,26 @@ class DatabaseSeeder extends Seeder
             'description' => 'Nejstarší veřejný park v ČR pro pikniky a outdoor aktivity.',
         ]);
 
+        $kasarnaUnob = Venue::create([
+            'name' => 'Kasárna Černá Pole / UNOB',
+            'slug' => 'kasarna-cerna-pole-unob',
+            'address' => 'Tř. Generála Píky 229/7',
+            'city' => 'Brno',
+            'latitude' => 49.2132,
+            'longitude' => 16.6185,
+            'description' => 'Studentský sportovní a výcvikový areál Univerzity obrany.',
+        ]);
+
+        $kampusVetuni = Venue::create([
+            'name' => 'Kampus VETUNI Palackého',
+            'slug' => 'kampus-vetuni-palackeho',
+            'address' => 'Palackého tř. 1946/1',
+            'city' => 'Brno',
+            'latitude' => 49.2178,
+            'longitude' => 16.5986,
+            'description' => 'Univerzitní kampus a park Veterinární univerzity Brno.',
+        ]);
+
         // 2. Categories
         $catParty = Category::create([
             'name' => 'Párty & Kluby',
@@ -168,6 +188,28 @@ class DatabaseSeeder extends Seeder
             'is_verified' => true,
         ]);
 
+        $skUnob = Organization::create([
+            'name' => 'Studentský klub Univerzity obrany (SK UNOB)',
+            'slug' => 'sk-unob',
+            'university' => 'UNOB',
+            'description' => 'Studentský klub a spolek kadetů Univerzity obrany v Brně.',
+            'website_url' => 'https://unob.cz',
+            'instagram_handle' => 'unob_cz',
+            'contact_email' => 'studenti@unob.cz',
+            'is_verified' => true,
+        ]);
+
+        $ivsaVetuni = Organization::create([
+            'name' => 'Spolek studentů VETUNI (IVSA Brno)',
+            'slug' => 'ivsa-vetuni',
+            'university' => 'VETUNI',
+            'description' => 'International Veterinary Students\' Association Brno při Veterinární univerzitě Brno.',
+            'website_url' => 'https://vetuni.cz',
+            'instagram_handle' => 'ivsa_brno',
+            'contact_email' => 'ivsa@vetuni.cz',
+            'is_verified' => true,
+        ]);
+
         // 4. Users (Superadmin & Club Admins)
         User::create([
             'name' => 'Super Administrátor',
@@ -191,6 +233,22 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('spolek123'),
             'role' => 'club_admin',
             'organization_id' => $best->id,
+        ]);
+
+        User::create([
+            'name' => 'Zástupce SK UNOB',
+            'email' => 'unob@brnoakce.cz',
+            'password' => Hash::make('spolek123'),
+            'role' => 'club_admin',
+            'organization_id' => $skUnob->id,
+        ]);
+
+        User::create([
+            'name' => 'Zástupce IVSA Brno',
+            'email' => 'vetuni@brnoakce.cz',
+            'password' => Hash::make('spolek123'),
+            'role' => 'club_admin',
+            'organization_id' => $ivsaVetuni->id,
         ]);
 
         // 5. Events - pouze všední dny (Po - Pá), studenti o víkendu jezdí domů!
@@ -314,6 +372,39 @@ class DatabaseSeeder extends Seeder
         ]);
 
         Event::create([
+            'organization_id' => $skUnob->id,
+            'venue_id' => $kasarnaUnob->id,
+            'category_id' => $catSport->id,
+            'title' => 'Vyzývací turnaj ve streetballu & Armádní workout',
+            'slug' => 'vyzyvaci-turnaj-ve-streetballu-and-armadni-workout',
+            'short_description' => 'Meziuniverzitní turnaj 3v3 a kondiční crossfit soutěž v areálu kasáren Černá Pole. Zvány jsou týmy ze všech brněnských univerzit!',
+            'description' => 'Tradiční sportovní odpoledne pořádané studenty Univerzity obrany. Týmy 3v3, občerstvení, hudba a silové disciplíny o putovní pohár.',
+            'cover_image' => 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=1200&q=80',
+            'starts_at' => $now->copy()->addDays(1)->setTime(16, 30),
+            'ends_at' => $now->copy()->addDays(1)->setTime(20, 0),
+            'price_type' => 'free',
+            'status' => 'published',
+            'is_featured' => true,
+        ]);
+
+        Event::create([
+            'organization_id' => $ivsaVetuni->id,
+            'venue_id' => $kampusVetuni->id,
+            'category_id' => $catQuiz->id,
+            'title' => 'Veterinární Pub Kvíz & Přednáška: Záchrana exotických zvířat',
+            'slug' => 'veterinarni-pub-kviz-and-prednaska-zachrana-exotickych-zvirat',
+            'short_description' => 'Večer plný zvířecích kuriozit, soutěžních otázek a diskuze s veterináři z terénu. Svařák a pivo zajištěno!',
+            'description' => 'IVSA Brno zve všechny studenty na tematický hospodský kvíz v klubu na kampusu VETUNI. Soutěží týmy o 4-6 lidech.',
+            'cover_image' => 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?auto=format&fit=crop&w=1200&q=80',
+            'starts_at' => $now->copy()->addDays(3)->setTime(18, 0),
+            'ends_at' => $now->copy()->addDays(3)->setTime(22, 0),
+            'price_type' => 'voluntary',
+            'price_amount' => 50,
+            'status' => 'published',
+            'is_featured' => false,
+        ]);
+
+        Event::create([
             'organization_id' => $munie->id,
             'venue_id' => $vinarska->id,
             'category_id' => $catParty->id,
@@ -329,6 +420,59 @@ class DatabaseSeeder extends Seeder
             'source_url' => 'https://facebook.com/events/example_fb_event',
             'status' => 'pending_review',
             'is_featured' => false,
+        ]);
+
+        // 6. Scrape Sources
+        \App\Models\ScrapeSource::create([
+            'name' => 'MENDELU Kalendář akcí',
+            'type' => 'web_mendelu',
+            'university' => 'MENDELU',
+            'organization_id' => $mendeluUnie->id,
+            'url' => 'https://mendelu.cz/akce/',
+            'is_active' => true,
+        ]);
+
+        \App\Models\ScrapeSource::create([
+            'name' => 'FIT VUT Kalendář akcí',
+            'type' => 'web_fit_vut',
+            'university' => 'VUT',
+            'organization_id' => $best->id,
+            'url' => 'https://www.fit.vut.cz/fit/calendar/',
+            'is_active' => true,
+        ]);
+
+        \App\Models\ScrapeSource::create([
+            'name' => 'UNOB Kalendář akcí',
+            'type' => 'web_unob',
+            'university' => 'UNOB',
+            'organization_id' => $skUnob->id,
+            'url' => 'https://unob.cz/univerzita/media-a-verejnost/akce-univerzity-obrany/',
+            'is_active' => true,
+        ]);
+
+        \App\Models\ScrapeSource::create([
+            'name' => 'MUNI Kalendář akcí',
+            'type' => 'web_muni',
+            'university' => 'MUNI',
+            'organization_id' => $munie->id,
+            'url' => 'https://www.muni.cz/kalendar',
+            'is_active' => true,
+        ]);
+
+        \App\Models\ScrapeSource::create([
+            'name' => 'Studentský iCal Kalendář (Fixtures / Feeds)',
+            'type' => 'web_ical',
+            'university' => 'OTHER',
+            'url' => 'file:///root/brno-events/scrapers/fixtures/sample_student_events.ics',
+            'is_active' => true,
+        ]);
+
+        \App\Models\ScrapeSource::create([
+            'name' => 'FIT VUT RSS Zprávy a akce',
+            'type' => 'web_rss',
+            'university' => 'VUT',
+            'url' => 'https://www.fit.vut.cz/fit/news-rss/',
+            'is_active' => true,
         ]);
     }
 }

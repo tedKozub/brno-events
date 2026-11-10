@@ -159,7 +159,7 @@
                     {{-- Univerzity --}}
                     <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                         <span class="text-[11px] font-black uppercase tracking-wider text-base-content/50 pr-1 shrink-0">Škola:</span>
-                        @foreach(['' => 'Všechny', 'MUNI' => 'MUNI', 'VUT' => 'VUT', 'MENDELU' => 'MENDELU'] as $code => $uLabel)
+                        @foreach(['' => 'Všechny', 'MUNI' => 'MUNI', 'VUT' => 'VUT', 'MENDELU' => 'MENDELU', 'UNOB' => 'UNOB', 'VETUNI' => 'VETUNI'] as $code => $uLabel)
                             <button
                                 wire:click="setUniversity('{{ $code }}')"
                                 class="px-3 py-1 rounded-lg text-xs font-bold shrink-0 transition-all cursor-pointer whitespace-nowrap {{ $selectedUniversity === $code ? 'bg-neutral text-neutral-content shadow-xs' : 'bg-base-200/80 text-base-content/70 hover:bg-base-300' }}"
@@ -320,7 +320,17 @@
                                     {{-- Spolek / Pořadatel s jasně čitelným odznakem --}}
                                     <div class="flex items-center gap-2 text-xs">
                                         @if($event->organization)
-                                            <span class="px-2 py-0.5 rounded text-[11px] font-black uppercase tracking-wider {{ $event->organization->university === 'MUNI' ? 'bg-info/15 text-info' : ($event->organization->university === 'VUT' ? 'bg-error/15 text-error' : 'bg-success/15 text-success') }}">
+                                            @php
+                                                $uBadge = match($event->organization->university) {
+                                                    'MUNI' => 'bg-info/15 text-info border border-info/20',
+                                                    'VUT' => 'bg-error/15 text-error border border-error/20',
+                                                    'MENDELU' => 'bg-success/15 text-success border border-success/20',
+                                                    'UNOB' => 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30',
+                                                    'VETUNI' => 'bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30',
+                                                    default => 'bg-neutral/15 text-base-content/70 border border-base-300',
+                                                };
+                                            @endphp
+                                            <span class="px-2 py-0.5 rounded text-[11px] font-black uppercase tracking-wider {{ $uBadge }}">
                                                 {{ $event->organization->university }}
                                             </span>
                                             <span class="font-semibold text-base-content/80 truncate">
@@ -439,7 +449,17 @@
                     <div>
                         <div class="flex items-center gap-2 text-xs text-base-content/60 mb-1.5">
                             @if($selectedEvent->organization)
-                                <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
+                                @php
+                                    $mBadge = match($selectedEvent->organization->university) {
+                                        'MUNI' => 'bg-info/15 text-info border border-info/20',
+                                        'VUT' => 'bg-error/15 text-error border border-error/20',
+                                        'MENDELU' => 'bg-success/15 text-success border border-success/20',
+                                        'UNOB' => 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30',
+                                        'VETUNI' => 'bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30',
+                                        default => 'bg-neutral/15 text-base-content/70 border border-base-300',
+                                    };
+                                @endphp
+                                <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider {{ $mBadge }}">
                                     {{ $selectedEvent->organization->university }}
                                 </span>
                                 <span class="font-bold text-primary">{{ $selectedEvent->organization->name }}</span>

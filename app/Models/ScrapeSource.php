@@ -14,6 +14,7 @@ class ScrapeSource extends Model
         'organization_id',
         'name',
         'type',
+        'university',
         'url',
         'target_identifier',
         'is_active',

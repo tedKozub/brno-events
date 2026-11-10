@@ -49,6 +49,8 @@ class OrganizationResource extends Resource
                                 'MUNI' => 'Masarykova univerzita (MUNI)',
                                 'VUT' => 'Vysoké učení technické (VUT)',
                                 'MENDELU' => 'Mendelova univerzita (MENDELU)',
+                                'UNOB' => 'Univerzita obrany (UNOB)',
+                                'VETUNI' => 'Veterinární univerzita Brno (VETUNI)',
                                 'OTHER' => 'Ostatní / Meziuniverzitní',
                             ])
                             ->default('MUNI')
@@ -117,6 +119,8 @@ class OrganizationResource extends Resource
                         'MUNI' => 'info',
                         'VUT' => 'danger',
                         'MENDELU' => 'success',
+                        'UNOB' => 'warning',
+                        'VETUNI' => 'purple',
                         default => 'gray',
                     }),
 

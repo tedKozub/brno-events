@@ -1,0 +1,41 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Brno Student Events Fixture//CZ
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Brněnské Studentské Akce Feeds
+X-WR-TIMEZONE:Europe/Prague
+BEGIN:VEVENT
+UID:sample-ical-001@brnoakce.tadeaskozub.com
+DTSTAMP:20261110T120000Z
+DTSTART:20261118T180000
+DTEND:20261118T220000
+SUMMARY:Meziuniverzitní Beerpong Liga – 3. Kolo
+DESCRIPTION:Třetí kolo brněnské meziuniverzitní beerpongové ligy. Zápasy ve skupinách, playoff pavouk o pohár a ceny od sponzorů. Vstupné pro týmy 200 Kč na tým (v ceně pivo na hru).
+LOCATION:Fléda Club, Štefánikova 24, Brno
+URL:https://brnoakce.tadeaskozub.com/events/beerpong-liga-3-kolo
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:sample-ical-002@brnoakce.tadeaskozub.com
+DTSTAMP:20261110T120000Z
+DTSTART:20261119T173000
+DTEND:20261119T200000
+SUMMARY:Open-Source Brno Meetup & Lightning Talks
+DESCRIPTION:Pravidelné setkání vývojářů a studentů IT fakult (FIT VUT & FI MUNI). Prezentace studentských open-source projektů, networking, pizza a pivo zdarma.
+LOCATION:Fakulta informatiky MUNI, Botanická 68a, Brno
+URL:https://brnoakce.tadeaskozub.com/events/open-source-brno-meetup
+STATUS:CONFIRMED
+END:VEVENT
+BEGIN:VEVENT
+UID:sample-ical-003@brnoakce.tadeaskozub.com
+DTSTAMP:20261110T120000Z
+DTSTART:20261120T190000
+DTEND:20261120T233000
+SUMMARY:Páteční Studentský Jam & Acoustic Night
+DESCRIPTION:Hudební jam session pro studenty všech brněnských vysokých škol. Vemte akustické nástroje, hlasivky a přijďte si zahrát nebo jen posedět u piva v ArtBaru.
+LOCATION:ArtBar Druhý Pád, Štefánikova 1, Brno
+URL:https://brnoakce.tadeaskozub.com/events/studentsky-jam-acoustic-night
+STATUS:CONFIRMED
+END:VEVENT
+END:VCALENDAR

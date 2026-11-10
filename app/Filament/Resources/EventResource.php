@@ -216,6 +216,18 @@ class EventResource extends Resource
                     ->color('gray')
                     ->searchable(),
 
+                Tables\Columns\TextColumn::make('organization.university')
+                    ->label('Univerzita')
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'MUNI' => 'info',
+                        'VUT' => 'danger',
+                        'MENDELU' => 'success',
+                        'UNOB' => 'warning',
+                        'VETUNI' => 'purple',
+                        default => 'gray',
+                    }),
+
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('Kategorie')
                     ->badge()
@@ -266,6 +278,17 @@ class EventResource extends Resource
                 Tables\Filters\SelectFilter::make('category')
                     ->label('Kategorie')
                     ->relationship('category', 'name'),
+                Tables\Filters\SelectFilter::make('university')
+                    ->label('Univerzita')
+                    ->options([
+                        'MUNI' => 'Masarykova univerzita (MUNI)',
+                        'VUT' => 'Vysoké učení technické (VUT)',
+                        'MENDELU' => 'Mendelova univerzita (MENDELU)',
+                        'UNOB' => 'Univerzita obrany (UNOB)',
+                        'VETUNI' => 'Veterinární univerzita (VETUNI)',
+                        'OTHER' => 'Ostatní / Meziuniverzitní',
+                    ])
+                    ->query(fn (Builder $query, array $data) => !empty($data['value']) ? $query->whereHas('organization', fn ($q) => $q->where('university', $data['value'])) : $query),
                 Tables\Filters\SelectFilter::make('organization')
                     ->label('Spolek')
                     ->relationship('organization', 'name'),
@@ -288,6 +311,17 @@ class EventResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('approve_bulk')
+                        ->label('Schválit vybrané')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                            $records->each(fn (Event $e) => $e->update(['status' => 'published']));
+                            Notification::make()
+                                ->title('Vybrané akce byly schváleny a publikovány.')
+                                ->success()
+                                ->send();
+                        }),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
