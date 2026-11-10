@@ -342,23 +342,25 @@
                     </div>
                 </div>
 
-                {{-- MAPA DETAILU (POKUD MÁ GPS) --}}
-                @if($event->venue && $event->venue->latitude && $event->venue->longitude)
+                {{-- MAPA DETAILU (ZOBRAZÍ SE PRO KAŽDOU AKCI S ADRESOU / AREÁLEM) --}}
+                @php
+                    $mapCoords = $event->map_coordinates;
+                @endphp
+                @if($mapCoords)
                     <div class="space-y-3 pt-2">
                         <div class="flex items-center justify-between">
                             <h2 class="text-base font-black text-base-content">Kde to najdeš</h2>
-                            <span class="text-xs text-base-content/60 font-medium">{{ $event->venue->name }}</span>
+                            <span class="text-xs text-base-content/60 font-medium">{{ $mapCoords['title'] }}</span>
                         </div>
                         <div
-                            id="detail-map"
-                            class="w-full h-56 sm:h-72 rounded-2xl border border-base-300 overflow-hidden shadow-xs"
-                            data-lat="{{ $event->venue->latitude }}"
-                            data-lng="{{ $event->venue->longitude }}"
-                            data-title="{{ $event->venue->name }}"
-                        ></div>
+                            x-data="eventDetailMap(@js($mapCoords))"
+                            class="w-full h-56 sm:h-72 rounded-2xl border border-base-300 overflow-hidden shadow-xs relative z-10"
+                        >
+                            <div x-ref="detailMapCanvas" wire:ignore class="w-full h-full"></div>
+                        </div>
                         <div class="flex flex-wrap items-center gap-2 pt-1">
                             <a
-                                href="https://www.google.com/maps/search/?api=1&query={{ urlencode($event->venue->name . ' ' . $event->venue->address . ' Brno') }}"
+                                href="https://www.google.com/maps/search/?api=1&query={{ urlencode($mapCoords['title'] . ' ' . $mapCoords['address']) }}"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 class="btn btn-ghost border border-base-300 font-bold rounded-xl px-4 py-2 min-h-[42px] text-sm gap-2 inline-flex items-center text-base-content hover:bg-base-200"
@@ -369,7 +371,7 @@
                                 <span>Navigovat v Google Mapách</span>
                             </a>
                             <a
-                                href="https://mapy.cz/zakladni?q={{ urlencode($event->venue->name . ' ' . $event->venue->address . ' Brno') }}"
+                                href="https://mapy.cz/zakladni?q={{ urlencode($mapCoords['title'] . ' ' . $mapCoords['address']) }}"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 class="btn btn-ghost border border-base-300 font-bold rounded-xl px-4 py-2 min-h-[42px] text-sm gap-2 inline-flex items-center text-base-content hover:bg-base-200"
@@ -595,64 +597,74 @@
 {{-- Leaflet Map Init pro detail --}}
 @script
 <script>
-    let detailMapInstance = null;
+    window.eventDetailMap = function(coords) {
+        return {
+            map: null,
+            init() {
+                this.$nextTick(() => {
+                    if (typeof L === 'undefined' || !this.$refs.detailMapCanvas) return;
 
-    function initDetailMap() {
-        const el = document.getElementById('detail-map');
-        if (!el || typeof L === 'undefined') return;
+                    const lat = parseFloat(coords.lat);
+                    const lng = parseFloat(coords.lng);
+                    const title = coords.title || 'Místo konání';
 
-        if (detailMapInstance) {
-            detailMapInstance.remove();
-            detailMapInstance = null;
-        }
+                    if (isNaN(lat) || isNaN(lng)) return;
 
-        const lat = parseFloat(el.getAttribute('data-lat'));
-        const lng = parseFloat(el.getAttribute('data-lng'));
-        const title = el.getAttribute('data-title') || 'Místo konání';
+                    if (this.map) {
+                        try {
+                            this.map.remove();
+                        } catch (e) {}
+                        this.map = null;
+                    }
 
-        if (isNaN(lat) || isNaN(lng)) return;
+                    this.map = L.map(this.$refs.detailMapCanvas, {
+                        scrollWheelZoom: true,
+                        touchZoom: true,
+                        dragging: true,
+                        tap: true
+                    }).setView([lat, lng], 15);
 
-        detailMapInstance = L.map('detail-map', {
-            scrollWheelZoom: true,
-            touchZoom: true,
-            dragging: true,
-            tap: true
-        }).setView([lat, lng], 15);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; OpenStreetMap contributors',
+                        maxZoom: 19,
+                    }).addTo(this.map);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors',
-            maxZoom: 19,
-        }).addTo(detailMapInstance);
+                    const pinIcon = L.divIcon({
+                        className: 'custom-map-pin',
+                        html: `
+                            <div style="background-color: #ea580c; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,0.35); cursor: pointer;">
+                                <svg style="width: 17px; height: 17px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                            </div>
+                        `,
+                        iconSize: [34, 34],
+                        iconAnchor: [17, 34],
+                        popupAnchor: [0, -34]
+                    });
 
-        const pinIcon = L.divIcon({
-            className: 'custom-map-pin',
-            html: `
-                <div style="background-color: #ea580c; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2.5px solid #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,0.35); cursor: pointer;">
-                    <svg style="width: 17px; height: 17px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                </div>
-            `,
-            iconSize: [34, 34],
-            iconAnchor: [17, 34],
-            popupAnchor: [0, -34]
-        });
+                    L.marker([lat, lng], { icon: pinIcon })
+                        .addTo(this.map)
+                        .bindPopup(`<strong>${title}</strong>`)
+                        .openPopup();
 
-        L.marker([lat, lng], { icon: pinIcon })
-            .addTo(detailMapInstance)
-            .bindPopup(`<strong>${title}</strong>`)
-            .openPopup();
-
-        setTimeout(() => {
-            if (detailMapInstance) {
-                detailMapInstance.invalidateSize();
+                    setTimeout(() => {
+                        if (this.map) {
+                            this.map.invalidateSize();
+                        }
+                    }, 200);
+                });
+            },
+            destroy() {
+                if (this.map) {
+                    try {
+                        this.map.remove();
+                    } catch (e) {}
+                    this.map = null;
+                }
             }
-        }, 150);
-    }
-
-    document.addEventListener('DOMContentLoaded', initDetailMap);
-    document.addEventListener('livewire:navigated', () => setTimeout(initDetailMap, 50));
-    initDetailMap();
+        };
+    };
 </script>
 @endscript
