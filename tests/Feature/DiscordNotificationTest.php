@@ -13,9 +13,13 @@ class DiscordNotificationTest extends TestCase
     public function test_discord_notifier_handles_missing_webhook_gracefully(): void
     {
         config(['services.discord.webhook_url' => null]);
+        config(['services.discord.security_webhook_url' => null]);
 
         $result = DiscordNotifier::test('Test message');
         $this->assertFalse($result);
+
+        $secResult = DiscordNotifier::test('Test security', 'security');
+        $this->assertFalse($secResult);
 
         $scrapeResult = DiscordNotifier::notifyScrapeSummary([
             'imported' => 2,
@@ -42,6 +46,39 @@ class DiscordNotificationTest extends TestCase
         Http::assertSent(function ($request) use ($fakeWebhook) {
             return $request->url() === $fakeWebhook &&
                    isset($request->data()['embeds']);
+        });
+    }
+
+    public function test_discord_security_webhook_sends_to_separate_channel(): void
+    {
+        $generalWebhook = 'https://discord.com/api/webhooks/general/token';
+        $securityWebhook = 'https://discord.com/api/webhooks/security/token';
+
+        config(['services.discord.webhook_url' => $generalWebhook]);
+        config(['services.discord.security_webhook_url' => $securityWebhook]);
+
+        Http::fake([
+            $generalWebhook => Http::response(['id' => '1'], 204),
+            $securityWebhook => Http::response(['id' => '2'], 204),
+        ]);
+
+        // Odeslání do bezpečnostního kanálu
+        $result = DiscordNotifier::notifySecurityAlert(
+            '🛡️ Test Security Alert',
+            'passed',
+            [['name' => 'Scanner', 'value' => 'OWASP ZAP', 'inline' => true]]
+        );
+        $this->assertTrue($result);
+
+        // Ověření, že zpráva šla POUZE na security webhook, nikoliv na general webhook
+        Http::assertSent(function ($request) use ($securityWebhook) {
+            return $request->url() === $securityWebhook &&
+                   str_contains($request->body(), 'Security Alert');
+        });
+
+        Http::assertNotSent(function ($request) use ($generalWebhook) {
+            return $request->url() === $generalWebhook &&
+                   str_contains($request->body(), 'Security Alert');
         });
     }
 }

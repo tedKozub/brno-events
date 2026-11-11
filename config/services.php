@@ -37,6 +37,7 @@ return [
 
     'discord' => [
         'webhook_url' => env('DISCORD_WEBHOOK_URL'),
+        'security_webhook_url' => env('DISCORD_SECURITY_WEBHOOK_URL'),
     ],
 
 ];

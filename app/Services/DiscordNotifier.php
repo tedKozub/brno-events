@@ -14,8 +14,13 @@ class DiscordNotifier
         return config('services.discord.webhook_url');
     }
 
+    public static function getSecurityWebhookUrl(): ?string
+    {
+        return config('services.discord.security_webhook_url');
+    }
+
     /**
-     * Sends a raw Discord Webhook payload.
+     * Sends a raw Discord Webhook payload to the general / scraping channel.
      */
     public static function send(array $payload): bool
     {
@@ -34,6 +39,30 @@ class DiscordNotifier
             return true;
         } catch (\Throwable $e) {
             Log::error('Discord webhook exception: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Sends a raw Discord Webhook payload to the dedicated SECURITY channel.
+     */
+    public static function sendSecurity(array $payload): bool
+    {
+        $url = self::getSecurityWebhookUrl();
+        if (empty($url)) {
+            Log::info('Discord security notification skipped: DISCORD_SECURITY_WEBHOOK_URL is not set.');
+            return false;
+        }
+
+        try {
+            $response = Http::timeout(10)->post($url, $payload);
+            if (!$response->successful()) {
+                Log::warning('Discord security webhook failed: ' . $response->status() . ' - ' . $response->body());
+                return false;
+            }
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('Discord security webhook exception: ' . $e->getMessage());
             return false;
         }
     }
@@ -172,20 +201,53 @@ class DiscordNotifier
     }
 
     /**
-     * Sends a simple test notification to verify webhook configuration.
+     * Sends an alert to the dedicated Security Discord channel.
      */
-    public static function test(string $customMessage = 'Testovací zpráva spojení s Discordem'): bool
+    public static function notifySecurityAlert(string $title, string $status, array $fields = []): bool
     {
-        return self::send([
+        $isSuccess = in_array(strtolower($status), ['success', 'passed', 'ok']);
+        $color = $isSuccess ? 0x10B981 : 0xEF4444; // Green vs Red
+
+        $payload = [
             'embeds' => [
                 [
-                    'title' => '🔌 Test spojení BrnoAkce',
+                    'title' => $title,
+                    'color' => $color,
+                    'fields' => $fields,
+                    'footer' => [
+                        'text' => 'BrnoAkce DevSecOps Security System',
+                    ],
+                    'timestamp' => now()->toIso8601String(),
+                ],
+            ],
+        ];
+
+        return self::sendSecurity($payload);
+    }
+
+    /**
+     * Sends a simple test notification to verify webhook configuration.
+     * $channel can be 'general' (or null) or 'security'.
+     */
+    public static function test(string $customMessage = 'Testovací zpráva spojení s Discordem', string $channel = 'general'): bool
+    {
+        $isSecurity = strtolower($channel) === 'security';
+
+        $payload = [
+            'embeds' => [
+                [
+                    'title' => $isSecurity ? '🛡️ Test spojení – Bezpečnostní kanál' : '🔌 Test spojení – Kanál pro scraping & hlášení',
                     'description' => $customMessage,
-                    'color' => 0x6366F1, // Indigo
+                    'color' => $isSecurity ? 0x10B981 : 0x6366F1, // Green vs Indigo
                     'fields' => [
                         [
                             'name' => 'Server',
                             'value' => gethostname() . ' (Debian 12 Hetzner)',
+                            'inline' => true,
+                        ],
+                        [
+                            'name' => 'Kanál',
+                            'value' => $isSecurity ? 'Bezpečnostní audity & Pentesty' : 'Scraping & Feedback',
                             'inline' => true,
                         ],
                         [
@@ -196,6 +258,8 @@ class DiscordNotifier
                     ],
                 ],
             ],
-        ]);
+        ];
+
+        return $isSecurity ? self::sendSecurity($payload) : self::send($payload);
     }
 }
