@@ -397,7 +397,7 @@ async def scrape_instagram_profile_async(
                 if os.path.exists(dest_path):
                     event["cover_image"] = f"events/covers/{filename}"
 
-                event["source_url"] = profile_url
+                event["source_url"] = f"{profile_url}#post-{img_hash}"
                 event["source_type"] = "scraper_instagram"
                 event["instagram_post_url"] = profile_url
                 events.append(event)

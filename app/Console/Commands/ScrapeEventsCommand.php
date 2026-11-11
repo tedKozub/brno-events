@@ -113,12 +113,19 @@ class ScrapeEventsCommand extends Command
                         $endsAt = null;
                     }
                 }
-                $existing = Event::where('source_url', $sourceUrl)
-                    ->orWhere(function ($q) use ($title, $startsAt) {
-                        $q->where('title', $title)
-                          ->whereDate('starts_at', $startsAt->toDateString());
-                    })
-                    ->first();
+                // Deduplikace podle unikátního source_url nebo titulku a data
+                $existing = Event::where(function ($q) use ($title, $startsAt, $sourceUrl, $item) {
+                    if (!empty($sourceUrl)) {
+                        $q->where('source_url', $sourceUrl);
+                    }
+                    $q->orWhere(function ($sub) use ($title, $startsAt) {
+                        $sub->where('title', $title)
+                            ->whereDate('starts_at', $startsAt->toDateString());
+                    });
+                    if (!empty($item['cover_image'])) {
+                        $q->orWhere('cover_image', $item['cover_image']);
+                    }
+                })->first();
 
                 if ($existing) {
                     $sourceSkipped++;
