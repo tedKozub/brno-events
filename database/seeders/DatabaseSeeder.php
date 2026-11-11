@@ -210,6 +210,27 @@ class DatabaseSeeder extends Seeder
             'is_verified' => true,
         ]);
 
+        $sppdfMuni = Organization::create([
+            'name' => 'SPPdF MUNI – Spolek posluchačů PdF MU',
+            'slug' => 'sppdf-muni',
+            'university' => 'MUNI',
+            'faculty' => 'Pedagogická fakulta',
+            'description' => 'Studentský spolek Pedagogické fakulty Masarykovy univerzity.',
+            'instagram_handle' => 'sppdf_muni',
+            'facebook_url' => 'https://facebook.com/sppdfmuni',
+            'is_verified' => true,
+        ]);
+
+        $fledaOrg = Organization::create([
+            'name' => 'Fléda Club',
+            'slug' => 'fleda',
+            'university' => null,
+            'description' => 'Klub Fléda v Brně.',
+            'instagram_handle' => 'fledaclub',
+            'facebook_url' => 'https://facebook.com/fledaclub',
+            'is_verified' => true,
+        ]);
+
         // 4. Users (Superadmin & Club Admins)
         User::create([
             'name' => 'Super Administrátor',

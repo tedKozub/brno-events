@@ -269,6 +269,12 @@ class EventBoard extends Component
             'mapMarkers' => $this->mapMarkers,
             'selectedEvent' => $selectedEvent,
             'totalUpcomingCount' => Event::published()->upcoming()->count(),
+        ])->layout('components.layouts.app', [
+            'title' => 'Studentské Akce Brno | Průvodce studentským životem (MUNI, VUT, MENDELU)',
+            'description' => 'Aktuální přehled studentských párty, festivalů, přednášek, turnajů a kulturních akcí v Brně. Interaktivní mapa, kalendář a vyhledávání.',
+            'ogImage' => asset('images/og-brnoakce.jpg'),
+            'ogType' => 'website',
+            'ogUrl' => url('/'),
         ]);
     }
 }

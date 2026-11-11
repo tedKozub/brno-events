@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Event;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
 class EventDetail extends Component
@@ -74,12 +75,56 @@ class EventDetail extends Component
             ->take(3)
             ->get();
 
+        // Generate Schema.org JSON-LD structured data for Google Event Rich Snippets
+        $schema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Event',
+            'name' => $event->title,
+            'startDate' => $event->starts_at->toIso8601String(),
+            'endDate' => ($event->ends_at ?: $event->starts_at->copy()->addHours(3))->toIso8601String(),
+            'eventStatus' => 'https://schema.org/EventScheduled',
+            'eventAttendanceMode' => 'https://schema.org/OfflineEventAttendanceMode',
+            'location' => [
+                '@type' => 'Place',
+                'name' => $event->venue ? $event->venue->name : ($event->location_name ?: 'Brno'),
+                'address' => [
+                    '@type' => 'PostalAddress',
+                    'addressLocality' => 'Brno',
+                    'addressCountry' => 'CZ',
+                    'streetAddress' => $event->venue?->address ?: ($event->location_name ?: 'Brno'),
+                ],
+            ],
+            'image' => [$event->cover_image_url],
+            'description' => $event->short_description ?: Str::limit(strip_tags($event->description), 200),
+            'offers' => [
+                '@type' => 'Offer',
+                'url' => $event->ticket_url ?: url('/akce/' . $event->slug),
+                'price' => $event->price_amount ?: '0',
+                'priceCurrency' => 'CZK',
+                'availability' => 'https://schema.org/InStock',
+            ],
+        ];
+
+        if ($event->organization) {
+            $schema['organizer'] = [
+                '@type' => 'Organization',
+                'name' => $event->organization->name,
+                'url' => $event->organization->website_url ?: url('/akce/' . $event->slug),
+            ];
+        }
+
+        $cleanDescription = $event->short_description ?: Str::limit(strip_tags($event->description ?: 'Studentská akce v Brně'), 160);
+
         return view('livewire.event-detail', [
             'event' => $event,
             'relatedEvents' => $relatedEvents,
         ])->layout('components.layouts.app', [
-            'title' => $event->title . ' | Studentské akce Brno',
-            'description' => $event->short_description,
+            'title' => $event->title . ' • BrnoAkce',
+            'description' => $cleanDescription,
+            'ogImage' => $event->cover_image_url,
+            'ogType' => 'event',
+            'ogUrl' => url('/akce/' . $event->slug),
+            'schemaJson' => json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
         ]);
     }
 }

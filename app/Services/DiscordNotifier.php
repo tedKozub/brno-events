@@ -11,7 +11,7 @@ class DiscordNotifier
 {
     public static function getWebhookUrl(): ?string
     {
-        return config('services.discord.webhook_url') ?? env('DISCORD_WEBHOOK_URL');
+        return config('services.discord.webhook_url');
     }
 
     /**
