@@ -452,6 +452,10 @@
                         </svg>
                         <span x-text="copied ? 'Zkopírováno do schránky!' : 'Sdílet akci'">Sdílet akci</span>
                     </button>
+
+                    <div class="w-full sm:w-auto sm:ml-auto flex justify-end">
+                        <livewire:report-event-modal :event-id="$event->id" />
+                    </div>
                 </div>
             </div>
         </div>

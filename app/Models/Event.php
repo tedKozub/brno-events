@@ -405,4 +405,72 @@ class Event extends Model
             'is_exact' => false,
         ];
     }
+
+    /**
+     * Identifies missing or low-quality data attributes on this event.
+     *
+     * @return array<string, string> Key = field name, Value = human description
+     */
+    public function getMissingFieldsAttribute(): array
+    {
+        $missing = [];
+
+        if (empty($this->cover_image)) {
+            $missing['cover_image'] = 'Chybí plakát / banner';
+        }
+
+        if (empty($this->venue_id) && empty($this->location_name)) {
+            $missing['venue'] = 'Chybí místo konání';
+        } elseif (empty($this->venue_id)) {
+            $missing['venue_pin'] = 'Místo nemá přesný GPS špendlík';
+        }
+
+        if (empty($this->description) || mb_strlen(trim($this->description)) < 30) {
+            $missing['description'] = 'Chybí nebo je příliš krátký popis';
+        }
+
+        if (!$this->is_all_day && $this->starts_at && $this->starts_at->format('H:i') === '00:00') {
+            $missing['time'] = 'Chybí čas začátku (00:00)';
+        }
+
+        if ($this->price_type === 'paid' && empty($this->price_amount) && empty($this->ticket_url)) {
+            $missing['price'] = 'Placená akce bez částky či odkazu na vstupenky';
+        }
+
+        if (empty($this->organization_id)) {
+            $missing['organization'] = 'Chybí pořádající organizace';
+        }
+
+        return $missing;
+    }
+
+    public function getHasMissingFieldsAttribute(): bool
+    {
+        return !empty($this->missing_fields);
+    }
+
+    public function scopeWithMissingData(Builder $query): Builder
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('cover_image')
+              ->orWhereNull('venue_id')
+              ->orWhereNull('description')
+              ->orWhere('description', '')
+              ->orWhereNull('organization_id');
+        });
+    }
+
+    public function scopeComplete(Builder $query): Builder
+    {
+        return $query->whereNotNull('cover_image')
+            ->whereNotNull('venue_id')
+            ->whereNotNull('description')
+            ->where('description', '!=', '')
+            ->whereNotNull('organization_id');
+    }
+
+    public function reports(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\EventReport::class);
+    }
 }

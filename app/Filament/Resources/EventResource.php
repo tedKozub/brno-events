@@ -201,6 +201,7 @@ class EventResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('cover_image')
                     ->label('Plakát')
+                    ->state(fn ($record) => $record->cover_image_url)
                     ->circular()
                     ->defaultImageUrl('https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=150&q=80'),
 
@@ -264,6 +265,19 @@ class EventResource extends Resource
                         'cancelled' => 'Zrušeno',
                         default => $state,
                     }),
+
+                Tables\Columns\TextColumn::make('missing_fields')
+                    ->label('Kvalita dat')
+                    ->state(function (Event $record) {
+                        $missing = $record->missing_fields;
+                        if (empty($missing)) {
+                            return 'Vše vyplněno';
+                        }
+                        return implode(', ', array_values($missing));
+                    })
+                    ->badge()
+                    ->color(fn ($record) => empty($record->missing_fields) ? 'success' : 'warning')
+                    ->wrap(),
             ])
             ->defaultSort('starts_at', 'asc')
             ->filters([
@@ -275,6 +289,9 @@ class EventResource extends Resource
                         'draft' => 'Koncept',
                         'cancelled' => 'Zrušeno',
                     ]),
+                Tables\Filters\Filter::make('missing_data')
+                    ->label('Vyžaduje doplnění dat')
+                    ->query(fn (Builder $query) => $query->withMissingData()),
                 Tables\Filters\SelectFilter::make('category')
                     ->label('Kategorie')
                     ->relationship('category', 'name'),
@@ -306,6 +323,12 @@ class EventResource extends Resource
                             ->success()
                             ->send();
                     }),
+                Tables\Actions\Action::make('view_web')
+                    ->label('Zobrazit')
+                    ->icon('heroicon-o-arrow-top-right-on-square')
+                    ->color('gray')
+                    ->url(fn (Event $record) => url('/akce/' . $record->slug))
+                    ->openUrlInNewTab(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])

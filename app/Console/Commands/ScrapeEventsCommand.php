@@ -7,6 +7,7 @@ use App\Models\Event;
 use App\Models\Organization;
 use App\Models\ScrapeSource;
 use App\Models\Venue;
+use App\Services\DiscordNotifier;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Process;
@@ -48,8 +49,15 @@ class ScrapeEventsCommand extends Command
 
         $totalImported = 0;
         $totalSkipped = 0;
+        $newEventsList = [];
+        $errorsList = [];
 
-        foreach ($sources as $source) {
+        foreach ($sources as $index => $source) {
+            if ($index > 0) {
+                // Šetrná náhodná prodleva 1.5s - 3s mezi zdroji proti rate-limitům
+                usleep(random_int(1500000, 3000000));
+            }
+
             $this->info("Scrapuji zdroj: [{$source->id}] {$source->name} ({$source->url})...");
 
             $cmd = [
@@ -71,6 +79,10 @@ class ScrapeEventsCommand extends Command
                     'last_status' => 'error',
                     'last_error' => Str::limit($err, 1000),
                 ]);
+                $errorsList[] = [
+                    'source' => $source->name,
+                    'message' => Str::limit($err, 120),
+                ];
                 continue;
             }
 
@@ -83,6 +95,10 @@ class ScrapeEventsCommand extends Command
                     'last_status' => 'error',
                     'last_error' => $err,
                 ]);
+                $errorsList[] = [
+                    'source' => $source->name,
+                    'message' => Str::limit($err, 120),
+                ];
                 continue;
             }
 
@@ -193,7 +209,7 @@ class ScrapeEventsCommand extends Command
                     $slug = Str::slug($title) . '-' . (++$counter);
                 }
 
-                Event::create([
+                $createdEvent = Event::create([
                     'organization_id' => $orgId,
                     'venue_id' => $venueId,
                     'category_id' => $categoryId,
@@ -217,6 +233,15 @@ class ScrapeEventsCommand extends Command
                     'is_featured' => false,
                 ]);
 
+                $newEventsList[] = [
+                    'id' => $createdEvent->id,
+                    'title' => $createdEvent->title,
+                    'starts_at' => $startsAt->toDateTimeString(),
+                    'venue' => $locName ?: ($createdEvent->venue?->name ?? 'Brno'),
+                    'organization' => $createdEvent->organization?->name ?? 'Univerzita',
+                    'missing' => $createdEvent->missing_fields,
+                ];
+
                 $sourceImported++;
                 $totalImported++;
             }
@@ -231,6 +256,14 @@ class ScrapeEventsCommand extends Command
         }
 
         $this->info("Celkem úspěšně importováno {$totalImported} nových akcí ke schválení (přeskočeno {$totalSkipped} duplikátů).");
+
+        // Odeslání souhrnu do Discord kanálu (pokud je nastaven webhook)
+        DiscordNotifier::notifyScrapeSummary([
+            'imported' => $totalImported,
+            'skipped' => $totalSkipped,
+            'sources' => $sources->count(),
+        ], $newEventsList, $errorsList);
+
         return 0;
     }
 
