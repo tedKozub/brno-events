@@ -13,6 +13,8 @@ class ListEvents extends ListRecords
 {
     protected static string $resource = EventResource::class;
 
+    protected ?string $pollingInterval = '5s';
+
     protected function getHeaderActions(): array
     {
         return [
@@ -36,35 +38,45 @@ class ListEvents extends ListRecords
         $isClub = $user && $user->isClubAdmin() && $user->organization_id;
 
         $pendingQuery = Event::where('status', 'pending_review');
-        $missingQuery = Event::withMissingData();
+        $missingQuery = Event::withMissingData()->where('status', 'pending_review');
+        $publishedQuery = Event::where('status', 'published');
         $rejectedQuery = Event::where('status', 'rejected');
+        $allQuery = Event::query();
 
         if ($isClub) {
             $pendingQuery->where('organization_id', $user->organization_id);
             $missingQuery->where('organization_id', $user->organization_id);
+            $publishedQuery->where('organization_id', $user->organization_id);
             $rejectedQuery->where('organization_id', $user->organization_id);
+            $allQuery->where('organization_id', $user->organization_id);
         }
 
         $pendingCount = $pendingQuery->count();
         $missingCount = $missingQuery->count();
+        $publishedCount = $publishedQuery->count();
         $rejectedCount = $rejectedQuery->count();
+        $allCount = $allQuery->count();
 
         return [
             'pending_review' => Tab::make('Ke schválení (moderace)')
-                ->badge($pendingCount > 0 ? (string) $pendingCount : null)
-                ->badgeColor('warning')
+                ->badge((string) $pendingCount)
+                ->badgeColor($pendingCount > 0 ? 'warning' : 'gray')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'pending_review')),
             'missing_data' => Tab::make('Vyžaduje doplnění dat')
-                ->badge($missingCount > 0 ? (string) $missingCount : null)
-                ->badgeColor('danger')
-                ->modifyQueryUsing(fn (Builder $query) => $query->withMissingData()),
+                ->badge((string) $missingCount)
+                ->badgeColor($missingCount > 0 ? 'danger' : 'gray')
+                ->modifyQueryUsing(fn (Builder $query) => $query->withMissingData()->where('status', 'pending_review')),
             'published' => Tab::make('Publikované')
+                ->badge((string) $publishedCount)
+                ->badgeColor('success')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'published')),
             'rejected' => Tab::make('Zamítnuté')
-                ->badge($rejectedCount > 0 ? (string) $rejectedCount : null)
+                ->badge((string) $rejectedCount)
                 ->badgeColor('gray')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'rejected')),
-            'all' => Tab::make('Všechny akce'),
+            'all' => Tab::make('Všechny akce')
+                ->badge((string) $allCount)
+                ->badgeColor('gray'),
         ];
     }
 }

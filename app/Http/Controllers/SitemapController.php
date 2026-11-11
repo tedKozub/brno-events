@@ -27,6 +27,14 @@ class SitemapController extends Controller
         $xml .= '<priority>1.0</priority>';
         $xml .= '</url>';
 
+        // Studentská místa v Brně
+        $xml .= '<url>';
+        $xml .= "<loc>{$baseUrl}/mista</loc>";
+        $xml .= '<lastmod>' . now()->toIso8601String() . '</lastmod>';
+        $xml .= '<changefreq>weekly</changefreq>';
+        $xml .= '<priority>0.9</priority>';
+        $xml .= '</url>';
+
         // Events
         foreach ($events as $event) {
             $isUpcoming = $event->starts_at >= now();

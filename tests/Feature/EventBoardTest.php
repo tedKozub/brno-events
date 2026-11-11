@@ -39,6 +39,19 @@ class EventBoardTest extends TestCase
             ->assertSee('MUNI');
     }
 
+    public function test_category_counts_dynamically_reflect_active_filters(): void
+    {
+        $component = Livewire::test(\App\Livewire\EventBoard::class);
+        $allCount = $component->viewData('allCategoriesCount');
+        $this->assertIsInt($allCount);
+
+        // When filtering by a search term that has few or 1 result
+        $searchComponent = Livewire::test(\App\Livewire\EventBoard::class)
+            ->set('search', 'Beerpong');
+        $filteredAllCount = $searchComponent->viewData('allCategoriesCount');
+        $this->assertLessThanOrEqual($allCount, $filteredAllCount);
+    }
+
     public function test_semantic_search_finds_relevant_events(): void
     {
         // Dotaz "hudba" by měl najít hudební akce jako Jam & Acoustic Night nebo Fléda Mecheche

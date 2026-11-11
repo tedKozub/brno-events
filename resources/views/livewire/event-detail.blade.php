@@ -21,7 +21,7 @@
 >
     {{-- KOMPAKTNÍ NAVBAR – 100% KOHERENTNÍ S HLAVNÍ STRÁNKOU --}}
     <header class="border-b border-base-300 bg-base-100/90 backdrop-blur-md sticky top-0 z-30 transition-colors shadow-xs">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-3">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-2 sm:gap-3">
             {{-- Oficiální Brand Logo --}}
             <a href="/" wire:navigate class="flex items-center gap-2 sm:gap-3 group shrink-0">
                 <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary flex items-center justify-center text-primary-content font-black shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
@@ -33,14 +33,40 @@
                     <span class="font-black text-base sm:text-xl tracking-tight text-base-content">
                         AKCE<span class="text-primary">BRNO</span>
                     </span>
-                    <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20">
+                    <span class="hidden xs:inline-block px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20">
                         Student
                     </span>
                 </div>
             </a>
 
-            {{-- Pravá část: 1-tlačítkový rotující přepínač témat (Systém -> Tmavý -> Světlý) --}}
-            <div class="flex items-center gap-2 sm:gap-3">
+            {{-- Středová navigace: Akce vs Místa --}}
+            <nav class="flex items-center gap-1 sm:gap-2">
+                <a
+                    href="/"
+                    wire:navigate
+                    class="px-3 sm:px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 transition-all text-base-content/70 hover:text-base-content hover:bg-base-200"
+                >
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span>Akce</span>
+                </a>
+                <a
+                    href="/mista"
+                    wire:navigate
+                    class="px-3 sm:px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 transition-all text-base-content/70 hover:text-base-content hover:bg-base-200"
+                >
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span class="hidden sm:inline">Studentská místa</span>
+                    <span class="sm:hidden">Místa</span>
+                </a>
+            </nav>
+
+            {{-- Pravá část: 1-tlačítkový rotující přepínač témat (BEZ TEXTU, Systém -> Tmavý -> Světlý) --}}
+            <div class="flex items-center gap-2 sm:gap-3 shrink-0">
                 <div
                     x-data="{
                         preference: localStorage.getItem('brno_events_theme') || 'system',
@@ -67,32 +93,26 @@
                     <button
                         type="button"
                         @click="cycleTheme()"
-                        class="btn btn-sm btn-ghost border border-base-300 bg-base-100 hover:bg-base-200 rounded-xl px-2.5 sm:px-3 h-9 min-h-[36px] font-bold text-xs inline-flex items-center gap-1.5 transition-colors shadow-2xs"
+                        class="btn btn-sm btn-ghost border border-base-300 bg-base-100 hover:bg-base-200 rounded-xl w-9 h-9 min-h-[36px] p-0 flex items-center justify-center transition-colors shadow-2xs"
                         :title="preference === 'system' ? 'Režim: Systém (kliknutím přepnout na Tmavý)' : ((preference === 'dark' || preference === 'events-dark') ? 'Režim: Tmavý (kliknutím přepnout na Světlý)' : 'Režim: Světlý (kliknutím přepnout na Systém)')"
+                        aria-label="Přepnout motiv vzhledu"
                     >
-                        {{-- 1. Stav: Systém (Auto) --}}
-                        <div x-show="preference === 'system'" class="flex items-center gap-1.5 text-base-content/80">
-                            <svg class="w-4 h-4 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l2 1h2l2-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                            </svg>
-                            <span class="font-bold text-xs">Auto</span>
-                        </div>
+                        {{-- 1. Stav: Systém (Auto) - kontrastní půlkruh --}}
+                        <svg x-show="preference === 'system'" class="w-4 h-4 text-base-content/80 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="12" cy="12" r="9" stroke-width="2" />
+                            <path fill="currentColor" d="M12 3a9 9 0 0 1 0 18V3z" />
+                        </svg>
 
-                        {{-- 2. Stav: Tmavý --}}
-                        <div x-show="preference === 'dark' || preference === 'events-dark'" class="flex items-center gap-1.5 text-sky-400">
-                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                            </svg>
-                            <span class="font-bold text-xs text-base-content">Tmavý</span>
-                        </div>
+                        {{-- 2. Stav: Tmavý - měsíc --}}
+                        <svg x-show="preference === 'dark' || preference === 'events-dark'" class="w-4 h-4 text-sky-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
 
-                        {{-- 3. Stav: Světlý --}}
-                        <div x-show="preference === 'light' || preference === 'events-light'" class="flex items-center gap-1.5 text-amber-500">
-                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                            </svg>
-                            <span class="font-bold text-xs text-base-content">Světlý</span>
-                        </div>
+                        {{-- 3. Stav: Světlý - slunce --}}
+                        <svg x-show="preference === 'light' || preference === 'events-light'" class="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="4" stroke-width="2"></circle>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m14.14-14.14l-1.41 1.41"></path>
+                        </svg>
                     </button>
                 </div>
             </div>

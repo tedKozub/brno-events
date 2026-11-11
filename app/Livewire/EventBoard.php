@@ -116,38 +116,34 @@ class EventBoard extends Component
     {
         $now = Carbon::now();
 
-        $query = Event::with(['organization', 'venue', 'category'])
+        // Základní dotaz pro události dle filtrů (datum, univerzita, cena zdarma)
+        $baseQuery = Event::with(['organization', 'venue', 'category'])
             ->published()
             ->upcoming();
 
         // Časové filtry pro studenty (bez víkendů)
         match ($this->dateFilter) {
-            'today' => $query->whereDate('starts_at', Carbon::today()),
-            'tomorrow' => $query->whereDate('starts_at', Carbon::tomorrow()),
-            'this_week' => $query->whereBetween('starts_at', [
+            'today' => $baseQuery->whereDate('starts_at', Carbon::today()),
+            'tomorrow' => $baseQuery->whereDate('starts_at', Carbon::tomorrow()),
+            'this_week' => $baseQuery->whereBetween('starts_at', [
                 Carbon::today()->startOfDay(),
                 $now->copy()->endOfWeek(Carbon::FRIDAY)->setTime(23, 59, 59)
             ]),
-            'next_week' => $query->whereBetween('starts_at', [
+            'next_week' => $baseQuery->whereBetween('starts_at', [
                 $now->copy()->addWeek()->startOfWeek(Carbon::MONDAY)->startOfDay(),
                 $now->copy()->addWeek()->endOfWeek(Carbon::FRIDAY)->setTime(23, 59, 59)
             ]),
             default => null,
         };
 
-        // Filtr kategorie
-        if (!empty($this->selectedCategory)) {
-            $query->whereHas('category', fn ($q) => $q->where('slug', $this->selectedCategory));
-        }
-
         // Filtr univerzity
         if (!empty($this->selectedUniversity)) {
-            $query->whereHas('organization', fn ($q) => $q->where('university', $this->selectedUniversity));
+            $baseQuery->whereHas('organization', fn ($q) => $q->where('university', $this->selectedUniversity));
         }
 
         // Filtr zdarma
         if ($this->onlyFree) {
-            $query->where('price_type', 'free');
+            $baseQuery->where('price_type', 'free');
         }
 
         // Vyhledávání: Hybridní (vektorový sémantický embedding + fulltext keyword match)
@@ -160,8 +156,8 @@ class EventBoard extends Component
             $queryVector = $embeddingService->getEmbedding($searchTerm);
 
             if ($queryVector) {
-                // Načteme kandidáty dle ostatních filtrů
-                $candidates = $query->get();
+                // Načteme kandidáty dle ostatních filtrů bez kategorie
+                $candidates = (clone $baseQuery)->get();
                 $scored = [];
 
                 foreach ($candidates as $event) {
@@ -218,11 +214,12 @@ class EventBoard extends Component
                     return $a['starts_at'] <=> $b['starts_at'];
                 });
 
-                $events = collect(array_column($scored, 'event'));
+                $eventsBeforeCategory = collect(array_column($scored, 'event'));
             } else {
                 // Fallback na klasické SQL vyhledávání
                 $term = '%' . $searchTerm . '%';
-                $query->where(function (Builder $q) use ($term) {
+                $searchQuery = clone $baseQuery;
+                $searchQuery->where(function (Builder $q) use ($term) {
                     $q->where('title', 'like', $term)
                       ->orWhere('short_description', 'like', $term)
                       ->orWhere('description', 'like', $term)
@@ -230,9 +227,38 @@ class EventBoard extends Component
                       ->orWhereHas('venue', fn ($vq) => $vq->where('name', 'like', $term)->orWhere('address', 'like', $term))
                       ->orWhereHas('organization', fn ($oq) => $oq->where('name', 'like', $term));
                 });
-                $events = $query->orderBy('starts_at', 'asc')->get();
+                $eventsBeforeCategory = $searchQuery->orderBy('starts_at', 'asc')->get();
+            }
+
+            // Spočítat reálné počty kategorií z nalezených položek
+            $categoryCounts = $eventsBeforeCategory
+                ->whereNotNull('category_id')
+                ->groupBy('category_id')
+                ->map(fn ($group) => $group->count())
+                ->toArray();
+            $allCategoriesCount = $eventsBeforeCategory->count();
+
+            // Aplikovat filtr vybrané kategorie
+            if (!empty($this->selectedCategory)) {
+                $events = $eventsBeforeCategory->filter(fn ($e) => $e->category?->slug === $this->selectedCategory)->values();
+            } else {
+                $events = $eventsBeforeCategory->values();
             }
         } else {
+            // Bez vyhledávání: spočítat přesné počty položek pro každou kategorii odpovídající aktivním filtrům
+            $categoryCounts = (clone $baseQuery)
+                ->whereNotNull('category_id')
+                ->groupBy('category_id')
+                ->selectRaw('category_id, count(*) as count')
+                ->pluck('count', 'category_id')
+                ->toArray();
+            $allCategoriesCount = (clone $baseQuery)->count();
+
+            // Aplikovat filtr kategorie na výsledky
+            $query = clone $baseQuery;
+            if (!empty($this->selectedCategory)) {
+                $query->whereHas('category', fn ($q) => $q->where('slug', $this->selectedCategory));
+            }
             $events = $query->orderBy('starts_at', 'asc')->get();
         }
 
@@ -257,15 +283,20 @@ class EventBoard extends Component
         // Informovat front-end (Alpine / Leaflet) o aktualizovaných markerech
         $this->dispatch('markers-updated', markers: $this->mapMarkers);
 
-        $categories = Category::withCount(['events' => fn ($q) => $q->published()->upcoming()])
-            ->orderBy('sort_order', 'asc')
-            ->get();
+        // Kategorie s přesným počtem reflektujícím aktivní filtry
+        $categories = Category::orderBy('sort_order', 'asc')
+            ->get()
+            ->map(function ($cat) use ($categoryCounts) {
+                $cat->events_count = $categoryCounts[$cat->id] ?? 0;
+                return $cat;
+            });
 
         $selectedEvent = $this->selectedEventId ? Event::with(['organization', 'venue', 'category'])->find($this->selectedEventId) : null;
 
         return view('livewire.event-board', [
             'events' => $events,
             'categories' => $categories,
+            'allCategoriesCount' => $allCategoriesCount,
             'mapMarkers' => $this->mapMarkers,
             'selectedEvent' => $selectedEvent,
             'totalUpcomingCount' => Event::published()->upcoming()->count(),
