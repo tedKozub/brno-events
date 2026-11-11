@@ -1,0 +1,79 @@
+name: Security Audit & SAST
+
+on:
+  schedule:
+    # Pravidelný bezpečnostní audit každé pondělí ve 4:00 UTC
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+  pull_request:
+    branches: [ master, main ]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  package-audit:
+    name: Package Vulnerability Audit (Composer & NPM)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, curl
+
+      - name: Composer Security Audit
+        run: |
+          echo "🔍 Kontrola zranitelností v PHP balíčcích (Composer Audit)..."
+          composer audit --format=table || true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: NPM Security Audit
+        run: |
+          echo "🔍 Kontrola zranitelností v Node.js/NPM balíčcích (NPM Audit)..."
+          npm audit --audit-level=high || true
+
+  sast-code-scan:
+    name: Static Application Security Testing (Semgrep SAST)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep SAST Scanner
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/owasp-top-ten
+            p/php
+            p/javascript
+        env:
+          SEMGREP_RULES: >-
+            p/security-audit
+            p/owasp-top-ten
+
+  secrets-leak-detection:
+    name: Secret & Credential Leak Detection
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks Secret Scanner
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

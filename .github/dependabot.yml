@@ -1,0 +1,35 @@
+version: 2
+updates:
+  # PHP Composer závislosti
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore(deps)"
+
+  # Frontend NPM závislosti
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore(deps)"
+
+  # GitHub Actions CI/CD akce
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    commit-message:
+      prefix: "ci(deps)"
+
+  # Python balíčky pro scraper
+  - package-ecosystem: "pip"
+    directory: "/scrapers"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps-py)"
