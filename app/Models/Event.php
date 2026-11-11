@@ -135,8 +135,8 @@ class Event extends Model
 
     public function getCoverImageUrlAttribute(): string
     {
-        if (empty($this->cover_image)) {
-            return 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=1200&q=80';
+        if (empty($this->cover_image) || str_contains($this->cover_image, 'unsplash.com')) {
+            return route('event.og-image', ['slug' => $this->slug]);
         }
 
         if (str_starts_with($this->cover_image, 'http://') || str_starts_with($this->cover_image, 'https://')) {
@@ -190,12 +190,35 @@ class Event extends Model
             ];
         }
 
-        if (str_contains($text, 'botanick') || str_contains($text, 'fakulta informatiky') || str_contains($text, 'fi muni')) {
+        // Univerzitní kampus Bohunice (MUNI - Přírodovědecká, Lékařská fakulta, FSpS, CEITEC)
+        if (str_contains($text, 'kamenice') || str_contains($text, 'kampus bohunice') || str_contains($text, 'bohunick') || str_contains($text, 'kampus muni') || str_contains($text, 'univerzitní kampus') || str_contains($text, 'b11/') || str_contains($text, 'botanický seminář') || str_contains($text, 'ústav botaniky')) {
+            return [
+                'lat' => 49.1772,
+                'lng' => 16.5684,
+                'title' => 'Univerzitní kampus Bohunice (MUNI)',
+                'address' => 'Kamenice 5, Brno – Bohunice',
+                'is_exact' => true,
+            ];
+        }
+
+        // Fakulta informatiky MUNI (FI MUNI - Botanická 68a)
+        if (str_contains($text, 'botanická 68') || str_contains($text, 'botanické 68') || str_contains($text, 'fakulta informatiky') || str_contains($text, 'fi muni')) {
             return [
                 'lat' => 49.2099,
                 'lng' => 16.6041,
                 'title' => 'Fakulta informatiky MUNI (FI MUNI)',
                 'address' => 'Botanická 68a, Brno – Královo Pole',
+                'is_exact' => true,
+            ];
+        }
+
+        // Přírodovědecká fakulta MUNI (Areál Kotlářská a Botanická zahrada PřF)
+        if (str_contains($text, 'kotlářsk') || str_contains($text, 'přírodovědecká fakulta') || str_contains($text, 'přf muni') || str_contains($text, 'botanická zahrada')) {
+            return [
+                'lat' => 49.2052,
+                'lng' => 16.5982,
+                'title' => 'Přírodovědecká fakulta MUNI (Kotlářská)',
+                'address' => 'Kotlářská 2, Brno – Veveří',
                 'is_exact' => true,
             ];
         }
@@ -240,15 +263,6 @@ class Event extends Model
             ];
         }
 
-        if (str_contains($text, 'kamenice') || str_contains($text, 'kampus bohunice') || str_contains($text, 'bohunick')) {
-            return [
-                'lat' => 49.1772,
-                'lng' => 16.5684,
-                'title' => 'Univerzitní kampus Bohunice (MUNI)',
-                'address' => 'Kamenice 5, Brno – Bohunice',
-                'is_exact' => true,
-            ];
-        }
 
         // 1.5 Známé brněnské kluby, kavárny, sály a parky
         if (str_contains($text, 'babylon')) {

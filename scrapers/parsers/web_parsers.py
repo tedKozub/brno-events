@@ -244,9 +244,12 @@ def parse_muni(html: str, base_url: str = "https://www.muni.cz/kalendar") -> Lis
         link_el = item.find("a")
         url = urljoin(base_url, link_el.get("href", "")) if link_el else base_url
         
-        title_el = item.find(["h3", "h2", "span"], class_=lambda c: c and "title" in c)
+        title_el = item.find(["h4", "h3", "h2", "span", "div"], class_=lambda c: c and "title" in c)
+        if not title_el:
+            title_el = item.select_one(".box-event__title")
         if not title_el and link_el:
-            title_el = link_el
+            # Avoid full card text if possible
+            title_el = link_el.find(["h4", "h3", "h2", "strong"]) or link_el
         if not title_el:
             continue
         title = title_el.get_text(strip=True)

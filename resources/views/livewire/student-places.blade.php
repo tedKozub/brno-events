@@ -193,11 +193,17 @@
 
                     this.renderMarkers();
                 },
+                updatePlaces(newPlaces) {
+                    this.places = newPlaces || [];
+                    this.renderMarkers();
+                },
                 renderMarkers() {
                     if (!this.map || typeof L === 'undefined') return;
 
                     // Odstranit staré markery
-                    Object.values(this.markers).forEach(m => this.map.removeLayer(m));
+                    Object.values(this.markers).forEach(m => {
+                        try { this.map.removeLayer(m); } catch (e) {}
+                    });
                     this.markers = {};
 
                     const bounds = [];
@@ -213,7 +219,7 @@
                         const color = categoryColors[place.category] || '#6366f1';
                         const customIcon = L.divIcon({
                             className: 'custom-student-pin',
-                            html: `<div style='background-color: ${color}; width: 28px; height: 28px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white;'>
+                            html: `<div style='background-color: ${color}; width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white;'>
                                     <svg style='width: 14px; height: 14px;' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z'/></svg>
                                    </div>`,
                             iconSize: [28, 28],
@@ -226,17 +232,13 @@
 
                         const popupContent = `
                             <div class='p-2 font-sans' style='min-width: 220px; max-width: 280px;'>
-                                <div style='font-size: 11px; font-weight: 800; text-transform: uppercase; color: ${color}; margin-bottom: 2px;'>${place.highlight}</div>
+                                <div style='font-size: 10px; font-weight: 800; text-transform: uppercase; color: ${color}; margin-bottom: 2px;'>${place.highlight}</div>
                                 <h3 style='font-weight: 800; font-size: 14px; line-height: 1.2; margin-bottom: 4px; color: #1e293b;'>${place.name}</h3>
                                 <p style='font-size: 11px; color: #64748b; margin-bottom: 6px;'>${place.address}</p>
                                 <p style='font-size: 12px; color: #334155; line-height: 1.35; margin-bottom: 10px;'>${place.description}</p>
                                 <div style='display: flex; gap: 6px;'>
-                                    <a href='${gMapsUrl}' target='_blank' rel='noopener noreferrer' style='flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 700; background-color: #3b82f6; color: white; border-radius: 8px; text-decoration: none; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 4px;'>
-                                        Google Maps
-                                    </a>
-                                    <a href='${mapyCzUrl}' target='_blank' rel='noopener noreferrer' style='flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 700; background-color: #dc2626; color: white; border-radius: 8px; text-decoration: none; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 4px;'>
-                                        Mapy.cz
-                                    </a>
+                                    <a href='${gMapsUrl}' target='_blank' rel='noopener noreferrer' style='flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 700; background-color: #3b82f6; color: white; border-radius: 8px; text-decoration: none; text-align: center;'>Google Maps</a>
+                                    <a href='${mapyCzUrl}' target='_blank' rel='noopener noreferrer' style='flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 700; background-color: #dc2626; color: white; border-radius: 8px; text-decoration: none; text-align: center;'>Mapy.cz</a>
                                 </div>
                             </div>
                         `;
@@ -268,8 +270,8 @@
             }"
             x-init="
                 $nextTick(() => initMap());
-                $watch('places', () => renderMarkers());
             "
+            @places-updated.window="updatePlaces($event.detail.places)"
             @place-selected.window="flyToPlace($event.detail.id, $event.detail.lat, $event.detail.lng)"
         >
             {{-- INTERAKTIVNÍ MAPA BRNA --}}
@@ -340,12 +342,12 @@
                                 class="card bg-base-100 border border-base-300 hover:border-primary/50 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
                             >
                                 <div class="card-body p-4 sm:p-5 space-y-3">
-                                    {{-- Horní štítky --}}
+                                    {{-- Horní štítky (stručné a čisté) --}}
                                     <div class="flex items-center justify-between gap-2">
-                                        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider border {{ $badgeColor }}">
-                                            {{ $categoryName }}
+                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border {{ $badgeColor }}">
+                                            {{ $categories[$place['category']]['short_name'] ?? $place['category'] }}
                                         </span>
-                                        <span class="text-[11px] font-bold text-base-content/50 truncate">
+                                        <span class="text-[10px] font-bold text-base-content/50 uppercase tracking-wider truncate">
                                             {{ $place['highlight'] }}
                                         </span>
                                     </div>
@@ -371,11 +373,11 @@
                                         {{ $place['description'] }}
                                     </p>
 
-                                    {{-- Tagy --}}
+                                    {{-- Stručné tagy (max 3 nejvýznamnější) --}}
                                     <div class="flex flex-wrap gap-1.5 pt-1">
-                                        @foreach($place['tags'] as $tag)
+                                        @foreach(array_slice($place['tags'], 0, 3) as $tag)
                                             <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-base-200 text-base-content/70">
-                                                #{{ $tag }}
+                                                {{ $tag }}
                                             </span>
                                         @endforeach
                                     </div>

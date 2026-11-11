@@ -176,7 +176,7 @@ class ScrapeEventsCommand extends Command
                     if ($university === 'MUNI') {
                         if (str_contains($textToCheck, 'pedagogick') || str_contains($textToCheck, 'pdf') || str_contains($textToCheck, 'poříčí')) {
                             $facultySlug = 'muni-pdf';
-                        } elseif (str_contains($textToCheck, 'informatik') || str_contains($textToCheck, 'botanick') || str_contains($textToCheck, 'fi muni')) {
+                        } elseif (str_contains($textToCheck, 'informatik') || str_contains($textToCheck, 'botanická 68') || str_contains($textToCheck, 'fi muni')) {
                             $facultySlug = 'muni-fi';
                         } elseif (str_contains($textToCheck, 'ekonomick') || str_contains($textToCheck, 'esf') || str_contains($textToCheck, 'lipov')) {
                             $facultySlug = 'muni-econ';
@@ -186,8 +186,10 @@ class ScrapeEventsCommand extends Command
                             $facultySlug = 'muni-phil';
                         } elseif (str_contains($textToCheck, 'právnick') || str_contains($textToCheck, 'veveří')) {
                             $facultySlug = 'muni-law';
-                        } elseif (str_contains($textToCheck, 'lékařsk') || str_contains($textToCheck, 'bohunick') || str_contains($textToCheck, 'kamenice')) {
+                        } elseif (str_contains($textToCheck, 'lékařsk') || str_contains($textToCheck, 'bohunick') || str_contains($textToCheck, 'kamenice') || str_contains($textToCheck, 'kampus')) {
                             $facultySlug = 'muni-med';
+                        } elseif (str_contains($textToCheck, 'přírodovědeck') || str_contains($textToCheck, 'kotlářsk') || str_contains($textToCheck, 'sci.muni') || str_contains($textToCheck, 'botanik') || str_contains($textToCheck, 'zoolog')) {
+                            $facultySlug = 'muni-sci';
                         }
                     } elseif ($university === 'VUT') {
                         if (str_contains($textToCheck, 'informačních technologií') || str_contains($textToCheck, 'fit') || str_contains($textToCheck, 'božetěchov')) {

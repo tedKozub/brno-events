@@ -224,7 +224,7 @@ class DatabaseSeeder extends Seeder
         $fledaOrg = Organization::create([
             'name' => 'Fléda Club',
             'slug' => 'fleda',
-            'university' => null,
+            'university' => 'OTHER',
             'description' => 'Klub Fléda v Brně.',
             'instagram_handle' => 'fledaclub',
             'facebook_url' => 'https://facebook.com/fledaclub',
@@ -393,6 +393,21 @@ class DatabaseSeeder extends Seeder
         ]);
 
         Event::create([
+            'organization_id' => $munie->id,
+            'venue_id' => $artbar->id,
+            'category_id' => $catCulture->id,
+            'title' => 'Páteční Studentský Jam & Acoustic Night',
+            'slug' => 'patecni-studentsky-jam-and-acoustic-night',
+            'short_description' => 'Hudební jam session pro studenty všech brněnských vysokých škol.',
+            'description' => 'Hudební jam session a živá hudba pro studenty všech brněnských vysokých škol. Vemte akustické nástroje, hlasivky a přijďte si zahrát nebo jen posedět u piva v ArtBaru.',
+            'starts_at' => $now->copy()->addDays(2)->setTime(19, 0),
+            'ends_at' => $now->copy()->addDays(2)->setTime(23, 0),
+            'price_type' => 'free',
+            'status' => 'published',
+            'is_featured' => true,
+        ]);
+
+        Event::create([
             'organization_id' => $skUnob->id,
             'venue_id' => $kasarnaUnob->id,
             'category_id' => $catSport->id,
@@ -439,6 +454,7 @@ class DatabaseSeeder extends Seeder
             'price_type' => 'free',
             'source_type' => 'scraper_facebook',
             'source_url' => 'https://facebook.com/events/example_fb_event',
+            'facebook_event_url' => 'https://facebook.com/events/example_fb_event',
             'status' => 'pending_review',
             'is_featured' => false,
         ]);

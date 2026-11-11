@@ -13,12 +13,21 @@ class StudentPlaces extends Component
     public function setCategory(string $category): void
     {
         $this->selectedCategory = $category;
+        $this->dispatch('places-updated', places: $this->filteredPlaces);
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->dispatch('places-updated', places: $this->filteredPlaces);
     }
 
     public function selectPlace(int $id): void
     {
         $this->selectedPlaceId = $id;
-        $this->dispatch('place-selected', id: $id);
+        $place = collect($this->allPlaces)->firstWhere('id', $id);
+        if ($place) {
+            $this->dispatch('place-selected', id: $id, lat: $place['lat'], lng: $place['lng']);
+        }
     }
 
     public function getCategoriesProperty(): array
@@ -26,26 +35,32 @@ class StudentPlaces extends Component
         return [
             'all' => [
                 'name' => 'Všechna místa',
+                'short_name' => 'Vše',
                 'color' => '#6366f1', // Indigo
             ],
             'study' => [
-                'name' => 'Studovny & Knihovny',
+                'name' => 'Studovny',
+                'short_name' => 'Studovna',
                 'color' => '#8b5cf6', // Violet
             ],
             'cafes' => [
-                'name' => 'Kavárny na učení',
+                'name' => 'Kavárny',
+                'short_name' => 'Kavárna',
                 'color' => '#f59e0b', // Amber
             ],
             'date' => [
-                'name' => 'Místa na rande',
+                'name' => 'Rande & Výhledy',
+                'short_name' => 'Rande',
                 'color' => '#ec4899', // Pink / Rose
             ],
             'pubs' => [
-                'name' => 'Studentské hospody & bary',
+                'name' => 'Hospody & Bary',
+                'short_name' => 'Hospoda',
                 'color' => '#10b981', // Emerald
             ],
             'parks' => [
-                'name' => 'Parky & Vyhlídky',
+                'name' => 'Parky & Příroda',
+                'short_name' => 'Park',
                 'color' => '#06b6d4', // Cyan
             ],
         ];
