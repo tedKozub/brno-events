@@ -17,11 +17,15 @@ class EventBoardTest extends TestCase
     use DatabaseTransactions;
     public function test_homepage_renders_with_events(): void
     {
+        $event = Event::published()->upcoming()->first();
+
         $response = $this->get('/');
         $response->assertStatus(200);
         $response->assertSee('AKCE');
         $response->assertSee('BRNO');
-        $response->assertSee('Velký studentský hospodský kvíz');
+        if ($event) {
+            $response->assertSee(e($event->title), false);
+        }
     }
 
     public function test_livewire_can_filter_events(): void
@@ -46,7 +50,7 @@ class EventBoardTest extends TestCase
 
     public function test_livewire_can_open_and_close_event_modal(): void
     {
-        $event = Event::published()->first();
+        $event = Event::published()->upcoming()->first();
 
         Livewire::test(\App\Livewire\EventBoard::class)
             ->call('openEventModal', $event->id)

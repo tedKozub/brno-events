@@ -47,6 +47,7 @@ class ScrapeSourceResource extends Resource
                                 'web_muni' => 'Web: MUNI Kalendář',
                                 'web_ical' => 'iCal / ICS Feed (.ics soubor nebo URL)',
                                 'web_rss' => 'RSS / Atom Feed',
+                                'web_instagram' => 'Instagram: Plakáty a posty (@username)',
                                 'web_generic' => 'Generická webová stránka (Schema.org Event)',
                             ])
                             ->required(),

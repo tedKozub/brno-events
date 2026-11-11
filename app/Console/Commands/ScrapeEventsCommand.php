@@ -138,8 +138,14 @@ class ScrapeEventsCommand extends Command
                 $locName = $item['location_name'] ?? '';
                 $venueId = $this->matchVenue($locName, $university);
 
-                // Detekce kategorie podle textu
-                $categoryId = $this->detectCategory($title . ' ' . ($item['description'] ?? ''));
+                // Detekce kategorie podle specifikovaného slugu nebo textu
+                $categoryId = null;
+                if (!empty($item['category_slug'])) {
+                    $categoryId = Category::where('slug', $item['category_slug'])->value('id');
+                }
+                if (empty($categoryId)) {
+                    $categoryId = $this->detectCategory($title . ' ' . ($item['description'] ?? ''));
+                }
 
                 // Tvorba unikátního slugu
                 $slug = Str::slug($title);
@@ -156,13 +162,16 @@ class ScrapeEventsCommand extends Command
                     'slug' => $slug,
                     'short_description' => $item['short_description'] ?? null,
                     'description' => $item['description'] ?? null,
+                    'cover_image' => $item['cover_image'] ?? null,
                     'starts_at' => $startsAt,
                     'ends_at' => $endsAt,
                     'is_all_day' => !empty($item['is_all_day']),
                     'location_name' => $locName,
-                    'price_type' => 'free',
-                    'source_type' => 'scraper_web',
+                    'price_type' => $item['price_type'] ?? 'free',
+                    'price_amount' => $item['price_amount'] ?? null,
+                    'source_type' => $item['source_type'] ?? ($source->type === 'web_instagram' ? 'scraper_instagram' : 'scraper_web'),
                     'source_url' => $sourceUrl,
+                    'instagram_post_url' => $item['instagram_post_url'] ?? null,
                     'status' => 'pending_review', // Vše jde do moderace ke schválení!
                     'is_featured' => false,
                 ]);

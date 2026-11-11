@@ -7,6 +7,7 @@ import httpx
 
 from parsers.ical_parser import parse_ical
 from parsers.rss_parser import parse_rss
+from parsers.instagram_parser import parse_instagram
 from parsers.web_parsers import (
     parse_mendelu,
     parse_fit_vut,
@@ -50,6 +51,7 @@ def main():
             "web_unob", "unob",
             "web_muni", "muni",
             "web_generic", "generic",
+            "web_instagram", "instagram",
         ],
         help="Type of scraper parser to execute",
     )
@@ -59,30 +61,33 @@ def main():
     args = parser.parse_args()
 
     try:
-        raw_content = fetch_content(args.url)
         stype = args.type.lower()
 
-        if stype in ["web_ical", "ical"]:
-            events = parse_ical(raw_content, source_url=args.url)
-        elif stype in ["web_rss", "rss"]:
-            events = parse_rss(raw_content, source_url=args.url)
+        if stype in ["web_instagram", "instagram"]:
+            events = parse_instagram(args.url, limit=args.limit)
         else:
-            # Decode HTML string
-            if isinstance(raw_content, bytes):
-                text_content = raw_content.decode("utf-8", errors="replace")
+            raw_content = fetch_content(args.url)
+            if stype in ["web_ical", "ical"]:
+                events = parse_ical(raw_content, source_url=args.url)
+            elif stype in ["web_rss", "rss"]:
+                events = parse_rss(raw_content, source_url=args.url)
             else:
-                text_content = raw_content
+                # Decode HTML string
+                if isinstance(raw_content, bytes):
+                    text_content = raw_content.decode("utf-8", errors="replace")
+                else:
+                    text_content = raw_content
 
-            if stype in ["web_mendelu", "mendelu"]:
-                events = parse_mendelu(text_content, base_url=args.url)
-            elif stype in ["web_fit_vut", "fit_vut"]:
-                events = parse_fit_vut(text_content, base_url=args.url)
-            elif stype in ["web_unob", "unob"]:
-                events = parse_unob(text_content, base_url=args.url)
-            elif stype in ["web_muni", "muni"]:
-                events = parse_muni(text_content, base_url=args.url)
-            else:
-                events = parse_generic_html(text_content, base_url=args.url)
+                if stype in ["web_mendelu", "mendelu"]:
+                    events = parse_mendelu(text_content, base_url=args.url)
+                elif stype in ["web_fit_vut", "fit_vut"]:
+                    events = parse_fit_vut(text_content, base_url=args.url)
+                elif stype in ["web_unob", "unob"]:
+                    events = parse_unob(text_content, base_url=args.url)
+                elif stype in ["web_muni", "muni"]:
+                    events = parse_muni(text_content, base_url=args.url)
+                else:
+                    events = parse_generic_html(text_content, base_url=args.url)
 
         # Apply university tag if provided
         if args.university:

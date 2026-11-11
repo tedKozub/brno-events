@@ -78,3 +78,11 @@ sources:
     is_active: true
     organization_slug: "ivsa-vetuni"
     description: "Feed akcí a workshopů Spolku studentů Veterinární univerzity Brno (IVSA)."
+
+  - id_slug: "sppdf-muni-instagram"
+    name: "Spolek přátel PdF MUNI (Instagram)"
+    type: "web_instagram"
+    university: "MUNI"
+    url: "sppdf_muni"
+    is_active: true
+    description: "Instagram profil @sppdf_muni s plakáty studentských workshopů, plesů a hospodských kvízů."
