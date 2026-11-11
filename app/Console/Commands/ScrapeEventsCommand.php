@@ -114,11 +114,25 @@ class ScrapeEventsCommand extends Command
                     continue;
                 }
 
+                // Ignorovat nerelevantní články (ocenění, rozhovory s profesory, výzkum, úmrtí, harmonogramy zkoušek)
+                if ($this->isIrrelevantArticle($title, $item['description'] ?? '')) {
+                    $sourceSkipped++;
+                    $totalSkipped++;
+                    continue;
+                }
+
                 // Deduplikace podle source_url nebo unikátního titulku a data
                 try {
                     $startsAt = Carbon::parse($item['starts_at'] ?? now()->addDay());
                 } catch (\Throwable $e) {
                     $startsAt = now()->addDays(2)->setTime(18, 0);
+                }
+
+                // Ignorovat staré proběhlé akce (starší než 2 dny), aby nezahlcovaly moderaci
+                if ($startsAt->lt(now()->subDays(2))) {
+                    $sourceSkipped++;
+                    $totalSkipped++;
+                    continue;
                 }
 
                 $endsAt = null;
@@ -129,8 +143,10 @@ class ScrapeEventsCommand extends Command
                         $endsAt = null;
                     }
                 }
+
                 // Deduplikace podle unikátního source_url nebo titulku a data
-                $existing = Event::where(function ($q) use ($title, $startsAt, $sourceUrl, $item) {
+                // DŮLEŽITÉ: Kontrolujeme i withTrashed(), aby se smazané nebo zamítnuté akce nescrapovaly znovu!
+                $existing = Event::withTrashed()->where(function ($q) use ($title, $startsAt, $sourceUrl, $item) {
                     if (!empty($sourceUrl)) {
                         $q->where('source_url', $sourceUrl);
                     }
@@ -333,5 +349,31 @@ class ScrapeEventsCommand extends Command
         }
 
         return Category::where('slug', 'kultura-divadlo')->value('id') ?? Category::first()?->id;
+    }
+
+    /**
+     * Zjistí, zda se jedná o nerelevantní zprávu / akademický článek namísto události.
+     */
+    protected function isIrrelevantArticle(string $title, string $description): bool
+    {
+        $lowerTitle = mb_strtolower($title);
+        $lowerDesc = mb_strtolower($description);
+
+        $articlePhrases = [
+            'získal cenu', 'získala cenu', 'národní cen', 'česká hlava', 'ocenění za',
+            'říká profesor', 'říká docent', 'říká děkan', 'rozhovor s',
+            'výzkum z fit', 'výzkumníci z', 'vědci z', 'nový výzkum',
+            'přehled vybraných zkoušek', 'výukové změny v zs', 'výukové změny v ls',
+            'harmonogram výuky', 'předtermíny zkoušek', 'zkouškové období',
+            'kondolen', 'smuteční oznámení', 'úmrtí', 'vzpomínka na',
+        ];
+
+        foreach ($articlePhrases as $phrase) {
+            if (str_contains($lowerTitle, $phrase) || str_contains($lowerDesc, $phrase)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

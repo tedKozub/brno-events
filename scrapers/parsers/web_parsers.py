@@ -105,6 +105,7 @@ def parse_fit_vut(html: str, base_url: str = "https://www.fit.vut.cz/fit/calenda
     soup = BeautifulSoup(html, "lxml")
     events = []
     current_year = datetime.datetime.now().year
+    now = datetime.datetime.now()
 
     for item in soup.select("li.c-events__item, .c-events__item"):
         link_el = item.find("a")
@@ -119,26 +120,51 @@ def parse_fit_vut(html: str, base_url: str = "https://www.fit.vut.cz/fit/calenda
             continue
         title = title_el.get_text(strip=True)
 
-        # Date parsing
-        day_el = item.find(class_=lambda c: c and "day" in c)
-        month_el = item.find(class_=lambda c: c and "month" in c)
-        year_el = item.find(class_=lambda c: c and "year" in c)
+        # Cover image extraction
+        img_el = item.select_one(".b-term__img img, img")
+        cover_image = None
+        if img_el and img_el.get("src"):
+            cover_image = urljoin(base_url, img_el.get("src"))
 
-        day_matches = re.findall(r"\d+", day_el.get_text()) if day_el else []
-        day = int(day_matches[0]) if day_matches else None
-        end_day = int(day_matches[1]) if len(day_matches) > 1 else None
-
-        month_str = month_el.get_text(strip=True).lower() if month_el else ""
-        month = CZECH_MONTHS.get(month_str[:3], datetime.datetime.now().month)
-        year = int(re.sub(r"\D", "", year_el.get_text())) if year_el and re.sub(r"\D", "", year_el.get_text()) else current_year
-
+        # Date parsing: check <time datetime="..."> first
+        starts_at = None
         ends_at = None
-        if day and month:
-            starts_at = f"{year:04d}-{month:02d}-{day:02d} 14:00:00"
-            if end_day and 1 <= end_day <= 31:
-                ends_at = f"{year:04d}-{month:02d}-{end_day:02d} 18:00:00"
-        else:
-            starts_at = f"{current_year:04d}-11-20 14:00:00"
+        time_el = item.find("time")
+        if time_el and time_el.get("datetime"):
+            dt_raw = time_el.get("datetime")
+            try:
+                dt_parsed = datetime.datetime.fromisoformat(dt_raw)
+                starts_at = dt_parsed.strftime("%Y-%m-%d %H:%M:%S")
+            except Exception:
+                pass
+
+        if not starts_at:
+            day_el = item.find(class_=lambda c: c and "day" in c)
+            month_el = item.find(class_=lambda c: c and "month" in c)
+            year_el = item.find(class_=lambda c: c and "year" in c)
+
+            day_matches = re.findall(r"\d+", day_el.get_text()) if day_el else []
+            day = int(day_matches[0]) if day_matches else None
+            end_day = int(day_matches[1]) if len(day_matches) > 1 else None
+
+            month_str = month_el.get_text(strip=True).lower() if month_el else ""
+            month = CZECH_MONTHS.get(month_str[:3], now.month)
+            year = int(re.sub(r"\D", "", year_el.get_text())) if year_el and re.sub(r"\D", "", year_el.get_text()) else current_year
+
+            if day and month:
+                starts_at = f"{year:04d}-{month:02d}-{day:02d} 14:00:00"
+                if end_day and 1 <= end_day <= 31:
+                    ends_at = f"{year:04d}-{month:02d}-{end_day:02d} 18:00:00"
+            else:
+                starts_at = f"{current_year:04d}-11-20 14:00:00"
+
+        # Skip past events older than 7 days
+        try:
+            event_dt = datetime.datetime.strptime(starts_at[:10], "%Y-%m-%d")
+            if event_dt < (now - datetime.timedelta(days=7)):
+                continue
+        except Exception:
+            pass
 
         desc = f"Událost Fakulty informačních technologií VUT v Brně: {title}."
 
@@ -147,8 +173,9 @@ def parse_fit_vut(html: str, base_url: str = "https://www.fit.vut.cz/fit/calenda
             "short_description": desc[:200],
             "description": desc,
             "starts_at": starts_at,
-            "ends_at": None,
+            "ends_at": ends_at,
             "is_all_day": False,
+            "cover_image": cover_image,
             "location_name": "FIT VUT, Božetěchova 1/2, Brno – Královo Pole",
             "source_url": url,
             "source_type": "scraper_web",

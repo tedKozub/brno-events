@@ -52,6 +52,30 @@ class EventResource extends Resource
 
         return $form
             ->schema([
+                Forms\Components\Placeholder::make('data_quality_alert')
+                    ->label('')
+                    ->visible(fn (?Event $record) => $record && !empty($record->missing_fields))
+                    ->content(function (?Event $record) {
+                        if (!$record || empty($record->missing_fields)) {
+                            return null;
+                        }
+                        $items = implode(' • ', array_values($record->missing_fields));
+                        return new \Illuminate\Support\HtmlString("
+                            <div style='padding: 1rem; border-radius: 0.75rem; border: 1px solid rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.1); margin-bottom: 0.5rem;'>
+                                <div style='font-weight: 600; color: #f59e0b; font-size: 0.95rem; margin-bottom: 0.25rem;'>
+                                    ⚠️ Vyžaduje pozornost před schválením – chybějící data:
+                                </div>
+                                <div style='font-size: 0.875rem; color: #fbbf24; line-height: 1.4;'>
+                                    {$items}
+                                </div>
+                                <div style='font-size: 0.75rem; color: #d97706; margin-top: 0.25rem;'>
+                                    Doplňte chybějící pole (např. plakát nebo místo), aby se akce zobrazovala správně na mapě a v kalendáři.
+                                </div>
+                            </div>
+                        ");
+                    })
+                    ->columnSpanFull(),
+
                 Forms\Components\Group::make([
                     Forms\Components\Section::make('Základní informace')
                         ->schema([
@@ -254,6 +278,7 @@ class EventResource extends Resource
                     ->color(fn (string $state): string => match ($state) {
                         'published' => 'success',
                         'pending_review' => 'warning',
+                        'rejected' => 'danger',
                         'draft' => 'gray',
                         'cancelled' => 'danger',
                         default => 'gray',
@@ -261,6 +286,7 @@ class EventResource extends Resource
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'published' => 'Publikováno',
                         'pending_review' => 'Ke schválení',
+                        'rejected' => 'Zamítnuto',
                         'draft' => 'Koncept',
                         'cancelled' => 'Zrušeno',
                         default => $state,
@@ -268,15 +294,15 @@ class EventResource extends Resource
 
                 Tables\Columns\TextColumn::make('missing_fields')
                     ->label('Kvalita dat')
+                    ->badge()
                     ->state(function (Event $record) {
                         $missing = $record->missing_fields;
                         if (empty($missing)) {
-                            return 'Vše vyplněno';
+                            return ['Vše v pořádku'];
                         }
-                        return implode(', ', array_values($missing));
+                        return array_values($missing);
                     })
-                    ->badge()
-                    ->color(fn ($record) => empty($record->missing_fields) ? 'success' : 'warning')
+                    ->color(fn ($state) => $state === 'Vše v pořádku' ? 'success' : 'warning')
                     ->wrap(),
             ])
             ->defaultSort('starts_at', 'asc')
@@ -284,8 +310,9 @@ class EventResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Stav')
                     ->options([
-                        'published' => 'Publikováno',
                         'pending_review' => 'Ke schválení (moderace)',
+                        'published' => 'Publikováno',
+                        'rejected' => 'Zamítnuto',
                         'draft' => 'Koncept',
                         'cancelled' => 'Zrušeno',
                     ]),
@@ -315,7 +342,7 @@ class EventResource extends Resource
                     ->label('Schválit')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
-                    ->visible(fn (Event $record) => $record->status === 'pending_review')
+                    ->visible(fn (Event $record) => in_array($record->status, ['pending_review', 'rejected']))
                     ->action(function (Event $record) {
                         $record->update(['status' => 'published']);
                         Notification::make()
@@ -323,14 +350,30 @@ class EventResource extends Resource
                             ->success()
                             ->send();
                     }),
+                Tables\Actions\Action::make('reject')
+                    ->label('Zamítnout')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Zamítnout akci?')
+                    ->modalDescription('Akce bude označena jako zamítnutá a robot ji už nikdy znovu nescrapne.')
+                    ->visible(fn (Event $record) => $record->status === 'pending_review')
+                    ->action(function (Event $record) {
+                        $record->update(['status' => 'rejected']);
+                        Notification::make()
+                            ->title('Akce byla zamítnuta (znovu se již nescrapne).')
+                            ->warning()
+                            ->send();
+                    }),
                 Tables\Actions\Action::make('view_web')
                     ->label('Zobrazit')
                     ->icon('heroicon-o-arrow-top-right-on-square')
                     ->color('gray')
+                    ->visible(fn (Event $record) => $record->status === 'published')
                     ->url(fn (Event $record) => url('/akce/' . $record->slug))
                     ->openUrlInNewTab(),
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\DeleteAction::make()->label('Smazat do koše'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -345,7 +388,21 @@ class EventResource extends Resource
                                 ->success()
                                 ->send();
                         }),
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\BulkAction::make('reject_bulk')
+                        ->label('Zamítnout vybrané')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading('Hromadně zamítnout vybrané akce?')
+                        ->modalDescription('Vybrané akce budou označeny jako zamítnuté a nebudou se již znovu scrapovat.')
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                            $records->each(fn (Event $e) => $e->update(['status' => 'rejected']));
+                            Notification::make()
+                                ->title('Vybrané akce byly zamítnuty.')
+                                ->warning()
+                                ->send();
+                        }),
+                    Tables\Actions\DeleteBulkAction::make()->label('Smazat do koše'),
                 ]),
             ]);
     }

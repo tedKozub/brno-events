@@ -40,9 +40,9 @@ sources:
     type: "web_rss"
     university: "VUT"
     url: "https://www.fit.vut.cz/fit/news-rss/"
-    is_active: true
+    is_active: false # Vypnuto: RSS obsahuje obecné fakultní zprávy, ocenění a rozhovory s pedagogy, nikoliv reálné studentské akce (akce jsou v fit-vut-kalendar)
     organization_slug: "vut-fit"
-    description: "RSS kanál aktualit a pozvánek na turnaje z FIT VUT."
+    description: "RSS kanál aktualit FIT VUT (vypnuto kvůli nerelevantním článkům)."
 
   - id_slug: "muni-kalendar"
     name: "MUNI Kalendář akcí"

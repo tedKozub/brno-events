@@ -20,6 +20,16 @@ class ListEvents extends ListRecords
         ];
     }
 
+    public function getDefaultActiveTab(): string | int | null
+    {
+        $user = auth()->user();
+        $query = Event::where('status', 'pending_review');
+        if ($user && $user->isClubAdmin() && $user->organization_id) {
+            $query->where('organization_id', $user->organization_id);
+        }
+        return $query->exists() ? 'pending_review' : 'published';
+    }
+
     public function getTabs(): array
     {
         $user = auth()->user();
@@ -27,15 +37,19 @@ class ListEvents extends ListRecords
 
         $pendingQuery = Event::where('status', 'pending_review');
         $missingQuery = Event::withMissingData();
+        $rejectedQuery = Event::where('status', 'rejected');
+
         if ($isClub) {
             $pendingQuery->where('organization_id', $user->organization_id);
             $missingQuery->where('organization_id', $user->organization_id);
+            $rejectedQuery->where('organization_id', $user->organization_id);
         }
+
         $pendingCount = $pendingQuery->count();
         $missingCount = $missingQuery->count();
+        $rejectedCount = $rejectedQuery->count();
 
         return [
-            'all' => Tab::make('Všechny akce'),
             'pending_review' => Tab::make('Ke schválení (moderace)')
                 ->badge($pendingCount > 0 ? (string) $pendingCount : null)
                 ->badgeColor('warning')
@@ -46,8 +60,11 @@ class ListEvents extends ListRecords
                 ->modifyQueryUsing(fn (Builder $query) => $query->withMissingData()),
             'published' => Tab::make('Publikované')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'published')),
-            'draft' => Tab::make('Koncepty')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'draft')),
+            'rejected' => Tab::make('Zamítnuté')
+                ->badge($rejectedCount > 0 ? (string) $rejectedCount : null)
+                ->badgeColor('gray')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'rejected')),
+            'all' => Tab::make('Všechny akce'),
         ];
     }
 }
