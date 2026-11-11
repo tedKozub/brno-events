@@ -23,7 +23,7 @@ sources:
     university: "MENDELU"
     url: "https://mendelu.cz/akce/"
     is_active: true
-    organization_slug: "unie-studentu-mendelu"
+    organization_slug: "mendelu"
     description: "Centrální kalendář akcí Mendelovy univerzity v Brně (workshopy, přednášky, konference)."
 
   - id_slug: "fit-vut-kalendar"
@@ -32,7 +32,7 @@ sources:
     university: "VUT"
     url: "https://www.fit.vut.cz/fit/calendar/"
     is_active: true
-    organization_slug: "best-brno"
+    organization_slug: "vut-fit"
     description: "Kalendář studentských a technologických akcí na FIT VUT (Božetěchova)."
 
   - id_slug: "fit-vut-rss"
@@ -41,7 +41,7 @@ sources:
     university: "VUT"
     url: "https://www.fit.vut.cz/fit/news-rss/"
     is_active: true
-    organization_slug: "best-brno"
+    organization_slug: "vut-fit"
     description: "RSS kanál aktualit a pozvánek na turnaje z FIT VUT."
 
   - id_slug: "muni-kalendar"
@@ -50,7 +50,7 @@ sources:
     university: "MUNI"
     url: "https://www.muni.cz/kalendar"
     is_active: true
-    organization_slug: "munie"
+    organization_slug: "muni"
     description: "Centrální kalendář Masarykovy univerzity (diskuze, přednášky, setkání)."
 
   - id_slug: "unob-akce"
@@ -59,7 +59,7 @@ sources:
     university: "UNOB"
     url: "https://unob.cz/univerzita/media-a-verejnost/akce-univerzity-obrany/"
     is_active: true
-    organization_slug: "sk-unob"
+    organization_slug: "unob"
     description: "Veřejné, prezentační a sportovní události studentů Univerzity obrany v Brně."
 
   - id_slug: "student-ical-feed"
@@ -71,19 +71,19 @@ sources:
     description: "iCal feed studentských turnajů, večírků a jam sessions na Flédě a v ArtBaru."
 
   - id_slug: "vetuni-spolek-feed"
-    name: "VETUNI Kalendář spolku IVSA (iCal Feed)"
+    name: "VETUNI Kalendář akcí (Areál Palackého)"
     type: "web_ical"
     university: "VETUNI"
     url: "file:///root/brno-events/scrapers/fixtures/sample_vetuni_events.ics"
     is_active: true
-    organization_slug: "ivsa-vetuni"
-    description: "Feed akcí a workshopů Spolku studentů Veterinární univerzity Brno (IVSA)."
+    organization_slug: "vetuni"
+    description: "Akce a workshopy Veterinární univerzity Brno (VETUNI)."
 
   - id_slug: "sppdf-muni-instagram"
-    name: "Spolek přátel PdF MUNI (Instagram)"
+    name: "Pedagogická fakulta MUNI (Instagram @sppdf_muni)"
     type: "web_instagram"
     university: "MUNI"
-    organization_slug: "sppdf-muni"
+    organization_slug: "muni-pdf"
     url: "sppdf_muni"
     is_active: true
-    description: "Instagram profil @sppdf_muni s plakáty studentských workshopů, plesů a hospodských kvízů."
+    description: "Instagram profil akcí Pedagogické fakulty MUNI (@sppdf_muni)."

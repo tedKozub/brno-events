@@ -133,9 +133,45 @@ class ScrapeEventsCommand extends Command
                     continue;
                 }
 
-                // Určení organizace (pouze explicitně přiřazené, nikdy náhodně nepřiřazovat první spolek univerzity)
+                // Určení organizace: by default přímo fakultě nebo univerzitě (nikdy nepřiřazovat k náhodnému spolku)
                 $orgId = $source->organization_id;
                 $university = $item['university'] ?? $source->university ?? 'OTHER';
+
+                if (!$orgId && $university !== 'OTHER') {
+                    $textToCheck = mb_strtolower($title . ' ' . ($item['location_name'] ?? '') . ' ' . ($item['description'] ?? ''));
+                    $facultySlug = null;
+
+                    if ($university === 'MUNI') {
+                        if (str_contains($textToCheck, 'pedagogick') || str_contains($textToCheck, 'pdf') || str_contains($textToCheck, 'poříčí')) {
+                            $facultySlug = 'muni-pdf';
+                        } elseif (str_contains($textToCheck, 'informatik') || str_contains($textToCheck, 'botanick') || str_contains($textToCheck, 'fi muni')) {
+                            $facultySlug = 'muni-fi';
+                        } elseif (str_contains($textToCheck, 'ekonomick') || str_contains($textToCheck, 'esf') || str_contains($textToCheck, 'lipov')) {
+                            $facultySlug = 'muni-econ';
+                        } elseif (str_contains($textToCheck, 'sociální') || str_contains($textToCheck, 'fss') || str_contains($textToCheck, 'joštov')) {
+                            $facultySlug = 'muni-fss';
+                        } elseif (str_contains($textToCheck, 'filozofick') || str_contains($textToCheck, 'arne novák')) {
+                            $facultySlug = 'muni-phil';
+                        } elseif (str_contains($textToCheck, 'právnick') || str_contains($textToCheck, 'veveří')) {
+                            $facultySlug = 'muni-law';
+                        } elseif (str_contains($textToCheck, 'lékařsk') || str_contains($textToCheck, 'bohunick') || str_contains($textToCheck, 'kamenice')) {
+                            $facultySlug = 'muni-med';
+                        }
+                    } elseif ($university === 'VUT') {
+                        if (str_contains($textToCheck, 'informačních technologií') || str_contains($textToCheck, 'fit') || str_contains($textToCheck, 'božetěchov')) {
+                            $facultySlug = 'vut-fit';
+                        }
+                    }
+
+                    if ($facultySlug) {
+                        $orgId = Organization::where('slug', $facultySlug)->value('id');
+                    }
+
+                    if (!$orgId) {
+                        $uniSlug = strtolower($university);
+                        $orgId = Organization::where('slug', $uniSlug)->value('id');
+                    }
+                }
 
                 // Detekce místa (Venue) podle klíčových slov
                 $locName = $item['location_name'] ?? '';

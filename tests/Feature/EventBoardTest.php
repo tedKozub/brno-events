@@ -36,7 +36,7 @@ class EventBoardTest extends TestCase
             ->assertDontSee('Velký studentský hospodský kvíz')
             ->set('search', '')
             ->set('selectedUniversity', 'MUNI')
-            ->assertSee('MUNIE');
+            ->assertSee('MUNI');
     }
 
     public function test_semantic_search_finds_relevant_events(): void
