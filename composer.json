@@ -9,7 +9,7 @@
         "php": "^8.2",
         "filament/filament": "^3.2",
         "laravel/framework": "^11.31",
-        "laravel/tinker": "^2.9",
+        "laravel/tinker": "^3.1",
         "symfony/yaml": "^8.1"
     },
     "require-dev": {
