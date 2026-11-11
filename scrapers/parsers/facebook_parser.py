@@ -78,7 +78,7 @@ def download_cover_image(img_url: str, event_id: str) -> Optional[str]:
         public_dest = os.path.join(public_covers_dir, filename)
         storage_dest = os.path.join(storage_covers_dir, filename)
 
-        if os.path.exists(public_dest) and os.path.getsize(public_dest) > 1000:
+        if os.path.exists(public_dest) and os.path.getsize(public_dest) > 20000:
             return relative_path
 
         headers = {
@@ -90,7 +90,7 @@ def download_cover_image(img_url: str, event_id: str) -> Optional[str]:
             if not content_type.startswith("image/"):
                 return None
             data = resp.read()
-            if len(data) < 500:
+            if len(data) < 1000:
                 return None
             with open(public_dest, "wb") as f:
                 f.write(data)
@@ -186,9 +186,25 @@ async def scrape_single_facebook_event(
         event_id_match = re.search(r'/events/(\d+)', event_url)
         event_id = event_id_match.group(1) if event_id_match else hashlib.md5(event_url.encode()).hexdigest()[:10]
 
-        # Download cover image (try og:image first, then fallback_image_url from list page)
+        # High-res cover photo from event page HTML (cover_photo in Relay GraphQL state)
+        high_res_img_url = None
+        m_cover = re.search(r'\"cover_photo\":\{.*?\"(?:full_image|viewer_image|image)\":\{.*?\"uri\":\"(https?:\\\\?/\\\\?/[^\"]+)\"', content)
+        if m_cover:
+            high_res_img_url = m_cover.group(1).replace('\\/', '/').replace('&amp;', '&')
+        else:
+            m_cover2 = re.search(r'\"cover_photo\":\{.*?\"uri\":\"(https?:\\\\?/\\\\?/[^\"]+)\"', content)
+            if m_cover2:
+                high_res_img_url = m_cover2.group(1).replace('\\/', '/').replace('&amp;', '&')
+            else:
+                m_cover3 = re.search(r'\"uri\":\"(https?:\\\\?/\\\\?/scontent[^\"]*(?:1920|1080|960)[^\"]*)\"', content)
+                if m_cover3:
+                    high_res_img_url = m_cover3.group(1).replace('\\/', '/').replace('&amp;', '&')
+
+        # Download cover image (Priority: high-res cover_photo -> og:image -> fallback thumbnail)
         cover_image = None
-        if img_url:
+        if high_res_img_url:
+            cover_image = download_cover_image(high_res_img_url, event_id)
+        if not cover_image and img_url:
             cover_image = download_cover_image(img_url, event_id)
         if not cover_image and fallback_image_url:
             cover_image = download_cover_image(fallback_image_url, event_id)
