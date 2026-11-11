@@ -80,19 +80,19 @@ sources:
     description: "Akce a workshopy Veterinární univerzity Brno (VETUNI)."
 
   - id_slug: "sppdf-muni-instagram"
-    name: "Pedagogická fakulta MUNI (Instagram @sppdf_muni)"
+    name: "Spolek přátel PdF MUNI (Instagram @sppdf_muni)"
     type: "web_instagram"
     university: "MUNI"
-    organization_slug: "muni-pdf"
+    organization_slug: "sppdf-muni"
     url: "sppdf_muni"
     is_active: true
-    description: "Instagram profil akcí Pedagogické fakulty MUNI (@sppdf_muni)."
+    description: "Instagram profil akcí Spolku přátel PdF MUNI (@sppdf_muni)."
 
   - id_slug: "sppdf-muni-facebook"
-    name: "Pedagogická fakulta MUNI (Facebook SPPdF)"
+    name: "Spolek přátel PdF MUNI (Facebook SPPdF)"
     type: "web_facebook"
     university: "MUNI"
-    organization_slug: "muni-pdf"
+    organization_slug: "sppdf-muni"
     url: "sppdfmuni"
     is_active: true
-    description: "Facebook stránka událostí Pedagogické fakulty MUNI (Spolek přátel PDF MUNI)."
+    description: "Facebook stránka událostí Spolku přátel PdF MUNI (sppdfmuni)."
