@@ -7,11 +7,50 @@
     'schemaJson' => null,
 ])
 <!DOCTYPE html>
-<html lang="cs" data-theme="events-light" class="transition-colors">
+<html lang="cs">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <!-- Okamžité nastavení tématu před vykreslením DOM (zabraňuje bílému probliknutí na mobilu i desktopu) -->
+    <script>
+        (function() {
+            try {
+                var p = localStorage.getItem('brno_events_theme') || 'system';
+                var d = false;
+                if (p === 'events-dark' || p === 'dark') { d = true; }
+                else if (p === 'events-light' || p === 'light') { d = false; }
+                else { d = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; }
+                var t = d ? 'events-dark' : 'events-light';
+                document.documentElement.setAttribute('data-theme', t);
+                if (d) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
+    <style>
+        /* Okamžité uzamčení barvy podkladu bez problikávání barev při navigaci */
+        html, body {
+            background-color: #f8fafc;
+        }
+        html[data-theme='events-dark'],
+        html.dark,
+        html[data-theme='events-dark'] body,
+        html.dark body {
+            background-color: #0f172a !important;
+            color-scheme: dark;
+        }
+        html[data-theme='events-light'],
+        html:not(.dark) body {
+            background-color: #f8fafc !important;
+            color-scheme: light;
+        }
+    </style>
 
     <title>{{ $title }}</title>
     <meta name="description" content="{{ $description }}">
@@ -84,11 +123,18 @@
                     } else {
                         document.documentElement.classList.remove('dark');
                     }
+                    var themeMeta = document.querySelector('meta[name="theme-color"]');
+                    if (themeMeta) {
+                        themeMeta.setAttribute('content', isDark ? '#0f172a' : '#6366f1');
+                    }
                 } catch (e) {}
             };
 
             window.applyAppTheme();
 
+            document.addEventListener('livewire:navigating', function() {
+                window.applyAppTheme();
+            });
             document.addEventListener('livewire:navigated', function() {
                 window.applyAppTheme();
             });
@@ -117,7 +163,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
-<body class="bg-base-200 text-base-content min-h-screen font-sans antialiased selection:bg-primary selection:text-primary-content transition-colors">
+<body class="bg-base-200 text-base-content min-h-screen font-sans antialiased selection:bg-primary selection:text-primary-content">
     {{ $slot }}
 
     @livewireScripts
