@@ -119,8 +119,9 @@
         <div class="flex items-center justify-between gap-2 sm:gap-3 text-xs">
             <a
                 href="/"
-                wire:navigate
-                class="inline-flex items-center gap-1.5 font-bold text-base-content/70 hover:text-primary transition-colors group shrink-0"
+                wire:navigate.hover
+                @click.prevent="if (window.history.length > 1) { window.history.back(); } else { Livewire.navigate('/'); }"
+                class="inline-flex items-center gap-1.5 font-bold text-base-content/70 hover:text-primary transition-colors group shrink-0 cursor-pointer"
             >
                 <svg class="w-4 h-4 text-primary group-hover:-translate-x-0.5 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
@@ -219,18 +220,18 @@
                             </div>
                         </div>
 
-                        <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 w-full sm:w-auto shrink-0">
+                        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 shrink-0">
                             @if($event->organization->website_url)
                                 <a
                                     href="{{ $event->organization->website_url }}"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    class="btn btn-ghost border border-base-300 font-bold rounded-xl px-4 py-2 min-h-[42px] text-sm gap-2 inline-flex items-center justify-center hover:bg-base-200 w-full sm:w-auto"
+                                    class="btn btn-xs sm:btn-sm btn-ghost border border-base-300 font-bold rounded-xl px-2.5 sm:px-3 h-8 min-h-[32px] text-xs gap-1.5 inline-flex items-center hover:bg-base-200"
                                 >
                                     <svg class="w-3.5 h-3.5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
                                     </svg>
-                                    <span>Web pořadatele</span>
+                                    <span>Web</span>
                                 </a>
                             @endif
 
@@ -239,7 +240,7 @@
                                     href="https://instagram.com/{{ ltrim($event->organization->instagram_handle, '@') }}"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    class="btn btn-ghost border border-base-300 font-bold rounded-xl px-4 py-2 min-h-[42px] text-sm gap-2 inline-flex items-center justify-center hover:bg-base-200 w-full sm:w-auto"
+                                    class="btn btn-xs sm:btn-sm btn-ghost border border-base-300 font-bold rounded-xl px-2.5 sm:px-3 h-8 min-h-[32px] text-xs gap-1.5 inline-flex items-center hover:bg-base-200"
                                 >
                                     <svg class="w-3.5 h-3.5 text-primary shrink-0" fill="currentColor" viewBox="0 0 24 24">
                                         <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
@@ -347,20 +348,20 @@
                     </div>
                 @endif
 
-                {{-- AKČNÍ LIŠTA – RESPONZIVNÍ TLAČÍTKA BEZ OVERFLOW NA MOBILU --}}
-                <div class="pt-4 border-t border-base-200 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2.5 sm:gap-3">
+                {{-- AKČNÍ LIŠTA – TLAČÍTKA HORIZONTÁLNĚ VEDLE SEBE, ÚZKÁ, NE PŘES CELÝ SCREEN --}}
+                <div class="pt-3 border-t border-base-200 flex flex-wrap items-center gap-2">
                     @if($event->ticket_url)
                         <a
                             href="{{ $event->ticket_url }}"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="btn btn-primary font-extrabold rounded-xl px-5 py-2.5 min-h-[44px] text-sm gap-2 inline-flex items-center justify-center w-full sm:w-auto shadow-sm"
+                            class="btn btn-sm btn-primary font-bold rounded-xl px-3 h-9 min-h-[36px] text-xs gap-1.5 inline-flex items-center shadow-xs"
                         >
-                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
                             </svg>
-                            <span>Koupit vstupenku</span>
-                            <svg class="w-3.5 h-3.5 text-primary-content/70 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <span>Vstupenky</span>
+                            <svg class="w-3 h-3 text-primary-content/70 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                             </svg>
                         </a>
@@ -369,13 +370,13 @@
                             href="{{ $event->facebook_event_url }}"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="btn btn-outline border-base-300 font-bold rounded-xl px-5 py-2.5 min-h-[44px] text-sm gap-2 inline-flex items-center justify-center w-full sm:w-auto"
+                            class="btn btn-sm btn-outline border-base-300 font-bold rounded-xl px-3 h-9 min-h-[36px] text-xs gap-1.5 inline-flex items-center"
                         >
-                            <svg class="w-4 h-4 text-primary shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-3.5 h-3.5 text-primary shrink-0" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                             </svg>
-                            <span>Facebook událost</span>
-                            <svg class="w-3.5 h-3.5 text-base-content/50 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <span>FB událost</span>
+                            <svg class="w-3 h-3 text-base-content/50 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                             </svg>
                         </a>
@@ -384,10 +385,10 @@
                             href="{{ $event->source_url }}"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="btn btn-outline border-base-300 font-bold rounded-xl px-5 py-2.5 min-h-[44px] text-sm gap-2 inline-flex items-center justify-center w-full sm:w-auto"
+                            class="btn btn-sm btn-outline border-base-300 font-bold rounded-xl px-3 h-9 min-h-[36px] text-xs gap-1.5 inline-flex items-center"
                         >
-                            <span>Původní zdroj akce</span>
-                            <svg class="w-3.5 h-3.5 text-base-content/50 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <span>Zdroj</span>
+                            <svg class="w-3 h-3 text-base-content/50 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                             </svg>
                         </a>
@@ -396,26 +397,28 @@
                     <button
                         wire:click="downloadIcal"
                         type="button"
-                        class="btn {{ $event->ticket_url ? 'btn-outline border-base-300' : 'btn-primary' }} font-bold rounded-xl px-5 py-2.5 min-h-[44px] text-sm gap-2 inline-flex items-center justify-center w-full sm:w-auto shadow-sm cursor-pointer"
+                        class="btn btn-sm {{ $event->ticket_url ? 'btn-outline border-base-300' : 'btn-primary' }} font-bold rounded-xl px-3 h-9 min-h-[36px] text-xs gap-1.5 inline-flex items-center shadow-xs cursor-pointer"
+                        title="Stáhnout do kalendáře (.ics)"
                     >
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                         </svg>
-                        <span>Uložit do kalendáře (.ics)</span>
+                        <span>Kalendář</span>
                     </button>
 
                     <button
                         type="button"
                         x-on:click="shareEvent"
-                        class="btn btn-ghost border border-base-300 font-bold rounded-xl px-5 py-2.5 min-h-[44px] text-sm gap-2 inline-flex items-center justify-center w-full sm:w-auto"
+                        class="btn btn-sm btn-ghost border border-base-300 font-bold rounded-xl px-3 h-9 min-h-[36px] text-xs gap-1.5 inline-flex items-center"
+                        title="Sdílet odkaz na akci"
                     >
-                        <svg class="w-4 h-4 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-3.5 h-3.5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
                         </svg>
-                        <span x-text="copied ? 'Zkopírováno do schránky!' : 'Sdílet akci'">Sdílet akci</span>
+                        <span x-text="copied ? 'Zkopírováno!' : 'Sdílet'">Sdílet</span>
                     </button>
 
-                    <div class="w-full sm:w-auto sm:ml-auto flex justify-center sm:justify-end pt-1 sm:pt-0">
+                    <div class="sm:ml-auto">
                         <livewire:report-event-modal :event-id="$event->id" />
                     </div>
                 </div>

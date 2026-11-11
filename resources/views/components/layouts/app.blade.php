@@ -7,50 +7,55 @@
     'schemaJson' => null,
 ])
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="cs" data-theme="events-light">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="color-scheme" content="light dark">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <!-- Okamžité nastavení tématu před vykreslením DOM (zabraňuje bílému probliknutí na mobilu i desktopu) -->
-    <script>
-        (function() {
+    <!-- Rychlá aplikace uloženého tématu bez probliknutí -->
+    <script data-navigate-once>
+        window.applyAppTheme = function() {
             try {
-                var p = localStorage.getItem('brno_events_theme') || 'system';
-                var d = false;
-                if (p === 'events-dark' || p === 'dark') { d = true; }
-                else if (p === 'events-light' || p === 'light') { d = false; }
-                else { d = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; }
-                var t = d ? 'events-dark' : 'events-light';
-                document.documentElement.setAttribute('data-theme', t);
-                if (d) {
+                var preference = localStorage.getItem('brno_events_theme') || 'system';
+                var isDark = false;
+                if (preference === 'events-dark' || preference === 'dark') {
+                    isDark = true;
+                } else if (preference === 'events-light' || preference === 'light') {
+                    isDark = false;
+                } else {
+                    isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                }
+
+                var theme = isDark ? 'events-dark' : 'events-light';
+                document.documentElement.setAttribute('data-theme', theme);
+                if (isDark) {
                     document.documentElement.classList.add('dark');
                 } else {
                     document.documentElement.classList.remove('dark');
                 }
+                var themeMeta = document.querySelector('meta[name="theme-color"]');
+                if (themeMeta) {
+                    themeMeta.setAttribute('content', isDark ? '#0f172a' : '#ea580c');
+                }
             } catch (e) {}
-        })();
+        };
+
+        window.applyAppTheme();
+
+        document.addEventListener('livewire:navigated', function() {
+            window.applyAppTheme();
+        });
+
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+                var pref = localStorage.getItem('brno_events_theme') || 'system';
+                if (pref === 'system') {
+                    window.applyAppTheme();
+                }
+            });
+        }
     </script>
-    <style>
-        /* Okamžité uzamčení barvy podkladu bez problikávání barev při navigaci */
-        html, body {
-            background-color: #f8fafc;
-        }
-        html[data-theme='events-dark'],
-        html.dark,
-        html[data-theme='events-dark'] body,
-        html.dark body {
-            background-color: #0f172a !important;
-            color-scheme: dark;
-        }
-        html[data-theme='events-light'],
-        html:not(.dark) body {
-            background-color: #f8fafc !important;
-            color-scheme: light;
-        }
-    </style>
 
     <title>{{ $title }}</title>
     <meta name="description" content="{{ $description }}">
@@ -101,63 +106,14 @@
         </script>
     @endif
 
-    <!-- Okamžitá aplikace uloženého tématu bez probliknutí a podpora Livewire wire:navigate -->
-    <script>
-        (function() {
-            window.applyAppTheme = function() {
-                try {
-                    var preference = localStorage.getItem('brno_events_theme') || 'system';
-                    var isDark = false;
-                    if (preference === 'events-dark' || preference === 'dark') {
-                        isDark = true;
-                    } else if (preference === 'events-light' || preference === 'light') {
-                        isDark = false;
-                    } else {
-                        isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                    }
-
-                    var theme = isDark ? 'events-dark' : 'events-light';
-                    document.documentElement.setAttribute('data-theme', theme);
-                    if (isDark) {
-                        document.documentElement.classList.add('dark');
-                    } else {
-                        document.documentElement.classList.remove('dark');
-                    }
-                    var themeMeta = document.querySelector('meta[name="theme-color"]');
-                    if (themeMeta) {
-                        themeMeta.setAttribute('content', isDark ? '#0f172a' : '#6366f1');
-                    }
-                } catch (e) {}
-            };
-
-            window.applyAppTheme();
-
-            document.addEventListener('livewire:navigating', function() {
-                window.applyAppTheme();
-            });
-            document.addEventListener('livewire:navigated', function() {
-                window.applyAppTheme();
-            });
-
-            if (window.matchMedia) {
-                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
-                    var pref = localStorage.getItem('brno_events_theme') || 'system';
-                    if (pref === 'system') {
-                        window.applyAppTheme();
-                    }
-                });
-            }
-        })();
-    </script>
-
     <!-- Google Font: Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" data-navigate-once>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin data-navigate-once>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" data-navigate-once>
 
     <!-- Leaflet Map CSS & JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" data-navigate-once/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" data-navigate-once></script>
 
     <!-- Vite Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])

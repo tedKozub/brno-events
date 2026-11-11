@@ -286,7 +286,7 @@
                     @foreach($events as $event)
                         <div class="card bg-base-100 shadow-xs hover:shadow-lg border border-base-300 transition-all duration-200 flex flex-col justify-between overflow-hidden group rounded-2xl">
                             {{-- Horní část: Obrázek & Odznaky s velkorysým paddingem --}}
-                            <a href="/akce/{{ $event->slug }}" wire:navigate class="relative aspect-[16/9] w-full bg-base-300 overflow-hidden block">
+                            <a href="/akce/{{ $event->slug }}" wire:navigate.hover class="relative aspect-[16/9] w-full bg-base-300 overflow-hidden block">
                                 <img
                                     src="{{ $event->cover_image_url }}"
                                     alt="{{ $event->title }}"
@@ -354,7 +354,7 @@
                                     {{-- Titulek s odkazem --}}
                                     <a
                                         href="/akce/{{ $event->slug }}"
-                                        wire:navigate
+                                        wire:navigate.hover
                                         class="font-black text-base sm:text-lg leading-snug tracking-tight text-base-content group-hover:text-primary transition-colors cursor-pointer line-clamp-2 block"
                                     >
                                         {{ $event->title }}
@@ -379,7 +379,7 @@
                                 <div class="pt-3 border-t border-base-200">
                                     <a
                                         href="/akce/{{ $event->slug }}"
-                                        wire:navigate
+                                        wire:navigate.hover
                                         class="btn btn-ghost border border-base-300 hover:btn-primary font-bold text-xs w-full rounded-xl gap-1.5 inline-flex items-center justify-center"
                                     >
                                         <span>Detail akce</span>

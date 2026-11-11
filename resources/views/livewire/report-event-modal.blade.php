@@ -3,12 +3,14 @@
     <button
         wire:click="openModal"
         type="button"
-        class="inline-flex items-center gap-1.5 text-xs text-base-content/60 hover:text-error transition-colors font-medium py-1.5 px-3 rounded-lg hover:bg-base-200"
+        class="btn btn-sm btn-ghost border border-base-300 font-bold rounded-xl px-2.5 sm:px-3 h-9 min-h-[36px] text-xs gap-1.5 inline-flex items-center text-base-content/70 hover:text-error hover:border-error/40 transition-colors"
+        title="Nahlásit chybu nebo nesrovnalost u této akce"
     >
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
         </svg>
-        <span>Nahlásit chybu u akce</span>
+        <span class="hidden sm:inline">Nahlásit chybu</span>
+        <span class="sm:hidden">Nahlásit</span>
     </button>
 
     <!-- Modal Dialog -->
