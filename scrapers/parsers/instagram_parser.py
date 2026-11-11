@@ -62,6 +62,101 @@ def get_gemini_api_key() -> Optional[str]:
     return None
 
 
+def get_openai_api_key() -> Optional[str]:
+    """Retrieves OPENAI_API_KEY from environment or .env file."""
+    key = os.environ.get("OPENAI_API_KEY")
+    if key:
+        return key
+
+    env_path = "/root/brno-events/.env"
+    if os.path.exists(env_path):
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("OPENAI_API_KEY="):
+                    val = line.split("=", 1)[1].strip().strip('"').strip("'")
+                    if val:
+                        return val
+    return None
+
+
+def extract_with_openai_vision(image_path: str, caption: str, api_key: str) -> Optional[Dict[str, Any]]:
+    """Uses OpenAI gpt-4o-mini Vision to extract structured event details from poster image + caption."""
+    try:
+        with open(image_path, "rb") as f:
+            img_b64 = base64.b64encode(f.read()).decode("utf-8")
+
+        prompt = f"""
+Jsi expert na brněnský studentský život. Analyzuj přiložený grafický plakát a text příspěvku z Instagramu.
+Dnešní datum je: {datetime.now().strftime('%Y-%m-%d')}.
+
+Extrahuj informace o události a vrať POUZE validní JSON ve formátu:
+{{
+  "title": "Přesný název akce z plakátu (bez emoji)",
+  "starts_at": "YYYY-MM-DD HH:MM:SS",
+  "ends_at": null nebo "YYYY-MM-DD HH:MM:SS",
+  "is_all_day": false,
+  "location_name": "Přesný název klubu, kavárny, fakulty nebo sálu v Brně",
+  "price_type": "free" nebo "paid" nebo "voluntary",
+  "price_amount": 150 nebo null,
+  "category_slug": "party-kluby" nebo "prednasky-workshopy" nebo "sport" nebo "kultura-umeni" nebo "kariera-networking",
+  "short_description": "Stručné shrnutí akce pro studenty na 1-2 věty bez emoji",
+  "description": "Kompletní popis a program bez emoji"
+}}
+
+Popisek z Instagramu:
+{caption}
+"""
+        url = "https://api.openai.com/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": "gpt-4o-mini",
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "Jsi asistent pro extrakci studentských akcí v Brně z plakátů do strukturovaného JSONu bez emoji.",
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{img_b64}",
+                                "detail": "high",
+                            },
+                        },
+                    ],
+                },
+            ],
+            "response_format": {"type": "json_object"},
+            "max_tokens": 1000,
+        }
+
+        with httpx.Client(timeout=25.0) as client:
+            resp = client.post(url, json=payload, headers=headers)
+            if resp.status_code == 200:
+                data = resp.json()
+                content = data["choices"][0]["message"]["content"]
+                extracted = json.loads(content)
+                extracted["title"] = clean_emoji(extracted.get("title", ""))
+                extracted["location_name"] = clean_emoji(extracted.get("location_name", "Brno"))
+                extracted["short_description"] = clean_emoji(extracted.get("short_description", ""))
+                if "description" in extracted:
+                    extracted["description"] = clean_emoji(extracted["description"])
+                return extracted
+            else:
+                print(f"OpenAI error {resp.status_code}: {resp.text}", flush=True)
+    except Exception as e:
+        print(f"OpenAI vision extraction failed: {e}", flush=True)
+
+    return None
+
+
 def extract_with_gemini_vision(image_path: str, caption: str, api_key: str) -> Optional[Dict[str, Any]]:
     """Uses Gemini 2.0 / 1.5 Flash Vision to extract structured event details from poster image + caption."""
     try:
@@ -249,6 +344,7 @@ async def scrape_instagram_profile_async(
     os.makedirs(output_dir, exist_ok=True)
     events = []
     gemini_key = get_gemini_api_key()
+    openai_key = get_openai_api_key()
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -285,9 +381,11 @@ async def scrape_instagram_profile_async(
                     except Exception:
                         pass
 
-                # Extract event: Multimodal Vision if key is available, else NLP fallback
+                # Extract event: Multimodal Vision (OpenAI or Gemini) if key is available, else NLP fallback
                 event = None
-                if gemini_key and os.path.exists(dest_path):
+                if openai_key and os.path.exists(dest_path):
+                    event = extract_with_openai_vision(dest_path, alt, openai_key)
+                elif gemini_key and os.path.exists(dest_path):
                     event = extract_with_gemini_vision(dest_path, alt, gemini_key)
 
                 if not event:
