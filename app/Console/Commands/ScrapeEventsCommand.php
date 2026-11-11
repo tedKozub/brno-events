@@ -133,13 +133,9 @@ class ScrapeEventsCommand extends Command
                     continue;
                 }
 
-                // Určení organizace
+                // Určení organizace (pouze explicitně přiřazené, nikdy náhodně nepřiřazovat první spolek univerzity)
                 $orgId = $source->organization_id;
                 $university = $item['university'] ?? $source->university ?? 'OTHER';
-                if (!$orgId && $university !== 'OTHER') {
-                    $org = Organization::where('university', $university)->first();
-                    $orgId = $org?->id;
-                }
 
                 // Detekce místa (Venue) podle klíčových slov
                 $locName = $item['location_name'] ?? '';
@@ -222,6 +218,18 @@ class ScrapeEventsCommand extends Command
         }
         if (str_contains($locLower, 'scala')) {
             return Venue::where('slug', 'univerzitni-kino-scala')->value('id');
+        }
+        if (str_contains($locLower, 'babylon')) {
+            return Venue::where('slug', 'kc-babylon')->value('id');
+        }
+        if (str_contains($locLower, 'koma lounge') || str_contains($locLower, 'koma')) {
+            return Venue::where('slug', 'koma-lounge-bar')->value('id');
+        }
+        if (str_contains($locLower, 'morgal')) {
+            return Venue::where('slug', 'cafe-morgal')->value('id');
+        }
+        if (str_contains($locLower, 'poříčí') || str_contains($locLower, 'pdf muni')) {
+            return Venue::where('slug', 'pdf-muni-porici')->value('id');
         }
         if (str_contains($locLower, 'lužánk') || str_contains($locLower, 'luzank')) {
             return Venue::where('slug', 'park-luzanky')->value('id');

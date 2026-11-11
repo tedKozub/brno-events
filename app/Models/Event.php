@@ -127,6 +127,27 @@ class Event extends Model
         return 'Placené';
     }
 
+    public function getCoverImageUrlAttribute(): string
+    {
+        if (empty($this->cover_image)) {
+            return 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=1200&q=80';
+        }
+
+        if (str_starts_with($this->cover_image, 'http://') || str_starts_with($this->cover_image, 'https://')) {
+            return $this->cover_image;
+        }
+
+        if (str_starts_with($this->cover_image, '/storage/')) {
+            return asset(ltrim($this->cover_image, '/'));
+        }
+
+        if (str_starts_with($this->cover_image, 'storage/')) {
+            return asset($this->cover_image);
+        }
+
+        return asset('storage/' . ltrim($this->cover_image, '/'));
+    }
+
     public function getMapCoordinatesAttribute(): ?array
     {
         if ($this->venue && $this->venue->latitude && $this->venue->longitude) {
@@ -219,6 +240,117 @@ class Event extends Model
                 'lng' => 16.5684,
                 'title' => 'Univerzitní kampus Bohunice (MUNI)',
                 'address' => 'Kamenice 5, Brno – Bohunice',
+                'is_exact' => true,
+            ];
+        }
+
+        // 1.5 Známé brněnské kluby, kavárny, sály a parky
+        if (str_contains($text, 'babylon')) {
+            return [
+                'lat' => 49.2018,
+                'lng' => 16.6006,
+                'title' => 'KC Babylon',
+                'address' => 'Kounicova 20, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'koma lounge') || str_contains($text, 'koma')) {
+            return [
+                'lat' => 49.2040,
+                'lng' => 16.5985,
+                'title' => 'Koma Lounge & Bar',
+                'address' => 'Kounicova 42, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'morgal')) {
+            return [
+                'lat' => 49.1979,
+                'lng' => 16.6079,
+                'title' => 'Café Morgal',
+                'address' => 'Moravské náměstí 1a, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'poříčí') || str_contains($text, 'pdf muni') || str_contains($text, 'pedagogick')) {
+            return [
+                'lat' => 49.1872,
+                'lng' => 16.5960,
+                'title' => 'Pedagogická fakulta MUNI (Poříčí)',
+                'address' => 'Poříčí 7/9, Brno – Štýřice',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'fléda') || str_contains($text, 'fleda')) {
+            return [
+                'lat' => 49.2096,
+                'lng' => 16.6033,
+                'title' => 'Fléda Club',
+                'address' => 'Štefánikova 24, Brno – Královo Pole',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'artbar') || str_contains($text, 'druhý pád')) {
+            return [
+                'lat' => 49.2062,
+                'lng' => 16.6042,
+                'title' => 'ArtBar Druhý Pád',
+                'address' => 'Štefánikova 1, Brno – Královo Pole',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'lužánk') || str_contains($text, 'luzank')) {
+            return [
+                'lat' => 49.2065,
+                'lng' => 16.6110,
+                'title' => 'Park Lužánky',
+                'address' => 'Pionýrská 280/1, Brno – Černá Pole',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'sono')) {
+            return [
+                'lat' => 49.2096,
+                'lng' => 16.5898,
+                'title' => 'Sono Music Club',
+                'address' => 'Veveří 113, Brno – Žabovřesky',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'perpetuum')) {
+            return [
+                'lat' => 49.1963,
+                'lng' => 16.6118,
+                'title' => 'Perpetuum Club',
+                'address' => 'Rooseveltova 9, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'exit club') || str_contains($text, 'exit')) {
+            return [
+                'lat' => 49.1936,
+                'lng' => 16.6074,
+                'title' => 'EXIT Club Brno',
+                'address' => 'Dominikánské náměstí 456/2, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'favál') || str_contains($text, 'faval')) {
+            return [
+                'lat' => 49.1864,
+                'lng' => 16.5819,
+                'title' => 'Favál Music Circus',
+                'address' => 'Křížkovského 416/22, Brno – Pisárky',
                 'is_exact' => true,
             ];
         }

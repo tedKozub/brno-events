@@ -162,7 +162,7 @@
             {{-- Plakát / Fotka akce s poměrem stran --}}
             <div class="relative aspect-[16/9] sm:aspect-[21/9] w-full bg-base-300 overflow-hidden">
                 <img
-                    src="{{ $event->cover_image ?: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=1200&q=80' }}"
+                    src="{{ $event->cover_image_url }}"
                     alt="{{ $event->title }}"
                     class="w-full h-full object-cover"
                 />
@@ -470,7 +470,7 @@
                             {{-- Horní část: Obrázek & Odznaky --}}
                             <a href="/akce/{{ $rel->slug }}" wire:navigate class="relative aspect-[16/9] w-full bg-base-300 overflow-hidden block">
                                 <img
-                                    src="{{ $rel->cover_image ?: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80' }}"
+                                    src="{{ $rel->cover_image_url }}"
                                     alt="{{ $rel->title }}"
                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                     loading="lazy"
