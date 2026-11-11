@@ -208,9 +208,11 @@ class ScrapeEventsCommand extends Command
                     'location_name' => $locName,
                     'price_type' => $item['price_type'] ?? 'free',
                     'price_amount' => $item['price_amount'] ?? null,
-                    'source_type' => $item['source_type'] ?? ($source->type === 'web_instagram' ? 'scraper_instagram' : 'scraper_web'),
+                    'ticket_url' => $item['ticket_url'] ?? null,
+                    'source_type' => $item['source_type'] ?? ($source->type === 'web_facebook' ? 'scraper_facebook' : ($source->type === 'web_instagram' ? 'scraper_instagram' : 'scraper_web')),
                     'source_url' => $sourceUrl,
                     'instagram_post_url' => $item['instagram_post_url'] ?? null,
+                    'facebook_event_url' => $item['facebook_event_url'] ?? null,
                     'status' => 'pending_review', // Vše jde do moderace ke schválení!
                     'is_featured' => false,
                 ]);

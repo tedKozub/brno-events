@@ -87,3 +87,12 @@ sources:
     url: "sppdf_muni"
     is_active: true
     description: "Instagram profil akcí Pedagogické fakulty MUNI (@sppdf_muni)."
+
+  - id_slug: "sppdf-muni-facebook"
+    name: "Pedagogická fakulta MUNI (Facebook SPPdF)"
+    type: "web_facebook"
+    university: "MUNI"
+    organization_slug: "muni-pdf"
+    url: "sppdfmuni"
+    is_active: true
+    description: "Facebook stránka událostí Pedagogické fakulty MUNI (Spolek přátel PDF MUNI)."

@@ -8,6 +8,7 @@ import httpx
 from parsers.ical_parser import parse_ical
 from parsers.rss_parser import parse_rss
 from parsers.instagram_parser import parse_instagram
+from parsers.facebook_parser import parse_facebook
 from parsers.web_parsers import (
     parse_mendelu,
     parse_fit_vut,
@@ -52,6 +53,7 @@ def main():
             "web_muni", "muni",
             "web_generic", "generic",
             "web_instagram", "instagram",
+            "web_facebook", "facebook",
         ],
         help="Type of scraper parser to execute",
     )
@@ -65,6 +67,8 @@ def main():
 
         if stype in ["web_instagram", "instagram"]:
             events = parse_instagram(args.url, limit=args.limit)
+        elif stype in ["web_facebook", "facebook"]:
+            events = parse_facebook(args.url, university=args.university, limit=args.limit)
         else:
             raw_content = fetch_content(args.url)
             if stype in ["web_ical", "ical"]:
