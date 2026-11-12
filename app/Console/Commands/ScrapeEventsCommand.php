@@ -117,7 +117,8 @@ class ScrapeEventsCommand extends Command
                 // Normalizace mezer a očištění titulku
                 $title = trim(preg_replace('/\s+/', ' ', $title));
                 // Odstranění zbytečných tagů / prefixů v názvu
-                $title = preg_replace('/^(top akce|akce:?)\s*/iu', '', $title);
+                $title = preg_replace('/\btop\s*akce:?\s*/iu', '', $title);
+                $title = preg_replace('/^akce:?\s*/iu', '', $title);
                 // Odstranění nalepených meta údajů z konce titulku
                 $title = preg_replace('/\s*(Prezenčně|Online|Hybridně|\d{1,2}\.\s*\d{1,2}\.).*$/iu', '', $title);
                 $title = trim($title);
@@ -131,8 +132,17 @@ class ScrapeEventsCommand extends Command
                     continue;
                 }
 
+                // Očištění popisků od TOP AKCE a systémových prefixů
+                $cleanDesc = preg_replace('/\btop\s*akce:?\s*/iu', '', $item['description'] ?? '');
+                $cleanDesc = preg_replace('/^Akce\s+[a-zA-Zá-žÁ-Ž\s]+:\s*/iu', '', $cleanDesc);
+                $cleanDesc = trim($cleanDesc);
+
+                $cleanShortDesc = preg_replace('/\btop\s*akce:?\s*/iu', '', $item['short_description'] ?? '');
+                $cleanShortDesc = preg_replace('/^Akce\s+[a-zA-Zá-žÁ-Ž\s]+:\s*/iu', '', $cleanShortDesc);
+                $cleanShortDesc = trim($cleanShortDesc);
+
                 // Ignorovat nerelevantní články (ocenění, rozhovory s profesory, výzkum, úmrtí, harmonogramy zkoušek, CŽV, zasedání senátů)
-                if ($this->isIrrelevantArticle($title, $item['description'] ?? '')) {
+                if ($this->isIrrelevantArticle($title, $cleanDesc)) {
                     $sourceSkipped++;
                     $totalSkipped++;
                     continue;
@@ -250,8 +260,8 @@ class ScrapeEventsCommand extends Command
                     'category_id' => $categoryId,
                     'title' => $title,
                     'slug' => $slug,
-                    'short_description' => $item['short_description'] ?? null,
-                    'description' => $item['description'] ?? null,
+                    'short_description' => $cleanShortDesc ?: null,
+                    'description' => $cleanDesc ?: null,
                     'cover_image' => $item['cover_image'] ?? null,
                     'starts_at' => $startsAt,
                     'ends_at' => $endsAt,

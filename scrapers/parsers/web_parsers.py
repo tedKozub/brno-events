@@ -251,6 +251,10 @@ def parse_muni(html: str, base_url: str = "https://www.muni.cz/kalendar") -> Lis
     ]
 
     for item in soup.select(".box-event"):
+        # Remove any decorative badge like "TOP AKCE" or ribbons
+        for badge in item.select(".box-event__badge, .badge, .ribbon"):
+            badge.decompose()
+
         full_card_text = item.get_text(" ", strip=True).lower()
         if any(re.search(pat, full_card_text) for pat in exclude_patterns):
             continue
@@ -339,8 +343,10 @@ def parse_muni(html: str, base_url: str = "https://www.muni.cz/kalendar") -> Lis
                 rm.decompose()
             desc = c_copy.get_text(" ", strip=True)
 
+        desc = re.sub(r"\btop\s*akce:?\s*", "", desc, flags=re.IGNORECASE).strip()
+
         if not desc:
-            desc = f"Akce Masarykovy univerzity: {title} ({date_str})."
+            desc = f"Událost Masarykovy univerzity: {title} ({date_str})."
 
         events.append({
             "title": title,
