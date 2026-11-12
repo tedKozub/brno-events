@@ -26,7 +26,7 @@ class OgImageTest extends TestCase
         $response->assertHeader('Content-Type', 'image/jpeg');
     }
 
-    public function test_event_fallback_cover_image_points_to_dynamic_og_image(): void
+    public function test_event_fallback_cover_image_uses_photographic_placeholder(): void
     {
         $event = Event::create([
             'title' => 'Testovací Přednáška',
@@ -37,7 +37,7 @@ class OgImageTest extends TestCase
             'cover_image' => null,
         ]);
 
-        $this->assertStringContainsString('og-image.jpg', $event->cover_image_url);
-        $this->assertStringNotContainsString('unsplash.com', $event->cover_image_url);
+        $this->assertStringContainsString('unsplash.com', $event->cover_image_url);
+        $this->assertStringNotContainsString('og-image.jpg', $event->cover_image_url);
     }
 }

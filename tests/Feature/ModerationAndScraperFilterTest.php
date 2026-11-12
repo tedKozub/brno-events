@@ -82,10 +82,17 @@ class ModerationAndScraperFilterTest extends TestCase
         $this->assertTrue($method->invoke($command, 'Výukové změny v ZS 2026: DOD', ''));
         $this->assertTrue($method->invoke($command, 'Přehled vybraných zkoušek po ZIMNÍM semestru', ''));
         $this->assertTrue($method->invoke($command, 'Co se stane s dopravou? Odpověď hledá výzkum z FIT VUT', ''));
+        // MUNI specifické nerelevantní položky (CŽV, jmenování, ZŠ/SŠ učitelé, NLZP)
+        $this->assertTrue($method->invoke($command, 'Trenér tanečních technik II. třídy', 'KURZ CŽV'));
+        $this->assertTrue($method->invoke($command, 'Geovědy pro environmentální vzdělávání', 'Kurz je určen pro učitele přírodopisu na ZŠ a SŠ'));
+        $this->assertTrue($method->invoke($command, 'Řízení ke jmenování profesorkou doc. Mgr. Novákové', ''));
+        $this->assertTrue($method->invoke($command, 'Akutní stavy v anestezii dětí', 'Pro NLZP'));
+        $this->assertTrue($method->invoke($command, 'Zasedání akademického senátu MU', ''));
 
         // Skutečné akce nesmí být označeny jako irelevantní
         $this->assertFalse($method->invoke($command, 'Meziuniverzitní Beerpong Cup na PPV', 'Turnaj studentů'));
         $this->assertFalse($method->invoke($command, 'Semestrální Mecheche na Flédě', 'Tradiční uvítací párty'));
         $this->assertFalse($method->invoke($command, 'Kreativní workshop malování květináčů', 'Dopřej si odpočinek'));
+        $this->assertFalse($method->invoke($command, 'Křehká svoboda 2026', 'Diskuze Masarykovy univerzity k 17. listopadu'));
     }
 }

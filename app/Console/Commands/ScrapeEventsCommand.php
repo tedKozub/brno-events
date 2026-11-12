@@ -114,7 +114,24 @@ class ScrapeEventsCommand extends Command
                     continue;
                 }
 
-                // Ignorovat nerelevantní články (ocenění, rozhovory s profesory, výzkum, úmrtí, harmonogramy zkoušek)
+                // Normalizace mezer a očištění titulku
+                $title = trim(preg_replace('/\s+/', ' ', $title));
+                // Odstranění zbytečných tagů / prefixů v názvu
+                $title = preg_replace('/^(top akce|akce:?)\s*/iu', '', $title);
+                // Odstranění nalepených meta údajů z konce titulku
+                $title = preg_replace('/\s*(Prezenčně|Online|Hybridně|\d{1,2}\.\s*\d{1,2}\.).*$/iu', '', $title);
+                $title = trim($title);
+
+                // Omezení maximální délky názvu akce pro zachování čistého UI
+                if (mb_strlen($title) > 90) {
+                    $title = Str::limit($title, 87, '...');
+                }
+
+                if (mb_strlen($title) < 4) {
+                    continue;
+                }
+
+                // Ignorovat nerelevantní články (ocenění, rozhovory s profesory, výzkum, úmrtí, harmonogramy zkoušek, CŽV, zasedání senátů)
                 if ($this->isIrrelevantArticle($title, $item['description'] ?? '')) {
                     $sourceSkipped++;
                     $totalSkipped++;
@@ -354,24 +371,45 @@ class ScrapeEventsCommand extends Command
     }
 
     /**
-     * Zjistí, zda se jedná o nerelevantní zprávu / akademický článek namísto události.
+     * Zjistí, zda se jedná o nerelevantní zprávu / akademický článek / neakci namísto studentské události.
      */
     protected function isIrrelevantArticle(string $title, string $description): bool
     {
         $lowerTitle = mb_strtolower($title);
         $lowerDesc = mb_strtolower($description);
+        $combined = $lowerTitle . ' ' . $lowerDesc;
 
         $articlePhrases = [
+            // Ocenění, věda a rozhovory
             'získal cenu', 'získala cenu', 'národní cen', 'česká hlava', 'ocenění za',
             'říká profesor', 'říká docent', 'říká děkan', 'rozhovor s',
             'výzkum z fit', 'výzkumníci z', 'vědci z', 'nový výzkum',
+            // Zkoušky, rozvrhy a harmonogramy
             'přehled vybraných zkoušek', 'výukové změny v zs', 'výukové změny v ls',
             'harmonogram výuky', 'předtermíny zkoušek', 'zkouškové období',
             'kondolen', 'smuteční oznámení', 'úmrtí', 'vzpomínka na',
+            // CŽV a kurzy celoživotního vzdělávání
+            'kurz cžv', 'kurzy cžv', 'cžv', 'celoživotní vzdělávání', 'celoživotního vzdělávání',
+            'vzdělávací kurz',
+            // Kurzy pro učitele a žáky ZŠ/SŠ
+            'pro studenty středních škol', 'pro žáky zš', 'pro žáky sš', 'žáků zuš',
+            'pro učitele zš', 'pro učitele sš', 'učitele přírodopisu', 'učitele biologie', 'učitele zeměpisu',
+            // Habilitace, jmenování profesorů a doktorské obhajoby
+            'řízení ke jmenování', 'habilitační řízení', 'habilitační přednáška',
+            'inaugurační přednáška', 'inaugurace', 'obhajoba disertační', 'obhajoby disertačních',
+            'doktorská obhajoba', 'rigorózní řízení', 'čestný doktorát',
+            // Orgány univerzity a senát
+            'akademický senát', 'akademického senátu', 'zasedání senátu', 'zasedání akademického senátu',
+            'vědecká rada', 'vědecké rady', 'zasedání vědecké rady', 'kolegium děkana', 'vedení fakulty',
+            // Zdravotnické kurzy pro zaměstnance nemocnic
+            'pro nlzp', 'nelékařských zdravotnických', 'kontinuální vzdělávání lékařů', 'atestační příprava',
+            'simulační kurz akutních stavů',
+            // Administrativní úkony
+            'přijímací řízení', 'zápis do studia', 'uzávěrka přihlášek', 'termín pro odevzdání',
         ];
 
         foreach ($articlePhrases as $phrase) {
-            if (str_contains($lowerTitle, $phrase) || str_contains($lowerDesc, $phrase)) {
+            if (str_contains($combined, $phrase)) {
                 return true;
             }
         }

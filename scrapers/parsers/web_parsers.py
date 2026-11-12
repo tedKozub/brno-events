@@ -235,49 +235,121 @@ def parse_unob(html: str, base_url: str = "https://unob.cz/univerzita/media-a-ve
 def parse_muni(html: str, base_url: str = "https://www.muni.cz/kalendar") -> List[Dict[str, Any]]:
     """
     Parses events from muni.cz/kalendar (.box-event)
+    Filters out non-event items (CŽV courses, administrative procedures, secondary school events, NLZP courses).
     """
     soup = BeautifulSoup(html, "lxml")
     events = []
     current_year = datetime.datetime.now().year
 
+    exclude_patterns = [
+        r"cžv", r"celoživotn", r"vzdělávací kurz",
+        r"pro studenty středních škol", r"pro žáky", r"pro učitele", r"žáků zuš",
+        r"pro nlzp", r"nelékařsk", r"řízení ke jmenování",
+        r"habilitačn", r"inaugurač", r"akademický senát", r"vědecká rada",
+        r"disertačn", r"rigorózní", r"přijímací řízení", r"zápis do studia",
+        r"simulační kurz akutních stavů", r"kontinuální vzdělávání lékařů",
+    ]
+
     for item in soup.select(".box-event"):
+        full_card_text = item.get_text(" ", strip=True).lower()
+        if any(re.search(pat, full_card_text) for pat in exclude_patterns):
+            continue
+
         link_el = item.find("a")
         url = urljoin(base_url, link_el.get("href", "")) if link_el else base_url
         
-        title_el = item.find(["h4", "h3", "h2", "span", "div"], class_=lambda c: c and "title" in c)
+        title_el = item.select_one(".box-event__title")
         if not title_el:
-            title_el = item.select_one(".box-event__title")
-        if not title_el and link_el:
-            # Avoid full card text if possible
-            title_el = link_el.find(["h4", "h3", "h2", "strong"]) or link_el
+            title_el = item.find(["h4", "h3", "h2"])
         if not title_el:
             continue
-        title = title_el.get_text(strip=True)
 
-        date_el = item.find(class_=lambda c: c and "date" in c)
-        date_str = date_el.get_text(strip=True) if date_el else ""
+        # Clone and decompose icons / sub-elements to avoid dirty title
+        t_copy = BeautifulSoup(str(title_el), "lxml")
+        for sub in t_copy.find_all(["span", "small", "i", "div"]):
+            sub.decompose()
+        title = t_copy.get_text(" ", strip=True)
 
-        # Parse date like "28. 8. – 31. 1." or "15. 11."
-        day, month = 15, 11
-        d_match = re.search(r"(\d{1,2})\.\s*(\d{1,2})\.", date_str)
-        if d_match:
-            day = int(d_match.group(1))
-            month = int(d_match.group(2))
+        # Strip prefixes
+        title = re.sub(r"^(top akce|akce:?)\s*", "", title, flags=re.IGNORECASE).strip()
+        # Enforce clean max length
+        if len(title) > 90:
+            title = title[:87].rsplit(" ", 1)[0] + "..." if " " in title[:87] else title[:87] + "..."
+
+        if len(title) < 4:
+            continue
+
+        # Extract image if present
+        img_el = item.select_one(".box-event__img img, img")
+        cover_image = None
+        if img_el and img_el.get("src"):
+            cover_image = urljoin(base_url, img_el.get("src"))
+
+        # Parse date and times
+        date_el = item.select_one(".box-event__date")
+        date_str = date_el.get_text(" ", strip=True) if date_el else ""
+
+        times = re.findall(r"(\d{1,2}:\d{2})", date_str)
+        start_time = f"{int(times[0].split(':')[0]):02d}:{times[0].split(':')[1]}:00" if times else "17:00:00"
+        end_time = f"{int(times[1].split(':')[0]):02d}:{times[1].split(':')[1]}:00" if len(times) > 1 else None
+
+        # Check for range: "11. – 25. 11."
+        m_range = re.search(r"^\s*(\d{1,2})\.\s*[–—-]\s*(\d{1,2})\.\s*(\d{1,2})\.", date_str)
+        if m_range:
+            start_day = int(m_range.group(1))
+            start_month = int(m_range.group(3))
+            end_day = int(m_range.group(2))
+            end_month = int(m_range.group(3))
+        else:
+            dates = re.findall(r"(\d{1,2})\.\s*(\d{1,2})\.", date_str)
+            if dates:
+                start_day = int(dates[0][0])
+                start_month = int(dates[0][1])
+                if len(dates) > 1:
+                    end_day = int(dates[1][0])
+                    end_month = int(dates[1][1])
+                else:
+                    end_day, end_month = None, None
+            else:
+                start_day, start_month = 15, 11
+                end_day, end_month = None, None
 
         year = current_year
-        if month < datetime.datetime.now().month - 1:
+        now = datetime.datetime.now()
+        if start_month < now.month - 1:
             year += 1
 
-        starts_at = f"{year:04d}-{month:02d}-{day:02d} 17:00:00"
-        desc = f"Akce Masarykovy univerzity: {title} ({date_str})."
+        starts_at = f"{year:04d}-{start_month:02d}-{start_day:02d} {start_time}"
+        ends_at = None
+        if end_day and end_month:
+            end_year = year
+            if end_month < start_month:
+                end_year += 1
+            e_time = end_time if end_time else "23:59:59"
+            ends_at = f"{end_year:04d}-{end_month:02d}-{end_day:02d} {e_time}"
+        elif end_time:
+            ends_at = f"{year:04d}-{start_month:02d}-{start_day:02d} {end_time}"
+
+        # Teaser description from content
+        content_el = item.select_one(".box-event__content")
+        desc = ""
+        if content_el:
+            c_copy = BeautifulSoup(str(content_el), "lxml")
+            for rm in c_copy.select(".box-event__title, .box-event__date, .box-event__tags, .meta, span, h4"):
+                rm.decompose()
+            desc = c_copy.get_text(" ", strip=True)
+
+        if not desc:
+            desc = f"Akce Masarykovy univerzity: {title} ({date_str})."
 
         events.append({
             "title": title,
             "short_description": desc[:200],
             "description": desc,
             "starts_at": starts_at,
-            "ends_at": None,
+            "ends_at": ends_at,
             "is_all_day": False,
+            "cover_image": cover_image,
             "location_name": "Masarykova univerzita, Brno",
             "source_url": url,
             "source_type": "scraper_web",

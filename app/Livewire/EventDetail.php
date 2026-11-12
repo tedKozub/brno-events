@@ -121,7 +121,7 @@ class EventDetail extends Component
         ])->layout('components.layouts.app', [
             'title' => $event->title . ' • BrnoAkce',
             'description' => $cleanDescription,
-            'ogImage' => $event->cover_image_url,
+            'ogImage' => !empty($event->cover_image) ? $event->cover_image_url : route('event.og-image', ['slug' => $event->slug]),
             'ogType' => 'event',
             'ogUrl' => url('/akce/' . $event->slug),
             'schemaJson' => json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
