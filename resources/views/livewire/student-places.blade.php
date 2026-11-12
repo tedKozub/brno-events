@@ -430,4 +430,7 @@
             </section>
         </div>
     </main>
+
+    {{-- FOOTER SE VSTUPEM PRO SPOLKY A PWA INSTALACÍ --}}
+    <x-footer />
 </div>

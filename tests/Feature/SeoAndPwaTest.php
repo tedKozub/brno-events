@@ -83,6 +83,8 @@ class SeoAndPwaTest extends TestCase
         $response->assertSee('property="og:site_name" content="BrnoAkce"', false);
         $response->assertSee('property="og:image"', false);
         $response->assertSee('name="twitter:card" content="summary_large_image"', false);
+        $response->assertSee('Přidat na plochu / PWA', false);
+        $response->assertSee('id="pwa_install_modal"', false);
     }
 
     public function test_event_detail_includes_opengraph_and_schema_org_json_ld(): void
