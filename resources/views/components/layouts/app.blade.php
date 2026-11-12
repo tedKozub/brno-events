@@ -198,6 +198,9 @@
     {{-- COOKIE CONSENT & PRIVACY BANNER --}}
     <x-cookie-consent />
 
+    {{-- PLOVOUCÍ TLAČÍTKO SCROLL TO TOP --}}
+    <x-scroll-to-top />
+
     @livewireScripts
 
     <!-- PWA Service Worker & Install Handler -->

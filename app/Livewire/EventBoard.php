@@ -19,6 +19,7 @@ class EventBoard extends Component
     public string $viewMode = 'cards'; // cards, map
     public ?int $selectedEventId = null;
     public array $mapMarkers = [];
+    public int $perPage = 12;
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -36,6 +37,7 @@ class EventBoard extends Component
 
     public function updatedSearch(): void
     {
+        $this->perPage = 12;
         if (mb_strlen(trim($this->search)) >= 3) {
             app(\App\Services\AnalyticsService::class)->trackSearch($this->search);
         }
@@ -44,21 +46,30 @@ class EventBoard extends Component
     public function setDateFilter(string $filter): void
     {
         $this->dateFilter = $filter;
+        $this->perPage = 12;
     }
 
     public function setCategory(string $categorySlug): void
     {
         $this->selectedCategory = $this->selectedCategory === $categorySlug ? '' : $categorySlug;
+        $this->perPage = 12;
     }
 
     public function setUniversity(string $university): void
     {
         $this->selectedUniversity = $this->selectedUniversity === $university ? '' : $university;
+        $this->perPage = 12;
     }
 
     public function toggleFree(): void
     {
         $this->onlyFree = !$this->onlyFree;
+        $this->perPage = 12;
+    }
+
+    public function loadMore(): void
+    {
+        $this->perPage += 12;
     }
 
     public function setViewMode(string $mode): void
@@ -90,6 +101,7 @@ class EventBoard extends Component
         $this->selectedCategory = '';
         $this->selectedUniversity = '';
         $this->onlyFree = false;
+        $this->perPage = 12;
     }
 
     public function downloadIcal(int $id)
@@ -315,8 +327,14 @@ class EventBoard extends Component
 
         $selectedEvent = $this->selectedEventId ? Event::with(['organization', 'venue', 'category'])->find($this->selectedEventId) : null;
 
+        $totalFilteredCount = $events->count();
+        $paginatedEvents = $events->take($this->perPage);
+        $hasMore = $totalFilteredCount > $this->perPage;
+
         return view('livewire.event-board', [
-            'events' => $events,
+            'events' => $paginatedEvents,
+            'totalEventsCount' => $totalFilteredCount,
+            'hasMore' => $hasMore,
             'categories' => $categories,
             'allCategoriesCount' => $allCategoriesCount,
             'mapMarkers' => $this->mapMarkers,

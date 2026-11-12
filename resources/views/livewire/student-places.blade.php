@@ -171,14 +171,15 @@
         </section>
 
         {{-- MAPOVÝ PANEL A SEZNAM MÍST --}}
-        <div
-            class="space-y-6"
-            x-data="studentPlacesController(@js($places))"
-            @places-updated.window="updatePlaces($event.detail.places)"
-            @place-selected.window="flyToPlace($event.detail.id, $event.detail.lat, $event.detail.lng)"
-        >
+        <div class="space-y-6">
             {{-- INTERAKTIVNÍ MAPA BRNA --}}
-            <section id="map-container" class="card bg-base-100 shadow-sm border border-base-300 overflow-hidden">
+            <section
+                id="map-container"
+                class="card bg-base-100 shadow-sm border border-base-300 overflow-hidden"
+                x-data="studentPlacesController(@js($places))"
+                @places-updated.window="updatePlaces($event.detail.places)"
+                @place-selected.window="flyToPlace($event.detail.id, $event.detail.lat, $event.detail.lng)"
+            >
                 <div class="card-body p-3.5 sm:p-5 space-y-3">
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         <h2 class="text-sm sm:text-base font-bold flex items-center gap-2 text-base-content">
@@ -292,7 +293,7 @@
                                 <div class="px-4 pb-4 pt-1 sm:px-5 sm:pb-5 border-t border-base-200 flex items-center gap-2">
                                     <button
                                         type="button"
-                                        @click="flyToPlace({{ $place['id'] }}, {{ $place['lat'] }}, {{ $place['lng'] }})"
+                                        @click="$dispatch('place-selected', { id: {{ $place['id'] }}, lat: {{ $place['lat'] }}, lng: {{ $place['lng'] }} })"
                                         class="btn btn-xs sm:btn-sm btn-ghost border border-base-300 hover:border-primary flex-1 font-bold text-xs"
                                         title="Vycentrovat na mapě"
                                     >
@@ -348,6 +349,7 @@
             map: null,
             markersLayer: null,
             markers: {},
+            _resizeHandler: null,
 
             init() {
                 this.$nextTick(() => {
@@ -360,11 +362,6 @@
                     }
                 };
                 window.addEventListener('resize', this._resizeHandler, { passive: true });
-
-                this.$cleanup(() => {
-                    window.removeEventListener('resize', this._resizeHandler);
-                    this.destroy();
-                });
             },
 
             initMap() {
@@ -376,6 +373,10 @@
                         this.map.remove();
                     } catch (e) {}
                     this.map = null;
+                }
+
+                if (mapEl._leaflet_id) {
+                    delete mapEl._leaflet_id;
                 }
 
                 // Shodná konfigurace s mapou akcí s plnou podporou gest z touchpadu i mobilu:
@@ -506,12 +507,15 @@
                     setTimeout(() => marker.openPopup(), 600);
                 }
                 const mapCard = document.getElementById('map-container');
-                if (mapCard && window.innerWidth < 1024) {
+                if (mapCard) {
                     mapCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             },
 
             destroy() {
+                if (this._resizeHandler) {
+                    window.removeEventListener('resize', this._resizeHandler);
+                }
                 if (this.map) {
                     try {
                         this.map.remove();

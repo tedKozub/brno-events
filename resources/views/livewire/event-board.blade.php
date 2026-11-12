@@ -24,7 +24,7 @@
                 <a
                     href="/"
                     wire:navigate
-                    class="px-3 sm:px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 transition-all {{ request()->is('/') ? 'bg-primary text-primary-content shadow-xs' : 'text-base-content/70 hover:text-base-content hover:bg-base-200' }}"
+                    class="px-3 sm:px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 transition-all bg-primary text-primary-content shadow-xs"
                 >
                     <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -34,7 +34,7 @@
                 <a
                     href="/mista"
                     wire:navigate
-                    class="px-3 sm:px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 transition-all {{ request()->is('mista*') ? 'bg-primary text-primary-content shadow-xs' : 'text-base-content/70 hover:text-base-content hover:bg-base-200' }}"
+                    class="px-3 sm:px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 transition-all text-base-content/70 hover:text-base-content hover:bg-base-200"
                 >
                     <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
@@ -305,7 +305,7 @@
             @else
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
                     @foreach($events as $event)
-                        <div class="card bg-base-100 shadow-xs hover:shadow-lg border border-base-300 transition-all duration-200 flex flex-col justify-between overflow-hidden group rounded-2xl">
+                        <div wire:key="event-card-{{ $event->id }}" class="card bg-base-100 shadow-xs hover:shadow-lg border border-base-300 transition-all duration-200 flex flex-col justify-between overflow-hidden group rounded-2xl">
                             {{-- Horní část: Obrázek & Odznaky s velkorysým paddingem --}}
                             <a href="/akce/{{ $event->slug }}" wire:navigate.hover class="relative aspect-[16/9] w-full bg-base-300 overflow-hidden block">
                                 <img
@@ -423,6 +423,37 @@
                         </div>
                     @endforeach
                 </div>
+
+                {{-- DYNAMICKÉ NAČÍTÁNÍ / INFINITE SCROLL S TLAČÍTKEM A INTERSECTION OBSERVEREM --}}
+                @if($hasMore)
+                    <div
+                        x-data="{
+                            observe() {
+                                const observer = new IntersectionObserver((entries) => {
+                                    if (entries[0].isIntersecting) {
+                                        $wire.loadMore();
+                                    }
+                                }, { rootMargin: '350px' });
+                                observer.observe(this.$el);
+                            }
+                        }"
+                        x-init="observe()"
+                        class="pt-10 pb-6 flex flex-col items-center justify-center gap-3"
+                    >
+                        <button
+                            wire:click="loadMore"
+                            wire:loading.attr="disabled"
+                            type="button"
+                            class="btn btn-outline border-base-300 hover:border-primary hover:bg-base-200 text-xs font-bold rounded-2xl px-6 gap-2 shadow-xs transition-all"
+                        >
+                            <span wire:loading.remove wire:target="loadMore">
+                                Načíst další akce (zobrazeno {{ count($events) }} z {{ $totalEventsCount }})
+                            </span>
+                            <span wire:loading wire:target="loadMore" class="loading loading-spinner loading-xs text-primary"></span>
+                            <span wire:loading wire:target="loadMore">Načítám další akce...</span>
+                        </button>
+                    </div>
+                @endif
             @endif
         @endif
     </main>

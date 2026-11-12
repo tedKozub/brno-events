@@ -2,6 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Services\EmbeddingService;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 class StudentPlaces extends Component
@@ -350,6 +352,15 @@ class StudentPlaces extends Component
         ];
     }
 
+    public function getPlaceEmbedding(array $place): ?array
+    {
+        $id = $place['id'];
+        return Cache::remember('student_place_emb_' . $id, 86400 * 30, function () use ($place) {
+            $text = "{$place['name']}. {$place['address']}. {$place['description']}. Tagy: " . implode(', ', $place['tags']) . '. ' . ($place['highlight'] ?? '');
+            return app(EmbeddingService::class)->getEmbedding($text);
+        });
+    }
+
     public function getFilteredPlacesProperty(): array
     {
         $places = $this->allPlaces;
@@ -359,26 +370,87 @@ class StudentPlaces extends Component
             $places = array_filter($places, fn ($p) => $p['category'] === $this->selectedCategory);
         }
 
-        // Vyhledávání podle názvu, tagů nebo popisu
+        // Hybridní vyhledávání (vektorový sémantický embedding + fulltext shoda)
         if (!empty(trim($this->search))) {
-            $term = mb_strtolower(trim($this->search));
-            $places = array_filter($places, function ($p) use ($term) {
-                if (str_contains(mb_strtolower($p['name']), $term)) {
-                    return true;
-                }
-                if (str_contains(mb_strtolower($p['description']), $term)) {
-                    return true;
-                }
-                if (str_contains(mb_strtolower($p['address']), $term)) {
-                    return true;
-                }
-                foreach ($p['tags'] as $tag) {
-                    if (str_contains(mb_strtolower($tag), $term)) {
-                        return true;
+            $searchTerm = trim($this->search);
+            $normSearch = mb_strtolower($searchTerm);
+            $keywords = array_filter(explode(' ', $normSearch), fn ($w) => mb_strlen($w) >= 2);
+
+            $embeddingService = app(EmbeddingService::class);
+            $queryVector = $embeddingService->getEmbedding($searchTerm);
+
+            $scored = [];
+            $hasAnyKeywordMatch = false;
+
+            foreach ($places as $place) {
+                $semanticSim = 0.0;
+                if ($queryVector) {
+                    $placeVector = $this->getPlaceEmbedding($place);
+                    if ($placeVector && is_array($placeVector)) {
+                        $semanticSim = EmbeddingService::cosineSimilarity($queryVector, $placeVector);
                     }
                 }
-                return false;
-            });
+
+                // Shody klíčových slov
+                $nameNorm = mb_strtolower($place['name']);
+                $descNorm = mb_strtolower($place['description']);
+                $addrNorm = mb_strtolower($place['address']);
+                $tagsNorm = mb_strtolower(implode(' ', $place['tags']));
+                $highlightNorm = mb_strtolower($place['highlight'] ?? '');
+                $combinedText = "{$nameNorm} {$descNorm} {$addrNorm} {$tagsNorm} {$highlightNorm}";
+
+                $hasExactNameMatch = str_contains($nameNorm, $normSearch);
+                $hasWordMatch = false;
+
+                foreach ($keywords as $kw) {
+                    if (str_contains($combinedText, $kw)) {
+                        $hasWordMatch = true;
+                        break;
+                    }
+                }
+
+                $keywordBonus = 0.0;
+                if ($hasExactNameMatch) {
+                    $keywordBonus += 1.0;
+                    $hasAnyKeywordMatch = true;
+                } elseif (str_contains($tagsNorm, $normSearch) || str_contains($highlightNorm, $normSearch)) {
+                    $keywordBonus += 0.6;
+                    $hasAnyKeywordMatch = true;
+                } elseif ($hasWordMatch) {
+                    $keywordBonus += 0.35;
+                    $hasAnyKeywordMatch = true;
+                }
+
+                $totalScore = $semanticSim + $keywordBonus;
+
+                $scored[] = [
+                    'place' => $place,
+                    'score' => $totalScore,
+                    'hasKeywordMatch' => $keywordBonus > 0,
+                    'semanticSim' => $semanticSim,
+                ];
+            }
+
+            // Pokud alespoň jedno místo přímo odpovídá klíčovým slovům (např. vyhledávání "Božence", "MZK"),
+            // vyřadíme místa bez jakékoliv shody klíčových slov, pokud nemají extrémně vysokou sémantickou shodu (>= 0.55).
+            // Pokud žádné místo nemá shodu klíčových slov (např. abstraktní dotaz "místo na učení"),
+            // použijeme čistě sémantický filtr (>= 0.35).
+            $filtered = [];
+            foreach ($scored as $item) {
+                if ($hasAnyKeywordMatch) {
+                    if ($item['hasKeywordMatch'] || $item['semanticSim'] >= 0.55) {
+                        $filtered[] = $item;
+                    }
+                } else {
+                    if ($item['semanticSim'] >= 0.35) {
+                        $filtered[] = $item;
+                    }
+                }
+            }
+
+            // Seřazení podle relevance skóre sestupně
+            usort($filtered, fn ($a, $b) => $b['score'] <=> $a['score']);
+            $places = array_column($filtered, 'place');
         }
 
         return array_values($places);

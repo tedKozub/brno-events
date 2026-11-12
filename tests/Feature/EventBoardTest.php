@@ -88,4 +88,28 @@ class EventBoardTest extends TestCase
         $response = $this->get('/admin/login');
         $response->assertStatus(200);
     }
+
+    public function test_dynamic_pagination_and_load_more(): void
+    {
+        $component = Livewire::test(\App\Livewire\EventBoard::class);
+
+        $events = $component->viewData('events');
+        $totalCount = $component->viewData('totalEventsCount');
+        $hasMore = $component->viewData('hasMore');
+
+        $this->assertLessThanOrEqual(12, $events->count());
+        if ($totalCount > 12) {
+            $this->assertTrue($hasMore);
+            $this->assertEquals(12, $events->count());
+
+            // Calling loadMore increases perPage and loads more events
+            $component->call('loadMore');
+            $updatedEvents = $component->viewData('events');
+            $this->assertGreaterThan(12, $updatedEvents->count());
+        }
+
+        // Filtering resets perPage
+        $component->call('setDateFilter', 'today');
+        $this->assertEquals(12, $component->get('perPage'));
+    }
 }
