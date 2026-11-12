@@ -23,6 +23,8 @@ class Event extends Model
         'short_description',
         'description',
         'cover_image',
+        'cover_image_type',
+        'original_image_url',
         'starts_at',
         'ends_at',
         'is_all_day',
@@ -159,6 +161,48 @@ class Event extends Model
         }
 
         return asset('storage/' . ltrim($this->cover_image, '/'));
+    }
+
+    public function getEffectiveCoverImageTypeAttribute(): string
+    {
+        if (empty($this->cover_image)) {
+            return 'stock';
+        }
+
+        if (!empty($this->cover_image_type)) {
+            return $this->cover_image_type;
+        }
+
+        $lower = strtolower($this->cover_image);
+        if (str_contains($lower, 'poster') || str_contains($lower, 'plakat')) {
+            return 'poster';
+        }
+
+        if (str_contains($lower, 'banner') || str_contains($lower, 'hero') || str_contains($lower, 'header') || str_contains($lower, 'fb_') || str_contains($lower, 'ig_')) {
+            return 'banner';
+        }
+
+        return 'article';
+    }
+
+    public function getCoverImageTypeDisplayAttribute(): string
+    {
+        return match($this->effective_cover_image_type) {
+            'poster' => 'Plakát akce',
+            'banner' => 'Webový banner',
+            'article' => 'Obrázek z článku',
+            default => 'Ilustrační foto',
+        };
+    }
+
+    public function isPoster(): bool
+    {
+        return $this->effective_cover_image_type === 'poster';
+    }
+
+    public function isStockImage(): bool
+    {
+        return $this->effective_cover_image_type === 'stock';
     }
 
     public function getMapCoordinatesAttribute(): ?array

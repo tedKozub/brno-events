@@ -173,7 +173,7 @@ class ScrapeEventsCommand extends Command
 
                 // Deduplikace podle unikátního source_url nebo titulku a data
                 // DŮLEŽITÉ: Kontrolujeme i withTrashed(), aby se smazané nebo zamítnuté akce nescrapovaly znovu!
-                $existing = Event::withTrashed()->where(function ($q) use ($title, $startsAt, $sourceUrl, $item) {
+                $existing = Event::withTrashed()->where(function ($q) use ($title, $startsAt, $sourceUrl) {
                     if (!empty($sourceUrl)) {
                         $q->where('source_url', $sourceUrl);
                     }
@@ -181,9 +181,6 @@ class ScrapeEventsCommand extends Command
                         $sub->where('title', $title)
                             ->whereDate('starts_at', $startsAt->toDateString());
                     });
-                    if (!empty($item['cover_image'])) {
-                        $q->orWhere('cover_image', $item['cover_image']);
-                    }
                 })->first();
 
                 if ($existing) {
@@ -277,6 +274,15 @@ class ScrapeEventsCommand extends Command
                     'status' => 'pending_review', // Vše jde do moderace ke schválení!
                     'is_featured' => false,
                 ]);
+
+                // Obohacení banneru / plakátu přímo ze zdrojového webu (poster > banner > article > stock)
+                if (!empty($createdEvent->source_url)) {
+                    try {
+                        app(\App\Services\EventBannerService::class)->enrichEvent($createdEvent);
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::warning("Scraper: Nepodařilo se obohatit banner pro akci #{$createdEvent->id}: " . $e->getMessage());
+                    }
+                }
 
                 $newEventsList[] = [
                     'id' => $createdEvent->id,

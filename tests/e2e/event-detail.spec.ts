@@ -85,4 +85,23 @@ test.describe('Event Detail & Reporting Workflow', () => {
     await expect(page.locator('text=Děkujeme za nahlášení!')).toBeVisible({ timeout: 5000 });
   });
 
+  test('opens poster lightbox modal on event detail when clicking full image/poster button', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('a[href^="/akce/"]').first().click();
+    await page.waitForURL('**/akce/**');
+
+    // Click full poster/image button
+    const posterBtn = page.locator('button:has-text("Plakát"), button:has-text("Celý plakát"), button:has-text("Obrázek")').first();
+    if (await posterBtn.isVisible()) {
+      await posterBtn.click();
+      const modal = page.locator('#poster_modal');
+      await expect(modal).toBeVisible();
+      const modalImg = modal.locator('img');
+      await expect(modalImg).toBeVisible();
+      // Close modal
+      const closeBtn = modal.locator('button:has-text("Zavřít")').first();
+      await closeBtn.click();
+    }
+  });
+
 });

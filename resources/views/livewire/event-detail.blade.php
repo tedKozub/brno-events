@@ -177,7 +177,7 @@
 
                 {{-- Horní odznaky --}}
                 <div class="absolute top-3 sm:top-4 left-3 sm:left-4 right-3 sm:right-4 flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 flex-wrap">
                         @if($event->organization)
                             @php
                                 $uBadge = match($event->organization->university) {
@@ -191,6 +191,35 @@
                             @endphp
                             <span class="px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider backdrop-blur-md {{ $uBadge }} shadow-sm">
                                 {{ $event->organization->university }}
+                            </span>
+                        @endif
+
+                        {{-- Typ obrázku (Plakát / Webový banner / Foto z článku) --}}
+                        @if($event->effective_cover_image_type === 'poster')
+                            <button
+                                type="button"
+                                onclick="document.getElementById('poster_modal').showModal()"
+                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-black backdrop-blur-md bg-primary/90 text-primary-content hover:bg-primary border border-primary/30 shadow-sm cursor-pointer transition-transform active:scale-95"
+                                title="Zobrazit celý původní plakát akce"
+                            >
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
+                                </svg>
+                                <span>Plakát akce</span>
+                            </button>
+                        @elseif($event->effective_cover_image_type === 'banner')
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold backdrop-blur-md bg-base-100/80 text-base-content border border-base-300 shadow-sm">
+                                <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                <span>Webový banner</span>
+                            </span>
+                        @elseif($event->effective_cover_image_type === 'article')
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold backdrop-blur-md bg-base-100/80 text-base-content border border-base-300 shadow-sm">
+                                <svg class="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+                                </svg>
+                                <span>Foto z článku</span>
                             </span>
                         @endif
                     </div>
@@ -438,6 +467,18 @@
                         <span x-text="copied ? 'Zkopírováno!' : 'Sdílet'">Sdílet</span>
                     </button>
 
+                    <button
+                        type="button"
+                        onclick="document.getElementById('poster_modal').showModal()"
+                        class="btn btn-sm btn-ghost border border-base-300 font-bold rounded-xl px-3 h-9 min-h-[36px] text-xs gap-1.5 inline-flex items-center"
+                        title="Zobrazit celý originální obrázek nebo plakát"
+                    >
+                        <svg class="w-3.5 h-3.5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <span>{{ $event->isPoster() ? 'Celý plakát' : 'Obrázek' }}</span>
+                    </button>
+
                     <div class="sm:ml-auto">
                         <livewire:report-event-modal :event-id="$event->id" />
                     </div>
@@ -475,6 +516,14 @@
                                     @if($rel->is_featured)
                                         <span class="px-3 py-1 rounded-lg text-xs font-bold bg-accent text-accent-content shadow-sm whitespace-nowrap">
                                             Tip
+                                        </span>
+                                    @endif
+                                    @if($rel->effective_cover_image_type === 'poster')
+                                        <span class="px-2.5 py-1 rounded-lg text-[11px] font-black tracking-wide backdrop-blur-md bg-primary/90 text-primary-content shadow-sm whitespace-nowrap inline-flex items-center gap-1">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                            </svg>
+                                            <span>Plakát</span>
                                         </span>
                                     @endif
                                 </div>
@@ -556,6 +605,68 @@
             </div>
         @endif
     </main>
+
+    {{-- MODAL PRO ZOBRAZENÍ CELÉHO PLAKÁTU VE VYSOKÉM ROZLIŠENÍ --}}
+    <dialog id="poster_modal" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box max-w-4xl max-h-[92vh] p-4 sm:p-6 bg-base-100 border border-base-300 rounded-2xl flex flex-col items-center">
+            <div class="flex items-center justify-between w-full pb-3 border-b border-base-300 mb-4 gap-3">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="text-base sm:text-lg font-black text-base-content truncate">{{ $event->title }}</span>
+                    <span class="badge badge-primary text-xs font-bold shrink-0">{{ $event->cover_image_type_display }}</span>
+                </div>
+                <form method="dialog">
+                    <button class="btn btn-sm btn-circle btn-ghost" aria-label="Zavřít">✕</button>
+                </form>
+            </div>
+            
+            <div class="overflow-auto max-h-[68vh] w-full flex justify-center items-center rounded-xl bg-base-200/60 p-2 sm:p-4">
+                <img
+                    src="{{ $event->cover_image_url }}"
+                    alt="Plakát: {{ $event->title }}"
+                    class="max-w-full max-h-[64vh] object-contain rounded-lg shadow-md"
+                    loading="lazy"
+                />
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between w-full pt-4 mt-2 gap-2">
+                @if($event->original_image_url)
+                    <a
+                        href="{{ $event->original_image_url }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="btn btn-xs sm:btn-sm btn-ghost gap-1.5 text-base-content/70 hover:text-base-content"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        </svg>
+                        <span>Otevřít zdrojový odkaz</span>
+                    </a>
+                @else
+                    <div></div>
+                @endif
+
+                <div class="flex items-center gap-2">
+                    <a
+                        href="{{ $event->cover_image_url }}"
+                        download
+                        target="_blank"
+                        class="btn btn-sm btn-outline border-base-300 gap-1.5 font-bold"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        <span>Stáhnout</span>
+                    </a>
+                    <form method="dialog">
+                        <button class="btn btn-sm btn-primary font-bold">Zavřít</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>Zavřít</button>
+        </form>
+    </dialog>
 
     {{-- FOOTER SE VSTUPEM PRO SPOLKY A PWA INSTALACÍ --}}
     <x-footer />
