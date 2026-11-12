@@ -70,7 +70,7 @@ class ListEvents extends ListRecords
                 ->badge((string) $publishedCount)
                 ->badgeColor('success')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'published')),
-            'rejected' => Tab::make('Zamítnuté')
+            'rejected' => Tab::make('Vyřazené / Zamítnuté')
                 ->badge((string) $rejectedCount)
                 ->badgeColor('gray')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'rejected')),

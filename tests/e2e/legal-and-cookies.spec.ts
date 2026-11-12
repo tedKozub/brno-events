@@ -29,6 +29,13 @@ test.describe('Legal Framework, GDPR & Cookie Consent', () => {
     test('footer link opens cookie settings modal and allows toggling analytics', async ({ page }) => {
         await page.goto('/');
 
+        // Dismiss initial floating banner so it doesn't cover footer on mobile
+        const bannerAccept = page.locator('#cookie_consent_banner button:has-text("Přijmout vše")');
+        if (await bannerAccept.isVisible()) {
+            await bannerAccept.click();
+            await page.waitForTimeout(200);
+        }
+
         // Click footer "Nastavení cookies"
         const footerBtn = page.getByRole('button', { name: 'Nastavení cookies' });
         await footerBtn.scrollIntoViewIfNeeded();

@@ -2,6 +2,8 @@
 
 namespace App\Livewire;
 
+use App\Models\StudentPlace;
+use App\Models\StudentPlaceCategory;
 use App\Services\EmbeddingService;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
@@ -39,12 +41,59 @@ class StudentPlaces extends Component
 
     public function getCategoriesProperty(): array
     {
-        return [
+        $categories = [
             'all' => [
                 'name' => 'Všechna místa',
                 'short_name' => 'Vše',
                 'color' => '#6366f1', // Indigo
             ],
+        ];
+
+        try {
+            $dbCategories = StudentPlaceCategory::where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->get();
+
+            if ($dbCategories->isNotEmpty()) {
+                foreach ($dbCategories as $cat) {
+                    $categories[$cat->slug] = [
+                        'name' => $cat->name,
+                        'short_name' => $cat->short_name ?: $cat->name,
+                        'color' => $cat->color ?: '#6366f1',
+                    ];
+                }
+                return $categories;
+            }
+        } catch (\Throwable $e) {
+            // Fallback if table not ready
+        }
+
+        return array_merge($categories, $this->getDefaultCategories());
+    }
+
+    public function getAllPlacesProperty(): array
+    {
+        try {
+            $dbPlaces = StudentPlace::with('category')
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->get();
+
+            if ($dbPlaces->isNotEmpty()) {
+                return $dbPlaces->map(fn ($p) => $p->toFrontendArray())->toArray();
+            }
+        } catch (\Throwable $e) {
+            // Fallback if table not ready
+        }
+
+        return $this->getDefaultPlaces();
+    }
+
+    public function getDefaultCategories(): array
+    {
+        return [
             'study' => [
                 'name' => 'Studovny',
                 'short_name' => 'Studovna',
@@ -73,7 +122,7 @@ class StudentPlaces extends Component
         ];
     }
 
-    public function getAllPlacesProperty(): array
+    public function getDefaultPlaces(): array
     {
         return [
             // STUDOVNY & KNIHOVNY
@@ -458,18 +507,20 @@ class StudentPlaces extends Component
 
     public function getCategoryCountsProperty(): array
     {
+        $all = $this->allPlaces;
         $counts = [
-            'all' => count($this->allPlaces),
-            'study' => 0,
-            'cafes' => 0,
-            'date' => 0,
-            'pubs' => 0,
-            'parks' => 0,
+            'all' => count($all),
         ];
 
-        foreach ($this->allPlaces as $place) {
-            $cat = $place['category'];
-            if (isset($counts[$cat])) {
+        foreach (array_keys($this->categories) as $key) {
+            if ($key !== 'all') {
+                $counts[$key] = 0;
+            }
+        }
+
+        foreach ($all as $place) {
+            $cat = $place['category'] ?? null;
+            if ($cat && isset($counts[$cat])) {
                 $counts[$cat]++;
             }
         }

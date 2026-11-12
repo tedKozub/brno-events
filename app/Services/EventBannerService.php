@@ -15,7 +15,8 @@ class EventBannerService
      */
     protected const POSTER_PATTERNS = [
         'plakat', 'plakát', 'poster', 'flyer', 'letak', 'leták',
-        'pozvanka', 'pozvánka', 'invitation', 'a4', 'program_plakat'
+        'pozvanka', 'pozvánka', 'invitation', 'a4', 'program_plakat',
+        'vystava', 'výstava', 'grafika', 'vizual', 'vizuál', 'lineup', 'line-up'
     ];
 
     /**
@@ -36,7 +37,9 @@ class EventBannerService
         'footer', 'cookie', 'flag', 'search', 'svg', '1x1',
         // Site-wide generic portal placeholders & fallback og images
         'dsc_1382_fb', 'adsc_7448', '3128009', 'default_og', 'default-og',
-        'og-default', 'share-fb', 'muni_default', 'unob_default', 'placeholder'
+        'og-default', 'share-fb', 'muni_default', 'unob_default', 'vut_default',
+        'mendelu_default', 'placeholder', 'hero_box_', 'openday', 'open-day',
+        'site-header', 'campus', 'budova', 'layout', 'portal'
     ];
 
     /**
@@ -87,11 +90,12 @@ class EventBannerService
 
         // Priority 1: Poster
         foreach ($candidates['poster'] as $url) {
-            $path = $this->downloadAndStore($url, 'poster', $event->id);
+            $actualType = 'poster';
+            $path = $this->downloadAndStore($url, 'poster', $event->id, $actualType);
             if ($path) {
                 $event->update([
                     'cover_image' => $path,
-                    'cover_image_type' => 'poster',
+                    'cover_image_type' => $actualType,
                     'original_image_url' => $url,
                 ]);
                 return true;
@@ -100,11 +104,12 @@ class EventBannerService
 
         // Priority 2: Banner
         foreach ($candidates['banner'] as $url) {
-            $path = $this->downloadAndStore($url, 'banner', $event->id);
+            $actualType = 'banner';
+            $path = $this->downloadAndStore($url, 'banner', $event->id, $actualType);
             if ($path) {
                 $event->update([
                     'cover_image' => $path,
-                    'cover_image_type' => 'banner',
+                    'cover_image_type' => $actualType,
                     'original_image_url' => $url,
                 ]);
                 return true;
@@ -113,11 +118,12 @@ class EventBannerService
 
         // Priority 3: Article image
         foreach ($candidates['article'] as $url) {
-            $path = $this->downloadAndStore($url, 'article', $event->id);
+            $actualType = 'article';
+            $path = $this->downloadAndStore($url, 'article', $event->id, $actualType);
             if ($path) {
                 $event->update([
                     'cover_image' => $path,
-                    'cover_image_type' => 'article',
+                    'cover_image_type' => $actualType,
                     'original_image_url' => $url,
                 ]);
                 return true;
@@ -129,11 +135,12 @@ class EventBannerService
             $fallbackUrl = $this->cleanCdnUrl($event->cover_image);
             $lower = strtolower($fallbackUrl);
             $fallbackType = $this->matchesAnyPattern($lower, self::POSTER_PATTERNS) ? 'poster' : 'banner';
-            $path = $this->downloadAndStore($fallbackUrl, $fallbackType, $event->id);
+            $actualType = $fallbackType;
+            $path = $this->downloadAndStore($fallbackUrl, $fallbackType, $event->id, $actualType);
             if ($path) {
                 $event->update([
                     'cover_image' => $path,
-                    'cover_image_type' => $fallbackType,
+                    'cover_image_type' => $actualType,
                     'original_image_url' => $fallbackUrl,
                 ]);
                 return true;
@@ -228,6 +235,18 @@ class EventBannerService
                 }
 
                 $fullUrl = $this->resolveUrl(html_entity_decode($src, ENT_QUOTES), $baseUrl);
+
+                // If image is wrapped in <a> linking to full-size original graphic, prefer the full-size target
+                if ($img->parentNode instanceof \DOMElement && strtolower($img->parentNode->tagName) === 'a') {
+                    $parentHref = $img->parentNode->getAttribute('href');
+                    if (!empty($parentHref) && preg_match('/\.(?:jpe?g|png|webp)(?:\?.*)?$/i', $parentHref)) {
+                        $parentFullUrl = $this->resolveUrl(html_entity_decode($parentHref, ENT_QUOTES), $baseUrl);
+                        if ($this->isValidCandidateUrl($parentFullUrl)) {
+                            $fullUrl = $parentFullUrl;
+                        }
+                    }
+                }
+
                 if (!$this->isValidCandidateUrl($fullUrl)) {
                     continue;
                 }
@@ -291,7 +310,7 @@ class EventBannerService
      *
      * @return string|null Relative storage path (e.g. 'events/covers/poster_12_abc.jpg')
      */
-    public function downloadAndStore(string $imageUrl, string $type, ?int $eventId = null): ?string
+    public function downloadAndStore(string $imageUrl, string $type, ?int $eventId = null, ?string &$actualType = null): ?string
     {
         try {
             $response = Http::timeout(8)
@@ -328,10 +347,22 @@ class EventBannerService
                 return null;
             }
 
-            // Minimum dimensions: at least 200px width/height for general images
+            // Minimum dimensions: at least 180px width/height for general images
             if ($width < 180 || $height < 150) {
                 return null;
             }
+
+            // Aspect ratio classification:
+            // If vertical (height > width * 1.15), classify as poster
+            // If landscape banner (width >= height * 1.25) and originally categorized as poster, reclassify as banner
+            if ($height > ($width * 1.15)) {
+                $detectedType = 'poster';
+            } elseif ($width >= ($height * 1.25) && $type === 'poster') {
+                $detectedType = 'banner';
+            } else {
+                $detectedType = $type;
+            }
+            $actualType = $detectedType;
 
             $ext = match ($imageType) {
                 IMAGETYPE_PNG => 'png',
@@ -341,7 +372,7 @@ class EventBannerService
 
             $urlHash = substr(md5($imageUrl), 0, 8);
             $eventPrefix = $eventId ? "{$eventId}_" : "";
-            $typePrefix = match ($type) {
+            $typePrefix = match ($detectedType) {
                 'poster' => 'poster',
                 'banner' => 'banner',
                 'article' => 'article',

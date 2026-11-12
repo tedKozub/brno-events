@@ -25,6 +25,13 @@ test.describe('Feed Dynamic Fetching, Nav Highlighting & Scroll To Top', () => {
   test('feed initially renders first chunk (12 events) and shows load more button', async ({ page }) => {
     await page.goto('/');
 
+    // Accept cookies if banner is visible to prevent overlay on mobile
+    const acceptCookies = page.locator('#cookie_consent_banner button:has-text("Přijmout vše"), #cookie_consent_banner button:has-text("Pouze nezbytné")').first();
+    if (await acceptCookies.isVisible()) {
+      await acceptCookies.click();
+      await page.waitForTimeout(200);
+    }
+
     // Wait for event cards
     const cards = page.locator('div[wire\\:key^="event-card-"]');
     await expect(cards.first()).toBeVisible({ timeout: 10000 });
@@ -50,10 +57,10 @@ test.describe('Feed Dynamic Fetching, Nav Highlighting & Scroll To Top', () => {
     await page.goto('/');
 
     // Accept cookies if banner is visible to prevent overlay
-    const acceptCookies = page.locator('#cookie_consent_banner button:has-text("Přijmout vše")');
+    const acceptCookies = page.locator('#cookie_consent_banner button:has-text("Přijmout vše"), #cookie_consent_banner button:has-text("Pouze nezbytné")').first();
     if (await acceptCookies.isVisible()) {
       await acceptCookies.click();
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(200);
     }
 
     // Initially at top: scroll-to-top button should not be visible
@@ -72,7 +79,9 @@ test.describe('Feed Dynamic Fetching, Nav Highlighting & Scroll To Top', () => {
 
     // Click scroll-to-top button
     await scrollBtn.click();
-    await page.waitForTimeout(600);
+
+    // Wait for smooth scrolling to reach top
+    await page.waitForFunction(() => (window.pageYOffset || document.documentElement.scrollTop) <= 50, { timeout: 3000 });
 
     // Verify scroll position is back at 0
     const scrollY = await page.evaluate(() => window.pageYOffset || document.documentElement.scrollTop);

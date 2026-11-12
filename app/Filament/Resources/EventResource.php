@@ -339,7 +339,7 @@ class EventResource extends Resource
             ])
             ->actions([
                 Tables\Actions\Action::make('approve')
-                    ->label('Schválit')
+                    ->label(fn (Event $record) => $record->status === 'rejected' ? 'Obnovit' : 'Schválit')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->visible(fn (Event $record) => in_array($record->status, ['pending_review', 'rejected']))
@@ -355,13 +355,13 @@ class EventResource extends Resource
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->modalHeading('Zamítnout akci?')
-                    ->modalDescription('Akce bude označena jako zamítnutá a robot ji už nikdy znovu nescrapne.')
-                    ->visible(fn (Event $record) => $record->status === 'pending_review')
+                    ->modalHeading('Zamítnout a vyřadit akci?')
+                    ->modalDescription('Akce se přesune do záložky "Vyřazené / Zamítnuté", nebude se zobrazovat na webu a scraper ji už znovu nestáhne.')
+                    ->visible(fn (Event $record) => $record->status !== 'rejected')
                     ->action(function (Event $record) {
                         $record->update(['status' => 'rejected']);
                         Notification::make()
-                            ->title('Akce byla zamítnuta (znovu se již nescrapne).')
+                            ->title('Akce byla vyřazena (znovu se již nescrapne).')
                             ->warning()
                             ->send();
                     }),
@@ -373,12 +373,16 @@ class EventResource extends Resource
                     ->url(fn (Event $record) => url('/akce/' . $record->slug))
                     ->openUrlInNewTab(),
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make()->label('Smazat do koše'),
+                Tables\Actions\DeleteAction::make()
+                    ->label('Trvale smazat')
+                    ->modalHeading('Trvale smazat akci z databáze?')
+                    ->modalDescription('Akce bude nevratně smazána.')
+                    ->visible(fn (Event $record) => $record->status === 'rejected'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\BulkAction::make('approve_bulk')
-                        ->label('Schválit vybrané')
+                        ->label('Schválit / Obnovit vybrané')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
@@ -394,15 +398,16 @@ class EventResource extends Resource
                         ->color('danger')
                         ->requiresConfirmation()
                         ->modalHeading('Hromadně zamítnout vybrané akce?')
-                        ->modalDescription('Vybrané akce budou označeny jako zamítnuté a nebudou se již znovu scrapovat.')
+                        ->modalDescription('Vybrané akce budou přesunuty do záložky "Vyřazené / Zamítnuté" a scraper je již znovu nestáhne.')
                         ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
                             $records->each(fn (Event $e) => $e->update(['status' => 'rejected']));
                             Notification::make()
-                                ->title('Vybrané akce byly zamítnuty.')
+                                ->title('Vybrané akce byly vyřazeny.')
                                 ->warning()
                                 ->send();
                         }),
-                    Tables\Actions\DeleteBulkAction::make()->label('Smazat do koše'),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('Trvale smazat vybrané'),
                 ]),
             ]);
     }

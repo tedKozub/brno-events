@@ -160,7 +160,7 @@ class Event extends Model
             return $stockUrl;
         }
 
-        return asset('storage/' . $cleanPath);
+        return '/storage/' . $cleanPath;
     }
 
     public function getEffectiveCoverImageTypeAttribute(): string

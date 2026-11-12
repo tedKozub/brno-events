@@ -489,6 +489,25 @@
                         <livewire:report-event-modal :event-id="$event->id" />
                     </div>
                 </div>
+
+                @if($event->effective_cover_image_type !== 'stock')
+                    <div class="pt-2 text-[11px] text-base-content/50 flex items-center gap-1.5 border-t border-base-200/60">
+                        <svg class="w-3.5 h-3.5 opacity-60 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>
+                            Zdroj vizuálu:
+                            @if($event->original_image_url || $event->source_url)
+                                <a href="{{ $event->original_image_url ?: $event->source_url }}" target="_blank" rel="noopener noreferrer" class="underline hover:text-base-content">
+                                    {{ $event->organization ? $event->organization->name : ($event->source_url ? parse_url($event->source_url, PHP_URL_HOST) : 'Původní pořadatel') }}
+                                </a>
+                            @else
+                                {{ $event->organization ? $event->organization->name : 'Původní pořadatel' }}
+                            @endif
+                            • Použito v rámci zpravodajské licence k propagaci akce (§ 34 autorského zákona).
+                        </span>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -670,6 +689,12 @@
                     </form>
                 </div>
             </div>
+
+            @if($event->effective_cover_image_type !== 'stock')
+                <div class="text-[11px] text-base-content/50 w-full pt-2 border-t border-base-200 text-left">
+                    Zdroj vizuálu: {{ $event->organization ? $event->organization->name : ($event->source_url ? parse_url($event->source_url, PHP_URL_HOST) : 'Pořadatel akce') }}. Použito v rámci zpravodajské licence a propagace kulturní / studentské akce (§ 34 autorského zákona č. 121/2000 Sb.).
+                </div>
+            @endif
         </div>
         <form method="dialog" class="modal-backdrop">
             <button>Zavřít</button>

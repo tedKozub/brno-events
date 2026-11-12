@@ -244,6 +244,45 @@ class EventBannerScraperTest extends TestCase
         $response->assertSee('Plakát akce');
         $response->assertSee('id="poster_modal"', false);
         $response->assertSee('Celý plakát');
+        $response->assertSee('Zdroj vizuálu');
+        $response->assertSee('autorského zákona');
+    }
+
+    public function test_vertical_article_image_is_automatically_promoted_to_poster_by_aspect_ratio(): void
+    {
+        // 600x900 is vertical aspect ratio 1:1.5
+        $dummyImage = $this->createDummyImageBytes(600, 900);
+
+        Http::fake([
+            'https://example.com/events/vertical-photo' => Http::response('
+                <!DOCTYPE html>
+                <html>
+                <body>
+                    <h1>Vernisáž studentů</h1>
+                    <img src="https://example.com/uploads/fotka_z_atelieru.jpg" alt="Grafika výstavy" width="600" height="900" />
+                </body>
+                </html>
+            ', 200),
+            'https://example.com/uploads/fotka_z_atelieru.jpg' => Http::response($dummyImage, 200, ['Content-Type' => 'image/jpeg']),
+        ]);
+
+        $event = Event::create([
+            'title' => 'Student Art Show',
+            'starts_at' => Carbon::tomorrow(),
+            'source_url' => 'https://example.com/events/vertical-photo',
+            'status' => 'published',
+        ]);
+
+        $service = app(EventBannerService::class);
+        $result = $service->enrichEvent($event);
+
+        $this->assertTrue($result);
+        $event->refresh();
+
+        // Should be promoted to poster due to vertical aspect ratio!
+        $this->assertEquals('poster', $event->cover_image_type);
+        $this->assertTrue($event->isPoster());
+        $this->assertStringStartsWith('events/covers/poster_', $event->cover_image);
     }
 
     public function test_event_board_renders_poster_tag_on_card(): void

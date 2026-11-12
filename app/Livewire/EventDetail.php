@@ -110,7 +110,7 @@ class EventDetail extends Component
                     'streetAddress' => $event->venue?->address ?: ($event->location_name ?: 'Brno'),
                 ],
             ],
-            'image' => [$event->cover_image_url],
+            'image' => [str_starts_with($event->cover_image_url, 'http') ? $event->cover_image_url : url($event->cover_image_url)],
             'description' => $event->short_description ?: Str::limit(strip_tags($event->description), 200),
             'offers' => [
                 '@type' => 'Offer',
@@ -137,7 +137,7 @@ class EventDetail extends Component
         ])->layout('components.layouts.app', [
             'title' => $event->title . ' • BrnoAkce',
             'description' => $cleanDescription,
-            'ogImage' => !empty($event->cover_image) ? $event->cover_image_url : route('event.og-image', ['slug' => $event->slug]),
+            'ogImage' => !empty($event->cover_image) ? (str_starts_with($event->cover_image_url, 'http') ? $event->cover_image_url : url($event->cover_image_url)) : route('event.og-image', ['slug' => $event->slug]),
             'ogType' => 'event',
             'ogUrl' => url('/akce/' . $event->slug),
             'schemaJson' => json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),

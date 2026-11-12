@@ -54,6 +54,14 @@ test.describe('Event Detail & Reporting Workflow', () => {
 
   test('submits an issue report for an event', async ({ page }) => {
     await page.goto('/');
+
+    // Accept cookies if banner is present to avoid pointer interception on mobile
+    const cookieBtn = page.locator('#cookie_consent_banner button:has-text("Přijmout vše"), #cookie_consent_banner button:has-text("Pouze nezbytné")').first();
+    if (await cookieBtn.isVisible()) {
+      await cookieBtn.click();
+      await page.waitForTimeout(200);
+    }
+
     await page.locator('a[href^="/akce/"]').first().click();
     await page.waitForURL('**/akce/**');
 

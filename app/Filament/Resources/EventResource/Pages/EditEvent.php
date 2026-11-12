@@ -15,7 +15,7 @@ class EditEvent extends EditRecord
     {
         return [
             Actions\Action::make('approve')
-                ->label('Schválit a publikovat')
+                ->label(fn () => $this->record->status === 'rejected' ? 'Obnovit a publikovat' : 'Schválit a publikovat')
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
                 ->visible(fn () => $this->record->status !== 'published')
@@ -29,17 +29,17 @@ class EditEvent extends EditRecord
                 }),
 
             Actions\Action::make('reject')
-                ->label('Zamítnout')
+                ->label('Zamítnout a vyřadit')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
                 ->visible(fn () => $this->record->status !== 'rejected')
                 ->requiresConfirmation()
-                ->modalHeading('Zamítnout tuto akci?')
-                ->modalDescription('Akce bude označena jako zamítnutá a robot ji už nikdy znovu nescrapne.')
+                ->modalHeading('Zamítnout a vyřadit tuto akci?')
+                ->modalDescription('Akce se přesune do záložky "Vyřazené / Zamítnuté", nebude se zobrazovat na webu a scraper ji již znovu nestáhne.')
                 ->action(function () {
                     $this->record->update(['status' => 'rejected']);
                     Notification::make()
-                        ->title('Akce byla zamítnuta (znovu se již nescrapne).')
+                        ->title('Akce byla vyřazena (znovu se již nescrapne).')
                         ->warning()
                         ->send();
                     $this->redirect(EventResource::getUrl('index'));
@@ -54,7 +54,10 @@ class EditEvent extends EditRecord
                 ->openUrlInNewTab(),
 
             Actions\DeleteAction::make()
-                ->label('Smazat do koše'),
+                ->label('Trvale smazat')
+                ->modalHeading('Trvale smazat akci z databáze?')
+                ->modalDescription('Akce bude nevratně smazána z databáze.')
+                ->visible(fn () => $this->record->status === 'rejected'),
         ];
     }
 }
