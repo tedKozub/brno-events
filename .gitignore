@@ -29,3 +29,6 @@ scrapers/.venv
 *.sqlite-shm
 
 __pycache__/
+/playwright-report/
+/test-results/
+
