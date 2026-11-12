@@ -12,3 +12,7 @@ Route::get('/mista', StudentPlaces::class)->name('places');
 Route::get('/akce/{slug}', EventDetail::class)->name('event.detail');
 Route::get('/akce/{slug}/og-image.jpg', [OgImageController::class, 'show'])->name('event.og-image');
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
+
+// Právní stránky, autorská práva, GDPR a Notice & Takedown
+Route::view('/podminky', 'pages.terms')->name('terms');
+Route::view('/ochrana-soukromi', 'pages.privacy')->name('privacy');

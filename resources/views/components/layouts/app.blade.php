@@ -195,6 +195,9 @@
         </form>
     </dialog>
 
+    {{-- COOKIE CONSENT & PRIVACY BANNER --}}
+    <x-cookie-consent />
+
     @livewireScripts
 
     <!-- PWA Service Worker & Install Handler -->

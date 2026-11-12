@@ -172,6 +172,7 @@
                     src="{{ $event->cover_image_url }}"
                     alt="{{ $event->title }}"
                     class="w-full h-full object-cover"
+                    onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=1200&q=80';"
                 />
                 <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent"></div>
 
@@ -504,6 +505,7 @@
                                     alt="{{ $rel->title }}"
                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                     loading="lazy"
+                                    onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=1200&q=80';"
                                 />
 
                                 {{-- Odznaky přes obrázek --}}
@@ -625,6 +627,7 @@
                     alt="Plakát: {{ $event->title }}"
                     class="max-w-full max-h-[64vh] object-contain rounded-lg shadow-md"
                     loading="lazy"
+                    onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=1200&q=80';"
                 />
             </div>
 

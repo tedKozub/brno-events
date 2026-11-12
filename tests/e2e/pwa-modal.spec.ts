@@ -2,6 +2,18 @@ import { test, expect } from '@playwright/test';
 
 test.describe('PWA Install Guide & Footer Workflows', () => {
 
+  test.beforeEach(async ({ page }) => {
+    // Set cookie consent so the banner does not obstruct footer action buttons
+    await page.addInitScript(() => {
+      localStorage.setItem('brno_events_cookie_consent', JSON.stringify({
+        essential: true,
+        analytics: false,
+        marketing: false,
+        updated_at: new Date().toISOString()
+      }));
+    });
+  });
+
   test('opens PWA install guide modal and verifies iPhone 3-step instructions', async ({ page }) => {
     await page.goto('/');
 

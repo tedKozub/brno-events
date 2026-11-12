@@ -27,13 +27,16 @@ class EventBannerService
     ];
 
     /**
-     * Patterns for discarding unwanted images (logos, icons, trackers, social).
+     * Patterns for discarding unwanted images (logos, icons, trackers, social, site-wide templates).
      */
     protected const EXCLUDE_PATTERNS = [
         'logo', 'icon', 'ico', 'avatar', 'user', 'author', 'share',
         'social', 'facebook', 'instagram', 'twitter', 'linkedin',
         'arrow', 'chevron', 'pixel', 'tracker', 'ad-', 'banner-ad',
-        'footer', 'cookie', 'flag', 'search', 'svg', '1x1'
+        'footer', 'cookie', 'flag', 'search', 'svg', '1x1',
+        // Site-wide generic portal placeholders & fallback og images
+        'dsc_1382_fb', 'adsc_7448', '3128009', 'default_og', 'default-og',
+        'og-default', 'share-fb', 'muni_default', 'unob_default', 'placeholder'
     ];
 
     /**

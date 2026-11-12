@@ -35,6 +35,22 @@ class SitemapController extends Controller
         $xml .= '<priority>0.9</priority>';
         $xml .= '</url>';
 
+        // Podmínky užití & Autorská práva
+        $xml .= '<url>';
+        $xml .= "<loc>{$baseUrl}/podminky</loc>";
+        $xml .= '<lastmod>' . now()->startOfMonth()->toIso8601String() . '</lastmod>';
+        $xml .= '<changefreq>monthly</changefreq>';
+        $xml .= '<priority>0.5</priority>';
+        $xml .= '</url>';
+
+        // Ochrana soukromí & GDPR
+        $xml .= '<url>';
+        $xml .= "<loc>{$baseUrl}/ochrana-soukromi</loc>";
+        $xml .= '<lastmod>' . now()->startOfMonth()->toIso8601String() . '</lastmod>';
+        $xml .= '<changefreq>monthly</changefreq>';
+        $xml .= '<priority>0.5</priority>';
+        $xml .= '</url>';
+
         // Events
         foreach ($events as $event) {
             $isUpcoming = $event->starts_at >= now();

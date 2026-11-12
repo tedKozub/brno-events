@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Event extends Model
@@ -137,36 +138,42 @@ class Event extends Model
 
     public function getCoverImageUrlAttribute(): string
     {
+        $stockUrl = match($this->category?->slug) {
+            'party-kluby' => 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80',
+            'prednasky-kariera', 'akademie-vzdelavani' => 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=1200&q=80',
+            'kvizy-hry' => 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?auto=format&fit=crop&w=1200&q=80',
+            'turnaje-sport', 'sport-outdoor' => 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=1200&q=80',
+            'kultura-umeni' => 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80',
+            default => 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=1200&q=80',
+        };
+
         if (empty($this->cover_image)) {
-            return match($this->category?->slug) {
-                'party-kluby' => 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80',
-                'prednasky-kariera', 'akademie-vzdelavani' => 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=1200&q=80',
-                'kvizy-hry' => 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?auto=format&fit=crop&w=1200&q=80',
-                'turnaje-sport', 'sport-outdoor' => 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=1200&q=80',
-                'kultura-umeni' => 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80',
-                default => 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=1200&q=80',
-            };
+            return $stockUrl;
         }
 
         if (str_starts_with($this->cover_image, 'http://') || str_starts_with($this->cover_image, 'https://')) {
             return $this->cover_image;
         }
 
-        if (str_starts_with($this->cover_image, '/storage/')) {
-            return asset(ltrim($this->cover_image, '/'));
+        $cleanPath = ltrim(preg_replace('#^/?storage/#', '', $this->cover_image), '/');
+        if (!Storage::disk('public')->exists($cleanPath)) {
+            return $stockUrl;
         }
 
-        if (str_starts_with($this->cover_image, 'storage/')) {
-            return asset($this->cover_image);
-        }
-
-        return asset('storage/' . ltrim($this->cover_image, '/'));
+        return asset('storage/' . $cleanPath);
     }
 
     public function getEffectiveCoverImageTypeAttribute(): string
     {
         if (empty($this->cover_image)) {
             return 'stock';
+        }
+
+        if (!str_starts_with($this->cover_image, 'http://') && !str_starts_with($this->cover_image, 'https://')) {
+            $cleanPath = ltrim(preg_replace('#^/?storage/#', '', $this->cover_image), '/');
+            if (!Storage::disk('public')->exists($cleanPath)) {
+                return 'stock';
+            }
         }
 
         if (!empty($this->cover_image_type)) {
