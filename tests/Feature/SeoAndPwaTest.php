@@ -67,6 +67,8 @@ class SeoAndPwaTest extends TestCase
     public function test_pwa_icons_and_service_worker_exist(): void
     {
         $this->assertTrue(File::exists(public_path('sw.js')), 'sw.js service worker must exist');
+        $this->assertTrue(File::exists(public_path('favicon.ico')), 'favicon.ico must exist');
+        $this->assertTrue(File::exists(public_path('favicon.svg')), 'favicon.svg must exist');
         $this->assertTrue(File::exists(public_path('icons/icon-192x192.png')), '192x192 icon must exist');
         $this->assertTrue(File::exists(public_path('icons/icon-512x512.png')), '512x512 icon must exist');
         $this->assertTrue(File::exists(public_path('icons/apple-touch-icon.png')), 'apple-touch-icon must exist');

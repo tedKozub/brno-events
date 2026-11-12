@@ -1,46 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <defs>
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4f46e5"/>
-      <stop offset="100%" stop-color="#7c3aed"/>
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#4338ca"/>
     </linearGradient>
-    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38bdf8"/>
-      <stop offset="100%" stop-color="#818cf8"/>
-    </linearGradient>
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#0f172a" flood-opacity="0.35"/>
-    </filter>
+    <clipPath id="calClip">
+      <rect x="13" y="16" width="38" height="36" rx="6" ry="6"/>
+    </clipPath>
   </defs>
-
-  <!-- Background rounded squircle -->
-  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#bgGrad)"/>
-
-  <!-- Calendar card -->
-  <g filter="url(#shadow)">
-    <!-- Main white calendar body -->
-    <rect x="100" y="128" width="312" height="276" rx="40" fill="#ffffff"/>
-    
-    <!-- Calendar top bar (colored) -->
-    <path d="M 100 168 A 40 40 0 0 1 140 128 L 372 128 A 40 40 0 0 1 412 168 L 412 208 L 100 208 Z" fill="url(#accentGrad)"/>
-    
-    <!-- Calendar rings/hangers -->
-    <rect x="164" y="96" width="28" height="64" rx="14" fill="#ffffff" stroke="#4f46e5" stroke-width="6"/>
-    <rect x="320" y="96" width="28" height="64" rx="14" fill="#ffffff" stroke="#4f46e5" stroke-width="6"/>
-
-    <!-- Spark / Star / Event icon in calendar body -->
-    <circle cx="256" cy="304" r="48" fill="#4f46e5" opacity="0.12"/>
-    
-    <!-- Modern pulse / flame / ticket glyph -->
-    <path d="M 256 244 C 238 274 220 292 220 316 C 220 338 236 354 256 354 C 276 354 292 338 292 316 C 292 292 274 274 256 244 Z" fill="#4f46e5"/>
-    <path d="M 256 288 C 248 304 240 314 240 326 C 240 336 247 342 256 342 C 265 342 272 336 272 326 C 272 314 264 304 256 288 Z" fill="#38bdf8"/>
-  </g>
-
-  <!-- Brno dots accent -->
-  <circle cx="160" cy="248" r="8" fill="#cbd5e1"/>
-  <circle cx="352" cy="248" r="8" fill="#cbd5e1"/>
-  <circle cx="160" cy="304" r="8" fill="#cbd5e1"/>
-  <circle cx="352" cy="304" r="8" fill="#cbd5e1"/>
-  <circle cx="160" cy="360" r="8" fill="#cbd5e1"/>
-  <circle cx="352" cy="360" r="8" fill="#cbd5e1"/>
+  <rect x="2" y="2" width="60" height="60" rx="14" ry="14" fill="url(#bgGrad)"/>
+  <rect x="13" y="16" width="38" height="36" rx="6" ry="6" fill="#ffffff"/>
+  <rect x="13" y="16" width="38" height="12" clip-path="url(#calClip)" fill="#ea580c"/>
+  <rect x="21" y="12" width="4.5" height="8" rx="2.25" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.5"/>
+  <rect x="38.5" y="12" width="4.5" height="8" rx="2.25" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.5"/>
+  <path d="M32 32.5 L33.8 37.2 L38.5 39 L33.8 40.8 L32 45.5 L30.2 40.8 L25.5 39 L30.2 37.2 Z" fill="#6366f1"/>
 </svg>

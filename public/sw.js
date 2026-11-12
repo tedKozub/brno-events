@@ -1,11 +1,12 @@
-const CACHE_NAME = 'brno-events-v1';
+const CACHE_NAME = 'brno-events-v2';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
+  '/favicon.svg',
+  '/favicon.ico',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
   '/icons/apple-touch-icon.png',
-  '/favicon.ico',
 ];
 
 self.addEventListener('install', (event) => {
