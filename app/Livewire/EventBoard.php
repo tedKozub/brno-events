@@ -29,6 +29,18 @@ class EventBoard extends Component
         'viewMode' => ['except' => 'cards'],
     ];
 
+    public function mount(): void
+    {
+        app(\App\Services\AnalyticsService::class)->trackPageView('/');
+    }
+
+    public function updatedSearch(): void
+    {
+        if (mb_strlen(trim($this->search)) >= 3) {
+            app(\App\Services\AnalyticsService::class)->trackSearch($this->search);
+        }
+    }
+
     public function setDateFilter(string $filter): void
     {
         $this->dateFilter = $filter;

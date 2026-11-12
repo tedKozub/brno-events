@@ -10,6 +10,11 @@ class StudentPlaces extends Component
     public string $search = '';
     public ?int $selectedPlaceId = null;
 
+    public function mount(): void
+    {
+        app(\App\Services\AnalyticsService::class)->trackPageView('/mista');
+    }
+
     public function setCategory(string $category): void
     {
         $this->selectedCategory = $category;

@@ -347,6 +347,7 @@
                                     href="https://www.google.com/maps/search/?api=1&query={{ urlencode(($event->venue ? $event->venue->name . ' ' : '') . $event->location_display . ' Brno') }}"
                                     target="_blank"
                                     rel="noopener noreferrer"
+                                    wire:click="trackOutbound('map')"
                                     class="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1"
                                 >
                                     <span>Google Mapy</span>
@@ -359,6 +360,7 @@
                                     href="https://mapy.cz/zakladni?q={{ urlencode(($event->venue ? $event->venue->name . ' ' : '') . $event->location_display . ' Brno') }}"
                                     target="_blank"
                                     rel="noopener noreferrer"
+                                    wire:click="trackOutbound('map')"
                                     class="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1"
                                 >
                                     <span>Mapy.cz</span>
@@ -405,6 +407,7 @@
                             href="{{ $event->ticket_url }}"
                             target="_blank"
                             rel="noopener noreferrer"
+                            wire:click="trackOutbound('ticket')"
                             class="btn btn-sm btn-primary font-bold rounded-xl px-3 h-9 min-h-[36px] text-xs gap-1.5 inline-flex items-center shadow-xs"
                         >
                             <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -420,6 +423,7 @@
                             href="{{ $event->facebook_event_url }}"
                             target="_blank"
                             rel="noopener noreferrer"
+                            wire:click="trackOutbound('facebook')"
                             class="btn btn-sm btn-outline border-base-300 font-bold rounded-xl px-3 h-9 min-h-[36px] text-xs gap-1.5 inline-flex items-center"
                         >
                             <svg class="w-3.5 h-3.5 text-primary shrink-0" fill="currentColor" viewBox="0 0 24 24">
@@ -435,6 +439,7 @@
                             href="{{ $event->source_url }}"
                             target="_blank"
                             rel="noopener noreferrer"
+                            wire:click="trackOutbound('source')"
                             class="btn btn-sm btn-outline border-base-300 font-bold rounded-xl px-3 h-9 min-h-[36px] text-xs gap-1.5 inline-flex items-center"
                         >
                             <span>Zdroj</span>
@@ -458,7 +463,7 @@
 
                     <button
                         type="button"
-                        x-on:click="shareEvent"
+                        x-on:click="shareEvent(); $wire.trackOutbound('share');"
                         class="btn btn-sm btn-ghost border border-base-300 font-bold rounded-xl px-3 h-9 min-h-[36px] text-xs gap-1.5 inline-flex items-center"
                         title="Sdílet odkaz na akci"
                     >

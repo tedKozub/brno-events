@@ -13,11 +13,30 @@ class EventDetail extends Component
     public function mount(string $slug): void
     {
         $this->slug = $slug;
+
+        $event = Event::with(['category', 'organization'])->where('slug', $slug)->first();
+        if ($event) {
+            $event->increment('views_count');
+            app(\App\Services\AnalyticsService::class)->trackPageView('/akce/' . $slug, $event);
+        }
+    }
+
+    public function trackOutbound(string $type = 'ticket'): void
+    {
+        $event = Event::with(['category', 'organization'])->where('slug', $this->slug)->first();
+        if ($event) {
+            if ($type === 'map') {
+                app(\App\Services\AnalyticsService::class)->trackMapClick($event);
+            } else {
+                app(\App\Services\AnalyticsService::class)->trackOutboundClick($event, $type);
+            }
+        }
     }
 
     public function downloadIcal()
     {
-        $event = Event::with('venue', 'organization')->where('slug', $this->slug)->firstOrFail();
+        $event = Event::with('venue', 'organization', 'category')->where('slug', $this->slug)->firstOrFail();
+        app(\App\Services\AnalyticsService::class)->trackIcalDownload($event);
 
         $start = $event->starts_at->format('Ymd\THis');
         $end = ($event->ends_at ?: $event->starts_at->copy()->addHours(3))->format('Ymd\THis');
@@ -53,9 +72,6 @@ class EventDetail extends Component
         $event = Event::with(['organization', 'venue', 'category'])
             ->where('slug', $this->slug)
             ->firstOrFail();
-
-        // Increment views once per mount
-        $event->increment('views_count');
 
         // Related upcoming events (same university or category)
         $relatedEvents = Event::with(['organization', 'venue', 'category'])
