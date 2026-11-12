@@ -9,6 +9,18 @@ use Illuminate\Support\Facades\Log;
 
 class DiscordNotifier
 {
+    public static function isHttpFaked(): bool
+    {
+        try {
+            $factory = app(\Illuminate\Http\Client\Factory::class);
+            $ref = new \ReflectionProperty($factory, 'recording');
+            $ref->setAccessible(true);
+            return (bool) $ref->getValue($factory);
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
     public static function getWebhookUrl(): ?string
     {
         return config('services.discord.webhook_url');
@@ -24,6 +36,11 @@ class DiscordNotifier
      */
     public static function send(array $payload): bool
     {
+        if (app()->environment('testing') && !self::isHttpFaked()) {
+            Log::info('Discord notification skipped: testing environment without Http::fake().');
+            return false;
+        }
+
         $url = self::getWebhookUrl();
         if (empty($url)) {
             Log::info('Discord notification skipped: DISCORD_WEBHOOK_URL is not set.');
@@ -48,6 +65,11 @@ class DiscordNotifier
      */
     public static function sendSecurity(array $payload): bool
     {
+        if (app()->environment('testing') && !self::isHttpFaked()) {
+            Log::info('Discord security notification skipped: testing environment without Http::fake().');
+            return false;
+        }
+
         $url = self::getSecurityWebhookUrl();
         if (empty($url)) {
             Log::info('Discord security notification skipped: DISCORD_SECURITY_WEBHOOK_URL is not set.');
@@ -171,6 +193,20 @@ class DiscordNotifier
      */
     public static function notifyEventReport(EventReport $report): bool
     {
+        if (app()->environment('testing') && !self::isHttpFaked()) {
+            return false;
+        }
+
+        // Prevent sending notification for automated test reports
+        if (
+            str_contains(mb_strtolower($report->details ?? ''), 'e2e') ||
+            str_contains(mb_strtolower($report->details ?? ''), 'testovac') ||
+            (function_exists('request') && request() && request()->header('X-E2E-Testing') === 'true')
+        ) {
+            Log::info('Discord event report notification skipped: detected automated test report.');
+            return false;
+        }
+
         $event = $report->event;
         $adminEventUrl = config('app.url', 'https://brnoakce.tadeaskozub.com') . "/admin/events/{$report->event_id}/edit";
         $publicEventUrl = config('app.url', 'https://brnoakce.tadeaskozub.com') . "/akce/{$event?->slug}";

@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Models\EventReport;
 use App\Livewire\ReportEventModal;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -15,6 +16,8 @@ class EventReportTest extends TestCase
 
     public function test_user_can_report_an_event_issue(): void
     {
+        Http::fake();
+
         $event = Event::first();
         $this->assertNotNull($event);
 
@@ -31,6 +34,9 @@ class EventReportTest extends TestCase
             'contact_email' => 'student@muni.cz',
             'status' => 'pending',
         ]);
+
+        // Ensure Discord webhook is NEVER called during test suite runs
+        Http::assertNothingSent();
     }
 
     public function test_event_has_missing_fields_attribute(): void

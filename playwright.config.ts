@@ -15,6 +15,9 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    extraHTTPHeaders: {
+      'X-E2E-Testing': 'true',
+    },
   },
   projects: [
     // 1. Desktop Workflows

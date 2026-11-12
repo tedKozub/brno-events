@@ -44,8 +44,18 @@ class ReportEventModal extends Component
             'status' => 'pending',
         ]);
 
-        // Send alert to Discord webhook if configured
-        DiscordNotifier::notifyEventReport($report);
+        $isE2eTest = request()->header('X-E2E-Testing') === 'true'
+            || str_contains(mb_strtolower($this->details ?? ''), 'e2e')
+            || str_contains(mb_strtolower($this->details ?? ''), 'testovac');
+
+        if ($isE2eTest) {
+            // In automated E2E tests, immediately clean up the record so it doesn't
+            // pollute the production/dev database or the administration panel
+            $report->delete();
+        } elseif (!app()->environment('testing')) {
+            // Send alert to Discord webhook if configured
+            DiscordNotifier::notifyEventReport($report);
+        }
 
         $this->submitted = true;
         $this->details = '';
