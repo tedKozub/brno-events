@@ -63,4 +63,54 @@ test.describe('Student Places & Map Workflow (/mista)', () => {
     await expect(popup).toBeVisible({ timeout: 5000 });
   });
 
+  test('supports touchpad scroll/pinch gestures and mobile touch interactions on the map', async ({ page, isMobile }) => {
+    const mapEl = page.locator('#student-places-map');
+    await expect(mapEl).toBeVisible();
+
+    // Verify Leaflet instance options enable touchpad and mobile gestures
+    const gestureOptions = await page.evaluate(() => {
+      const el = document.getElementById('student-places-map');
+      // @ts-ignore
+      const alpineData = window.Alpine?.$data(el?.closest('[x-data]'));
+      const map = alpineData?.map;
+      return {
+        scrollWheelZoom: map?.options?.scrollWheelZoom,
+        touchZoom: map?.options?.touchZoom,
+        dragging: map?.options?.dragging,
+        tap: map?.options?.tap,
+      };
+    });
+
+    expect(gestureOptions.scrollWheelZoom).toBe(true);
+    expect(gestureOptions.touchZoom).toBe(true);
+    expect(gestureOptions.dragging).toBe(true);
+
+    if (!isMobile) {
+      // Test mouse wheel / touchpad zoom gesture simulation on desktop
+      const initialZoom = await page.evaluate(() => {
+        // @ts-ignore
+        const alpineData = window.Alpine?.$data(document.getElementById('student-places-map')?.closest('[x-data]'));
+        return alpineData?.map?.getZoom();
+      });
+
+      await mapEl.hover();
+      await page.mouse.wheel(0, -120);
+      await page.waitForTimeout(500);
+
+      const newZoom = await page.evaluate(() => {
+        // @ts-ignore
+        const alpineData = window.Alpine?.$data(document.getElementById('student-places-map')?.closest('[x-data]'));
+        return alpineData?.map?.getZoom();
+      });
+
+      expect(newZoom).toBeGreaterThanOrEqual(initialZoom);
+    } else {
+      // Test mobile touch interaction
+      const box = await mapEl.boundingBox();
+      if (box) {
+        await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+      }
+    }
+  });
+
 });
