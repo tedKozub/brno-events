@@ -251,6 +251,18 @@ class ScrapeEventsCommand extends Command
                     $slug = Str::slug($title) . '-' . (++$counter);
                 }
 
+                $sourceType = $item['source_type'] ?? match ($source->type) {
+                    'web_facebook' => 'scraper_facebook',
+                    'web_instagram' => 'scraper_instagram',
+                    default => 'scraper_web',
+                };
+
+                // Sociální sítě (Instagram, Facebook) vyžadují moderaci (pending_review).
+                // Oficiální univerzitní weby, iCal kalendáře a RSS jsou důvěryhodné a publikují se rovnou (published).
+                $isSocialMedia = in_array($source->type, ['web_instagram', 'web_facebook'])
+                    || in_array($sourceType, ['scraper_instagram', 'scraper_facebook', 'instagram', 'facebook']);
+                $initialStatus = $isSocialMedia ? 'pending_review' : 'published';
+
                 $createdEvent = Event::create([
                     'organization_id' => $orgId,
                     'venue_id' => $venueId,
@@ -269,11 +281,11 @@ class ScrapeEventsCommand extends Command
                     'price_type' => $item['price_type'] ?? 'free',
                     'price_amount' => $item['price_amount'] ?? null,
                     'ticket_url' => $item['ticket_url'] ?? null,
-                    'source_type' => $item['source_type'] ?? ($source->type === 'web_facebook' ? 'scraper_facebook' : ($source->type === 'web_instagram' ? 'scraper_instagram' : 'scraper_web')),
+                    'source_type' => $sourceType,
                     'source_url' => $sourceUrl,
                     'instagram_post_url' => $item['instagram_post_url'] ?? null,
                     'facebook_event_url' => $item['facebook_event_url'] ?? null,
-                    'status' => 'pending_review', // Vše jde do moderace ke schválení!
+                    'status' => $initialStatus,
                     'is_featured' => false,
                 ]);
 

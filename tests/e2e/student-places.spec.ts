@@ -3,6 +3,13 @@ import { test, expect } from '@playwright/test';
 test.describe('Student Places & Map Workflow (/mista)', () => {
 
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('brno_events_cookie_consent', JSON.stringify({
+        necessary: true,
+        analytics: true,
+        timestamp: Date.now(),
+      }));
+    });
     await page.goto('/mista');
     await expect(page.locator('#student-places-map')).toBeVisible({ timeout: 10000 });
   });
@@ -119,6 +126,29 @@ test.describe('Student Places & Map Workflow (/mista)', () => {
         await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
       }
     }
+  });
+
+  test('opens propose place modal and submits crowdsourced suggestion', async ({ page }) => {
+    const proposeBtn = page.locator('#btn-propose-place');
+    await expect(proposeBtn).toBeVisible();
+    await proposeBtn.click();
+
+    // Modal dialog is displayed
+    const modalTitle = page.locator('#propose-place-title');
+    await expect(modalTitle).toBeVisible();
+
+    // Fill form
+    await page.fill('#propose-name', 'E2E Testovací Kavárna');
+    await page.fill('#propose-address', 'Gorkého 15, Brno');
+    await page.fill('#propose-description', 'Skvělá studentská káva a příjemná zahrádka.');
+
+    // Submit
+    const submitBtn = page.locator('#submit-propose-place');
+    await submitBtn.scrollIntoViewIfNeeded();
+    await submitBtn.click();
+
+    // Success screen
+    await expect(page.locator('text=Díky moc za tip!')).toBeVisible({ timeout: 10000 });
   });
 
 });

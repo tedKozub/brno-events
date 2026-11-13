@@ -117,8 +117,11 @@
                     Ověřené kavárny na učení, tiché studovny s Eduroamem, místa na rande i studentské hospody.
                 </p>
             </div>
-            <div class="text-xs text-base-content/60 font-semibold shrink-0">
-                Celkem <strong class="text-base-content font-black">{{ count($places) }}</strong> míst
+            <div class="flex items-center gap-3 shrink-0">
+                <div class="text-xs text-base-content/60 font-semibold hidden sm:block">
+                    Celkem <strong class="text-base-content font-black">{{ count($places) }}</strong> míst
+                </div>
+                <livewire:propose-student-place-modal />
             </div>
         </div>
 

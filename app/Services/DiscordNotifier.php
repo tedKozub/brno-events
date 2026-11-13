@@ -237,6 +237,56 @@ class DiscordNotifier
     }
 
     /**
+     * Sends an alert when a student submits a tip for a new student place in Brno.
+     */
+    public static function notifyPlaceSuggestion(\App\Models\StudentPlaceSuggestion $suggestion): bool
+    {
+        if (app()->environment('testing') && !self::isHttpFaked()) {
+            return false;
+        }
+
+        // Prevent sending notification for automated test runs
+        if (
+            str_contains(mb_strtolower($suggestion->description ?? ''), 'e2e') ||
+            str_contains(mb_strtolower($suggestion->description ?? ''), 'testovac') ||
+            str_contains(mb_strtolower($suggestion->name ?? ''), 'test') ||
+            (function_exists('request') && request() && request()->header('X-E2E-Testing') === 'true')
+        ) {
+            Log::info('Discord place suggestion notification skipped: detected automated test.');
+            return false;
+        }
+
+        $adminUrl = config('app.url', 'https://brnoakce.tadeaskozub.com') . "/admin/student-place-suggestions";
+
+        $categoryName = $suggestion->category?->name ?? 'Místo';
+        $submitter = $suggestion->submitter_name ?: ($suggestion->submitter_email ?: 'Anonymní student');
+
+        $payload = [
+            'embeds' => [
+                [
+                    'title' => '📍 Nový studentský tip na místo v Brně',
+                    'description' => sprintf(
+                        "Student navrhl nové místo: **%s** (%s)\n\n**Adresa:** %s\n**Proč doporučuje:** %s\n**Od:** %s\n\n[Zkontrolovat a schválit v administraci](%s)",
+                        $suggestion->name,
+                        $categoryName,
+                        $suggestion->address,
+                        $suggestion->description,
+                        $submitter,
+                        $adminUrl
+                    ),
+                    'color' => 0x6366F1, // Indigo
+                    'footer' => [
+                        'text' => 'BrnoAkce Crowdsourcing System',
+                    ],
+                    'timestamp' => now()->toIso8601String(),
+                ],
+            ],
+        ];
+
+        return self::send($payload);
+    }
+
+    /**
      * Sends an alert to the dedicated Security Discord channel.
      */
     public static function notifySecurityAlert(string $title, string $status, array $fields = []): bool

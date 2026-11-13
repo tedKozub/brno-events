@@ -112,9 +112,36 @@ flowchart TD
 3. **`article`:** Čtvercový nebo běžný článkový obrázek.
 4. **`stock`:** Automatický kvalitní fotoplaceholder z Unsplash podle kategorie akce.
 
+### 4. Moderace akcí: Sociální sítě (IG & FB) vs. Oficiální univerzitní zdroje
+* **Oficiální weby, iCal kalendáře a RSS (MUNI, VUT, MENDELU atd.):** Jsou důvěryhodné, importují se rovnou se stavem `status = 'published'`.
+* **Sociální sítě (Instagram posty, Facebook events):** Příspěvky ze sociálních sítí mohou obsahovat reels, memes, neúplné texty nebo změny programu. Proto se nově scrapnuté položky z IG/FB ukládají jako `status = 'pending_review'`.
+* **Schvalovací workflow:** V administraci Filamentu (nebo autonomním AI agentem) se v záložce *„Ke schválení (moderace)“* akce zkontrolují a 1 kliknutím schválí (`published`) nebo zamítnou (`rejected`).
+
+### 5. Retenční politika a archiv akcí (365 dní) & SEO
+* **Délka uchování dat:** Server disponuje dostatečnou diskovou kapacitou (50 GB), akce se drží v databázi po dobu **minimálně 1 celého roku (365 dní)**.
+* **SEO archiv proběhlých akcí:** Proběhlé akce (`starts_at < now()`) se nemažou ani nevedou na 404. Zůstávají zaindexovány ve vyhledávačích (`sitemap.xml`) s prioritou 0.5.
+* **UX v detailu proběhlé akce:** Detail proběhlé akce obsahuje zřetelný žlutý informační alert: *„Tato akce již proběhla ([datum]). Informace slouží jako archiv.“* Akční tlačítka pro nákup vstupenek jsou přepnuta do archivního stylu, aby nemátla návštěvníky.
+
 ---
 
-## 5. Průvodce Správou a Během Systému
+## 5. Crowdsourcing Studentských Míst (`/mista`)
+
+Aby byla mapa studentských míst v Brně co nejaktuálnější a nejrozsáhlejší, platforma umožňuje studentům doporučovat vlastní ověřená místa:
+1. **Frontend formulář:** Na `/mista` je k dispozici tlačítko *„Přidat místo“*, které otevírá moderní DaisyUI modal (`ProposeStudentPlaceModal`).
+2. **Sběr parametrů:** Název, kategorie, adresa v Brně, důvod doporučení (např. spousta zásuvek, levné pivo, otevřeno do noci), highlight, odkazy (web, IG) a nepovinný kontakt.
+3. **Ochrana proti spamu:**
+   * Skrytý honeypot input, který tiše zahodí boty.
+   * Rate limiting (max 5 návrhů / hodina / IP).
+   * Automatické vyloučení znečištění testy při `APP_ENV=testing` nebo E2E markerech.
+4. **Administrace ve Filamentu (`StudentPlaceSuggestionResource`):**
+   * Zobrazení počtu čekajících tipů v odznaku navigace.
+   * 1-klikové schválení s **automatickým geocodingem** adresy v Brně přes OpenStreetMap Nominatim a okamžité vytvoření aktivního záznamu v mapě.
+   * Možnost zamítnutí s poznámkou.
+5. **Discord alert:** O novém studentském tipu je moderátor okamžitě notifikován přes Discord webhook.
+
+---
+
+## 6. Průvodce Správou a Během Systému
 
 ### Příkazy pro vývojáře a agenty
 
@@ -140,7 +167,7 @@ systemctl restart brno-events.service                 # Restart produkční syst
 
 ---
 
-## 6. Databázové Modely a Vztahy
+## 7. Databázové Modely a Vztahy
 
 ```mermaid
 erDiagram
@@ -149,6 +176,8 @@ erDiagram
     CATEGORY ||--o{ EVENT : classifies
     SCRAPE_SOURCE ||--o{ EVENT : imports
     STUDENT_PLACE_CATEGORY ||--o{ STUDENT_PLACE : categorizes
+    STUDENT_PLACE_CATEGORY ||--o{ STUDENT_PLACE_SUGGESTION : categorizes
+    STUDENT_PLACE ||--o{ STUDENT_PLACE_SUGGESTION : creates
 
     EVENT {
         int id PK
@@ -168,10 +197,29 @@ erDiagram
     STUDENT_PLACE {
         int id PK
         string name
+        string slug UK
         string address
-        decimal latitude
-        decimal longitude
-        json embedding
+        decimal lat
+        decimal lng
+        string highlight
+        json tags
+        string website_url
+        string instagram_handle
         boolean is_active
+    }
+
+    STUDENT_PLACE_SUGGESTION {
+        int id PK
+        string name
+        string address
+        string highlight
+        text description
+        string website_url
+        string instagram_handle
+        string submitter_name
+        string submitter_email
+        string status
+        text admin_notes
+        int approved_student_place_id FK
     }
 ```

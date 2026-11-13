@@ -9,9 +9,11 @@ class SitemapController extends Controller
 {
     public function index(): Response
     {
+        // Zahrnujeme akce z celého 365denního retenčního okna pro SEO archiv
         $events = Event::published()
+            ->where('starts_at', '>=', now()->subDays(365))
             ->orderBy('starts_at', 'desc')
-            ->take(200)
+            ->take(2000)
             ->get(['slug', 'updated_at', 'starts_at']);
 
         $baseUrl = config('app.url', 'https://brnoakce.tadeaskozub.com');

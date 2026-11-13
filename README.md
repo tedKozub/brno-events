@@ -19,9 +19,9 @@
 
 * **⚡ Dynamický Feed akcí:** Okamžité filtrování podle univerzit (**MUNI**, **VUT**, **MENDELU**, **UNOB**, **VETUNI**), kategorií a vstupného s plynulým načítáním dalších dávek a tlačítkem *Scroll to Top*.
 * **🧠 Sémantické vektorové vyhledávání:** Vyhledávání založené na 384-dimenzionálních embeddingových vektorech s bleskovou kosinovou podobností přímo v PHP. Najde *„pivo“*, i když je v popisu jen *„hospodský kvíz“*.
-* **🗺️ Interaktivní Mapa Brna:** Zobrazení akcí i studentských míst (`/mista`) na mapovém podkladu OpenStreetMap přes Leaflet.js s podporou dotykových gest a zoomování.
+* **🗺️ Interaktivní Mapa Brna & Crowdsourcing (`/mista`):** Zobrazení akcí i studentských míst na mapovém podkladu OpenStreetMap přes Leaflet.js s podporou dotykových gest. Studenti mohou sami navrhovat nová místa přes frontendový formulář, která administrátor jedním kliknutím schválí s automatickým geocodingem souřadnic.
 * **🖼️ Full-screen Media Lightbox:** Zobrazení originálních plakátů ve vysokém rozlišení. Zavírá se intuitivně kliknutím kamkoliv mimo plakát nebo klávesou `Escape`, bez rušivých prvků.
-* **🤖 Multimodální AI Scraping:** Automatické vytěžování akcí z univerzitních webů, iCal kalendářů, RSS kanálů i sociálních sítí (Instagram & Facebook) s využitím Playwright a OpenAI / Gemini Vision pro čtení grafických plakátů.
+* **🤖 Multimodální AI Scraping & Moderace:** Automatické vytěžování akcí z univerzitních webů, iCal kalendářů, RSS i sociálních sítí (Instagram & Facebook). Oficiální kalendáře se publikují rovnou, příspěvky ze sociálních sítí jdou do přehledné moderace ke schválení.
 * **📊 Cookieless Anonymní Analytika:** 100% v souladu s GDPR, žádné ukládání IP adres, automatická detekce státu a možnost vyloučení interního testovacího provozu na 1 kliknutí.
 * **📱 Progresivní Webová Aplikace (PWA):** Responzivní mobilní zobrazení, instalace na plochu telefonu, podpora tmavého i světlého režimu.
 * **🛡️ Administrace & Moderace:** Správa akcí, zdrojů, schvalovací fronta a přehledné statistiky ve Filament 3 (`/admin`).

@@ -34,4 +34,23 @@ class EventDetailTest extends TestCase
             ->call('downloadIcal')
             ->assertFileDownloaded($event->slug . '.ics');
     }
+
+    public function test_past_event_displays_archive_alert_banner(): void
+    {
+        $event = Event::published()->first();
+        $pastEvent = $event->replicate();
+        $pastEvent->title = 'Proběhlá minulá akce ' . uniqid();
+        $pastEvent->slug = 'past-event-' . uniqid();
+        $pastEvent->starts_at = now()->subDays(10);
+        $pastEvent->ends_at = now()->subDays(10)->addHours(2);
+        $pastEvent->ticket_url = 'https://example.com/tickets/past';
+        $pastEvent->save();
+
+        $response = $this->get('/akce/' . $pastEvent->slug);
+
+        $response->assertStatus(200);
+        $response->assertSee('Tato akce již proběhla');
+        $response->assertSee('Informace slouží jako archiv');
+        $response->assertSee('Vstupenky (archiv)');
+    }
 }

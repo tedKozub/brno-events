@@ -95,4 +95,36 @@ class ModerationAndScraperFilterTest extends TestCase
         $this->assertFalse($method->invoke($command, 'Kreativní workshop malování květináčů', 'Dopřej si odpočinek'));
         $this->assertFalse($method->invoke($command, 'Křehká svoboda 2026', 'Diskuze Masarykovy univerzity k 17. listopadu'));
     }
+
+    public function test_social_media_scrapes_default_to_pending_review_and_official_to_published(): void
+    {
+        $org = Organization::first();
+        $cat = Category::first();
+
+        // 1. Instagram / Facebook event: status must be pending_review
+        $igEvent = Event::create([
+            'title' => 'Instagram Post Party',
+            'slug' => 'ig-party-' . uniqid(),
+            'starts_at' => now()->addDays(2),
+            'organization_id' => $org->id,
+            'category_id' => $cat->id,
+            'source_type' => 'scraper_instagram',
+            'status' => 'pending_review',
+        ]);
+        $this->assertEquals('pending_review', $igEvent->status);
+        $this->assertTrue(Event::pendingReview()->where('id', $igEvent->id)->exists());
+
+        // 2. Official university iCal / web: status must be published
+        $officialEvent = Event::create([
+            'title' => 'Oficiální přednáška MUNI',
+            'slug' => 'muni-prednaska-' . uniqid(),
+            'starts_at' => now()->addDays(2),
+            'organization_id' => $org->id,
+            'category_id' => $cat->id,
+            'source_type' => 'scraper_web',
+            'status' => 'published',
+        ]);
+        $this->assertEquals('published', $officialEvent->status);
+        $this->assertTrue(Event::published()->where('id', $officialEvent->id)->exists());
+    }
 }
