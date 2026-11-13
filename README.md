@@ -1,66 +1,131 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <h1 align="center">🎓 BrnoAkce – Studentské akce Brno</h1>
+  <p align="center">
+    <strong>Moderní, rychlá a otevřená platforma sdružující všechny studentské akce, festivaly, workshopy a komunitní život v Brně na jednom místě.</strong>
+  </p>
 </p>
 
-## About Laravel
+<p align="center">
+  <img src="https://img.shields.io/badge/Laravel-12.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel 12" />
+  <img src="https://img.shields.io/badge/Livewire-3.x-FB70A9?style=for-the-badge&logo=livewire&logoColor=white" alt="Livewire 3" />
+  <img src="https://img.shields.io/badge/TailwindCSS-3.x-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/Python_Scraper-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.11" />
+  <img src="https://img.shields.io/badge/Playwright-E2E-2EAD33?style=for-the-badge&logo=playwright&logoColor=white" alt="Playwright" />
+</p>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🌟 Hlavní funkce platformy
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+* **⚡ Dynamický Feed akcí:** Okamžité filtrování podle univerzit (**MUNI**, **VUT**, **MENDELU**, **UNOB**, **VETUNI**), kategorií a vstupného s plynulým načítáním dalších dávek a tlačítkem *Scroll to Top*.
+* **🧠 Sémantické vektorové vyhledávání:** Vyhledávání založené na 384-dimenzionálních embeddingových vektorech s bleskovou kosinovou podobností přímo v PHP. Najde *„pivo“*, i když je v popisu jen *„hospodský kvíz“*.
+* **🗺️ Interaktivní Mapa Brna:** Zobrazení akcí i studentských míst (`/mista`) na mapovém podkladu OpenStreetMap přes Leaflet.js s podporou dotykových gest a zoomování.
+* **🖼️ Full-screen Media Lightbox:** Zobrazení originálních plakátů ve vysokém rozlišení. Zavírá se intuitivně kliknutím kamkoliv mimo plakát nebo klávesou `Escape`, bez rušivých prvků.
+* **🤖 Multimodální AI Scraping:** Automatické vytěžování akcí z univerzitních webů, iCal kalendářů, RSS kanálů i sociálních sítí (Instagram & Facebook) s využitím Playwright a OpenAI / Gemini Vision pro čtení grafických plakátů.
+* **📊 Cookieless Anonymní Analytika:** 100% v souladu s GDPR, žádné ukládání IP adres, automatická detekce státu a možnost vyloučení interního testovacího provozu na 1 kliknutí.
+* **📱 Progresivní Webová Aplikace (PWA):** Responzivní mobilní zobrazení, instalace na plochu telefonu, podpora tmavého i světlého režimu.
+* **🛡️ Administrace & Moderace:** Správa akcí, zdrojů, schvalovací fronta a přehledné statistiky ve Filament 3 (`/admin`).
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 🏗️ Architektura a Pravidla
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+Kompletní technická specifikace, datové toky, právní mantinely (§ 34 autorského zákona) a pravidla pro vývojáře a budoucí AI agenty naleznete v samostatném dokumentu:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+👉 **[Přečíst ARCHITECTURE.md](ARCHITECTURE.md)**
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 🚀 Rychlý start (Vývojové prostředí)
 
-### Premium Partners
+### Požadavky
+* **PHP:** 8.4+ s rozšířeními `pdo_sqlite`, `mbstring`, `curl`, `dom`, `fileinfo`
+* **Node.js:** 20+ a npm
+* **Python:** 3.11+ (pro scrapery)
+* **Composer**
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+### Instalace krok za krokem
 
-## Contributing
+```bash
+# 1. Klonování repozitáře
+git clone https://github.com/tedKozub/brno-events.git
+cd brno-events
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# 2. Instalace PHP závislostí
+composer install
 
-## Code of Conduct
+# 3. Instalace JS závislostí a sestavení stylů
+npm install
+npm run build
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# 4. Příprava konfiguračního souboru
+cp .env.example .env
+php artisan key:generate
 
-## Security Vulnerabilities
+# 5. Inicializace SQLite databáze a migrace
+touch database/database.sqlite
+php artisan migrate --seed
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# 6. Příprava Python virtuálního prostředí pro scrapery
+cd scrapers
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+playwright install chromium
+cd ..
+```
 
-## License
+### Spuštění vývojového serveru
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+# Spuštění aplikace
+php artisan serve --port=8085
+
+# Sledování změn frontendu (Vite)
+npm run dev
+```
+
+---
+
+## 🧪 Spouštění testů (Quality Assurance)
+
+Každá úprava v projektu podléhá přísnému testování. Před odesláním do větve `master` musí projít všechny testy:
+
+```bash
+# Backend unit a feature testy (PHPUnit)
+php artisan test
+
+# E2E testy v prohlížeči (Playwright Desktop Chrome)
+npm run test:e2e:desktop
+
+# E2E testy v mobilním viewportu (iPhone 14)
+npx playwright test --project="Mobile iPhone 14"
+```
+
+---
+
+## 📜 Správa Scraperů
+
+Zdroje pro scraping jsou deklarativně definovány v [`config/scrape_sources.yaml`](config/scrape_sources.yaml).
+
+```bash
+# Synchronizace YAML definic do databáze
+php artisan scrape-sources:sync
+
+# Spuštění scrapingu všech aktivních zdrojů
+php artisan events:scrape
+
+# Spuštění konkrétního zdroje podle ID
+php artisan events:scrape 8
+
+# Dotipování plakátů a bannerů k již existujícím akcím
+php artisan events:enrich-banners
+```
+
+---
+
+## ⚖️ Právní rámec & Licence
+
+* Platforma operuje v režimu **zpravodajské licence podle § 34 odst. 1 písm. c) autorského zákona (zákon č. 121/2000 Sb.)** pro informování studentů o veřejných univerzitních událostech.
+* Všechny akce a plakáty uvádějí odkaz na původní zdroj pořadatele. Pořadatelé mohou kdykoliv požádat o stažení či úpravu přes integrovaný formulář nahlášení nebo na e-mailu správce.
+* Tento projekt je licencován pod licencí [MIT](LICENSE).
