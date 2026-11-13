@@ -5,7 +5,7 @@ import json
 import os
 import re
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 import httpx
 from playwright.async_api import async_playwright
@@ -24,6 +24,76 @@ CZECH_MONTHS = {
     'lis': 11, 'listopadu': 11, 'listopad': 11,
     'pro': 12, 'prosince': 12, 'prosinec': 12,
 }
+
+CZECH_DAY_MAP = {
+    'pondělí': 0, 'pondělky': 0, 'pondeli': 0, 'pondelky': 0, 'pondělní': 0, 'pondelni': 0,
+    'úterý': 1, 'utery': 1, 'úterní': 1, 'uterni': 1,
+    'středa': 2, 'středy': 2, 'středu': 2, 'streda': 2, 'stredy': 2, 'stredu': 2, 'středeční': 2, 'stredecni': 2,
+    'čtvrtek': 3, 'čtvrtky': 3, 'ctvrtek': 3, 'ctvrtky': 3, 'čtvrteční': 3, 'ctvrtecni': 3,
+    'pátek': 4, 'pátky': 4, 'patek': 4, 'patky': 4, 'páteční': 4, 'patecni': 4,
+    'sobota': 5, 'soboty': 5, 'sobotu': 5, 'sobotní': 5, 'sobotni': 5,
+    'neděle': 6, 'nedele': 6, 'neděli': 6, 'nedeli': 6, 'nedělní': 6, 'nedelni': 6,
+}
+
+CZECH_WEEKDAY_NAMES = {
+    0: 'pondělí',
+    1: 'úterý',
+    2: 'středa',
+    3: 'čtvrtek',
+    4: 'pátek',
+    5: 'sobota',
+    6: 'neděle'
+}
+
+
+def resolve_next_weekday(target_weekday: int, hour: int = 18, minute: int = 0, now: Optional[datetime] = None) -> datetime:
+    """Calculates the upcoming date for the given weekday (0=Monday..6=Sunday)."""
+    if now is None:
+        now = datetime.now()
+    days_ahead = (target_weekday - now.weekday()) % 7
+    if days_ahead == 0:
+        event_time_today = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        if event_time_today <= now:
+            days_ahead = 7
+    return (now + timedelta(days=days_ahead)).replace(hour=hour, minute=minute, second=0, microsecond=0)
+
+
+def extract_weekday_from_text(text: str) -> Optional[int]:
+    """Detects if text mentions a Czech weekday (e.g. 'středy', 've středu', 'čtvrtek')."""
+    lower = text.lower()
+    for word, day_idx in CZECH_DAY_MAP.items():
+        if re.search(r'\b' + re.escape(word) + r'\b', lower):
+            return day_idx
+    return None
+
+
+def sanitize_extracted_event_date(event: Dict[str, Any], raw_text: str, now: Optional[datetime] = None) -> Dict[str, Any]:
+    """Validates and corrects extracted starts_at if flyer/caption mentions a specific weekday (e.g. 'středy') but LLM miscalculated the date."""
+    if not event or "starts_at" not in event or not event["starts_at"]:
+        return event
+
+    if now is None:
+        now = datetime.now()
+
+    starts_at_str = event["starts_at"]
+    try:
+        dt = datetime.strptime(starts_at_str[:19], "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        try:
+            dt = datetime.fromisoformat(starts_at_str.replace("Z", "+00:00"))
+        except Exception:
+            return event
+
+    combined_text = f"{event.get('title', '')} {event.get('description', '')} {raw_text}"
+    has_explicit_date = bool(re.search(r"\b\d{1,2}\.\s*(\d{1,2}\.|" + "|".join(CZECH_MONTHS.keys()) + r")", combined_text, re.IGNORECASE))
+
+    target_weekday = extract_weekday_from_text(combined_text)
+    if target_weekday is not None and not has_explicit_date:
+        if dt.weekday() != target_weekday:
+            corrected = resolve_next_weekday(target_weekday, dt.hour, dt.minute, now=now)
+            event["starts_at"] = corrected.strftime("%Y-%m-%d %H:%M:%S")
+
+    return event
 
 
 def clean_emoji(text: str) -> str:
@@ -86,9 +156,14 @@ def extract_with_openai_vision(image_path: str, caption: str, api_key: str) -> O
         with open(image_path, "rb") as f:
             img_b64 = base64.b64encode(f.read()).decode("utf-8")
 
+        now = datetime.now()
+        today_cz = CZECH_WEEKDAY_NAMES.get(now.weekday(), "")
+        next_wed = resolve_next_weekday(2, 19, 30, now=now).strftime("%Y-%m-%d")
+        monday_str = (now + timedelta(days=((0 - now.weekday()) % 7 or 7))).strftime("%Y-%m-%d")
+
         prompt = f"""
 Jsi expert na brněnský studentský život. Analyzuj přiložený grafický plakát a text příspěvku z Instagramu.
-Dnešní datum je: {datetime.now().strftime('%Y-%m-%d')}.
+Dnešní datum je: {now.strftime('%Y-%m-%d')} ({today_cz}).
 
 Extrahuj informace o události a vrať POUZE validní JSON ve formátu:
 {{
@@ -104,6 +179,13 @@ Extrahuj informace o události a vrať POUZE validní JSON ve formátu:
   "description": "Kompletní popis a program bez emoji"
 }}
 
+DŮLEŽITÁ PRAVIDLA PRO DATUM (starts_at):
+1. Pokud je na plakátu nebo v textu konkrétní datum (např. 18.11., 25. listopadu), použij toto datum.
+2. Pokud je na plakátu nebo v textu uveden pouze den v týdnu nebo opakování (např. 'STŘEDY', 'každou středu', 've středu', 'úterý', 'čtvrtek'), vypočítej datum NEJBLIŽŠÍHO NADCHÁZEJÍCÍHO tohoto dne počínaje dneškem ({now.strftime('%Y-%m-%d')}).
+   - Příklad: Pokud je na plakátu 'STŘEDY', nejbližší nadcházející středa je {next_wed} 19:30:00! V ŽÁDNÉM PŘÍPADĚ nedávej pondělí ({monday_str}) ani jiné nesouvisející dny.
+   - Dny v týdnu v češtině: Pondělí=Monday, Úterý=Tuesday, Středa/Středy=Wednesday, Čtvrtek/Čtvrtky=Thursday, Pátek/Pátky=Friday, Sobota=Saturday, Neděle=Sunday.
+3. Čas vyber dle plakátu (např. 19:30 -> 19:30:00). Pokud čas chybí, použij 18:00:00.
+
 Popisek z Instagramu:
 {caption}
 """
@@ -117,7 +199,7 @@ Popisek z Instagramu:
             "messages": [
                 {
                     "role": "system",
-                    "content": "Jsi asistent pro extrakci studentských akcí v Brně z plakátů do strukturovaného JSONu bez emoji.",
+                    "content": "Jsi asistent pro extrakci studentských akcí v Brně z plakátů do strukturovaného JSONu bez emoji. Striktně dodržuj uvedené dny v týdnu.",
                 },
                 {
                     "role": "user",
@@ -148,7 +230,7 @@ Popisek z Instagramu:
                 extracted["short_description"] = clean_emoji(extracted.get("short_description", ""))
                 if "description" in extracted:
                     extracted["description"] = clean_emoji(extracted["description"])
-                return extracted
+                return sanitize_extracted_event_date(extracted, caption, now=now)
             else:
                 print(f"OpenAI error {resp.status_code}: {resp.text}", flush=True)
     except Exception as e:
@@ -163,9 +245,14 @@ def extract_with_gemini_vision(image_path: str, caption: str, api_key: str) -> O
         with open(image_path, "rb") as f:
             img_b64 = base64.b64encode(f.read()).decode("utf-8")
 
+        now = datetime.now()
+        today_cz = CZECH_WEEKDAY_NAMES.get(now.weekday(), "")
+        next_wed = resolve_next_weekday(2, 19, 30, now=now).strftime("%Y-%m-%d")
+        monday_str = (now + timedelta(days=((0 - now.weekday()) % 7 or 7))).strftime("%Y-%m-%d")
+
         prompt = f"""
 Jsi expert na brněnský studentský život. Analyzuj přiložený grafický plakát a text příspěvku z Instagramu.
-Dnešní datum je: {datetime.now().strftime('%Y-%m-%d')}.
+Dnešní datum je: {now.strftime('%Y-%m-%d')} ({today_cz}).
 
 Extrahuj informace o události a vrať POUZE validní JSON ve formátu:
 {{
@@ -180,6 +267,13 @@ Extrahuj informace o události a vrať POUZE validní JSON ve formátu:
   "short_description": "Stručné shrnutí akce pro studenty na 1-2 věty bez emoji",
   "description": "Kompletní popis a program"
 }}
+
+DŮLEŽITÁ PRAVIDLA PRO DATUM (starts_at):
+1. Pokud je na plakátu nebo v textu konkrétní datum (např. 18.11., 25. listopadu), použij toto datum.
+2. Pokud je na plakátu nebo v textu uveden pouze den v týdnu nebo opakování (např. 'STŘEDY', 'každou středu', 've středu', 'úterý', 'čtvrtek'), vypočítej datum NEJBLIŽŠÍHO NADCHÁZEJÍCÍHO tohoto dne počínaje dneškem ({now.strftime('%Y-%m-%d')}).
+   - Příklad: Pokud je na plakátu 'STŘEDY', nejbližší nadcházející středa je {next_wed} 19:30:00! V ŽÁDNÉM PŘÍPADĚ nedávej pondělí ({monday_str}) ani jiné nesouvisející dny.
+   - Dny v týdnu v češtině: Pondělí=Monday, Úterý=Tuesday, Středa/Středy=Wednesday, Čtvrtek/Čtvrtky=Thursday, Pátek/Pátky=Friday, Sobota=Saturday, Neděle=Sunday.
+3. Čas vyber dle plakátu (např. 19:30 -> 19:30:00). Pokud čas chybí, použij 18:00:00.
 
 Popisek z Instagramu:
 {caption}
@@ -213,7 +307,7 @@ Popisek z Instagramu:
                 extracted["title"] = clean_emoji(extracted.get("title", ""))
                 extracted["location_name"] = clean_emoji(extracted.get("location_name", "Brno"))
                 extracted["short_description"] = clean_emoji(extracted.get("short_description", ""))
-                return extracted
+                return sanitize_extracted_event_date(extracted, caption, now=now)
     except Exception as e:
         print(f"Gemini vision extraction failed, falling back to NLP: {e}", flush=True)
 
@@ -268,7 +362,12 @@ def extract_event_from_caption(caption: str, base_url: str) -> Optional[Dict[str
         except ValueError:
             starts_at = f"{year:04d}-11-20 18:00:00"
     else:
-        starts_at = f"{current_year:04d}-11-20 18:00:00"
+        weekday = extract_weekday_from_text(cleaned)
+        if weekday is not None:
+            resolved_dt = resolve_next_weekday(weekday, hour, minute, now=now)
+            starts_at = resolved_dt.strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            starts_at = f"{current_year:04d}-11-20 18:00:00"
 
     venue = "Brno"
     venue_match = re.search(r"(?:Kde|Místo|📍)\s*:?\s*([^\n]+)", cleaned, re.IGNORECASE)
@@ -393,6 +492,8 @@ async def scrape_instagram_profile_async(
 
                 if not event:
                     continue
+
+                event = sanitize_extracted_event_date(event, alt)
 
                 if os.path.exists(dest_path):
                     event["cover_image"] = f"events/covers/{filename}"

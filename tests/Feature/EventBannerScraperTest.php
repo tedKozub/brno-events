@@ -127,7 +127,7 @@ class EventBannerScraperTest extends TestCase
 
         $this->assertEquals('banner', $event->cover_image_type);
         $this->assertFalse($event->isPoster());
-        $this->assertEquals('Webový banner', $event->cover_image_type_display);
+        $this->assertEquals('Plakát akce', $event->cover_image_type_display);
         $this->assertStringContainsString('web_banner_main.jpg', $event->original_image_url);
         $this->assertStringStartsWith('events/covers/banner_', $event->cover_image);
 
@@ -243,7 +243,9 @@ class EventBannerScraperTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Plakát akce');
         $response->assertSee('id="poster_modal"', false);
-        $response->assertSee('Celý plakát');
+        $response->assertSee('Původní zdroj');
+        $response->assertDontSee('Stáhnout v plném rozlišení');
+        $response->assertDontSee('Zvětšit plakát');
         // Detail UI must remain clean without legal disclaimer clutter
         $response->assertDontSee('zpravodajské licence');
 

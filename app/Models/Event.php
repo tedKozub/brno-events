@@ -215,8 +215,7 @@ class Event extends Model
     public function getCoverImageTypeDisplayAttribute(): string
     {
         return match($this->effective_cover_image_type) {
-            'poster' => 'Plakát akce',
-            'banner' => 'Webový banner',
+            'poster', 'banner' => 'Plakát akce',
             'article' => 'Obrázek z článku',
             default => 'Ilustrační foto',
         };

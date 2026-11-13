@@ -199,8 +199,8 @@
                             </span>
                         @endif
 
-                        {{-- Typ obrázku (Plakát / Webový banner / Foto) - VŠECHNY lze rozkliknout do lightboxu --}}
-                        @if($event->effective_cover_image_type === 'poster')
+                        {{-- Tlačítko pro zobrazení plakátu akce --}}
+                        @if(!$event->isStockImage())
                             <button
                                 type="button"
                                 onclick="document.getElementById('poster_modal').showModal()"
@@ -211,30 +211,6 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
                                 </svg>
                                 <span>Plakát akce</span>
-                            </button>
-                        @elseif($event->effective_cover_image_type === 'banner')
-                            <button
-                                type="button"
-                                onclick="document.getElementById('poster_modal').showModal()"
-                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold backdrop-blur-md bg-base-100/90 text-base-content hover:bg-base-100 border border-base-300 shadow-sm cursor-pointer transition-transform active:scale-95"
-                                title="Zobrazit celý webový banner"
-                            >
-                                <svg class="w-3.5 h-3.5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
-                                </svg>
-                                <span>Webový banner</span>
-                            </button>
-                        @elseif($event->effective_cover_image_type === 'article')
-                            <button
-                                type="button"
-                                onclick="document.getElementById('poster_modal').showModal()"
-                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold backdrop-blur-md bg-base-100/90 text-base-content hover:bg-base-100 border border-base-300 shadow-sm cursor-pointer transition-transform active:scale-95"
-                                title="Zobrazit celý obrázek"
-                            >
-                                <svg class="w-3.5 h-3.5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
-                                </svg>
-                                <span>Foto / Grafika</span>
                             </button>
                         @endif
                     </div>
@@ -247,15 +223,7 @@
                     </div>
                 </div>
 
-                {{-- Hint pro zvětšení na hover --}}
-                <div class="absolute top-14 right-3 sm:right-4 opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none">
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold backdrop-blur-md bg-black/75 text-white border border-white/20 shadow-lg">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
-                        </svg>
-                        <span>Zvětšit {{ $event->isPoster() ? 'plakát' : 'obrázek' }}</span>
-                    </span>
-                </div>
+
 
                 {{-- Spodní info na obrázku --}}
                 <div class="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 text-white space-y-2">
@@ -501,12 +469,12 @@
                         type="button"
                         onclick="document.getElementById('poster_modal').showModal()"
                         class="btn btn-sm btn-ghost border border-base-300 font-bold rounded-xl px-3 h-9 min-h-[36px] text-xs gap-1.5 inline-flex items-center cursor-pointer"
-                        title="Zobrazit celý originální obrázek nebo plakát ve vysokém rozlišení"
+                        title="Zobrazit celý originální plakát akce"
                     >
                         <svg class="w-3.5 h-3.5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                         </svg>
-                        <span>{{ $event->isPoster() ? 'Celý plakát' : 'Zvětšit obrázek' }}</span>
+                        <span>Plakát akce</span>
                     </button>
 
                     <div class="sm:ml-auto">
@@ -647,30 +615,25 @@
                     <span class="badge badge-primary badge-sm text-[11px] font-bold shrink-0">{{ $event->cover_image_type_display }}</span>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                    <a
-                        href="{{ $event->cover_image_url }}"
-                        download
-                        target="_blank"
-                        class="btn btn-xs sm:btn-sm btn-ghost text-white/90 hover:text-white hover:bg-white/15 gap-1.5 rounded-xl font-bold"
-                        title="Stáhnout v plném rozlišení"
-                    >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                        </svg>
-                        <span class="hidden sm:inline">Stáhnout</span>
-                    </a>
-                    @if($event->original_image_url)
+                    @php
+                        $sourceUrl = $event->original_image_url
+                            ?: ($event->source_url
+                            ?: ($event->instagram_post_url
+                            ?: ($event->facebook_event_url
+                            ?: ($event->organization?->website_url ?: $event->cover_image_url))));
+                    @endphp
+                    @if($sourceUrl)
                         <a
-                            href="{{ $event->original_image_url }}"
+                            href="{{ $sourceUrl }}"
                             target="_blank"
                             rel="noopener noreferrer"
                             class="btn btn-xs sm:btn-sm btn-ghost text-white/90 hover:text-white hover:bg-white/15 gap-1.5 rounded-xl font-bold"
-                            title="Otevřít původní odkaz zdroje"
+                            title="Otevřít původní zdroj"
                         >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                             </svg>
-                            <span class="hidden sm:inline">Původní zdroj</span>
+                            <span>Původní zdroj</span>
                         </a>
                     @endif
                     <button

@@ -112,10 +112,14 @@ test.describe('Event Detail & Reporting Workflow', () => {
     }
   });
 
-  test('clicking the hero cover banner directly opens the lightbox modal', async ({ page }) => {
+  test('clicking the hero cover banner directly opens the lightbox modal with unified actions', async ({ page }) => {
     await page.goto('/');
     await page.locator('a[href^="/akce/"]').first().click();
     await page.waitForURL('**/akce/**');
+
+    // Verify hover pill 'Zvětšit plakát' does not exist
+    const hoverPill = page.locator('span:has-text("Zvětšit plakát"), span:has-text("Zvětšit obrázek")');
+    await expect(hoverPill).toHaveCount(0);
 
     // Click the hero banner container directly
     const bannerContainer = page.locator('div[title="Kliknutím zobrazit v plné velikosti"]');
@@ -126,6 +130,14 @@ test.describe('Event Detail & Reporting Workflow', () => {
     await expect(modal).toBeVisible();
     const modalImg = modal.locator('img');
     await expect(modalImg).toBeVisible();
+
+    // Verify original source button exists
+    const sourceBtn = modal.locator('a:has-text("Původní zdroj")');
+    await expect(sourceBtn).toBeVisible();
+
+    // Verify download button is absent
+    const downloadBtn = modal.locator('a[download], a:has-text("Stáhnout")');
+    await expect(downloadBtn).toHaveCount(0);
 
     // Close via close button
     const closeBtn = modal.locator('button[aria-label="Zavřít"]').first();
