@@ -260,6 +260,8 @@ class ScrapeEventsCommand extends Command
                     'short_description' => $cleanShortDesc ?: null,
                     'description' => $cleanDesc ?: null,
                     'cover_image' => $item['cover_image'] ?? null,
+                    'cover_image_type' => $item['cover_image_type'] ?? null,
+                    'original_image_url' => $item['original_image_url'] ?? null,
                     'starts_at' => $startsAt,
                     'ends_at' => $endsAt,
                     'is_all_day' => !empty($item['is_all_day']),

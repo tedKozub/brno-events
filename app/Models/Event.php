@@ -180,6 +180,26 @@ class Event extends Model
             return $this->cover_image_type;
         }
 
+        // If stored locally on disk, determine type dynamically by aspect ratio
+        if (!str_starts_with($this->cover_image, 'http://') && !str_starts_with($this->cover_image, 'https://')) {
+            $cleanPath = ltrim(preg_replace('#^/?storage/#', '', $this->cover_image), '/');
+            $fullPath = Storage::disk('public')->path($cleanPath);
+            if (file_exists($fullPath)) {
+                $dims = @getimagesize($fullPath);
+                if ($dims && $dims[0] > 0 && $dims[1] > 0) {
+                    $w = $dims[0];
+                    $h = $dims[1];
+                    if ($h > 1.15 * $w) {
+                        return 'poster';
+                    }
+                    if ($w >= 1.2 * $h) {
+                        return 'banner';
+                    }
+                    return 'article';
+                }
+            }
+        }
+
         $lower = strtolower($this->cover_image);
         if (str_contains($lower, 'poster') || str_contains($lower, 'plakat')) {
             return 'poster';

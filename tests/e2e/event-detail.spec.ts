@@ -99,7 +99,7 @@ test.describe('Event Detail & Reporting Workflow', () => {
     await page.waitForURL('**/akce/**');
 
     // Click full poster/image button
-    const posterBtn = page.locator('button:has-text("Plakát"), button:has-text("Celý plakát"), button:has-text("Obrázek")').first();
+    const posterBtn = page.locator('button:has-text("Plakát"), button:has-text("Celý plakát"), button:has-text("Zvětšit")').first();
     if (await posterBtn.isVisible()) {
       await posterBtn.click();
       const modal = page.locator('#poster_modal');
@@ -107,9 +107,30 @@ test.describe('Event Detail & Reporting Workflow', () => {
       const modalImg = modal.locator('img');
       await expect(modalImg).toBeVisible();
       // Close modal
-      const closeBtn = modal.locator('button:has-text("Zavřít")').first();
+      const closeBtn = modal.locator('button[aria-label="Zavřít"]').first();
       await closeBtn.click();
     }
+  });
+
+  test('clicking the hero cover banner directly opens the lightbox modal', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('a[href^="/akce/"]').first().click();
+    await page.waitForURL('**/akce/**');
+
+    // Click the hero banner container directly
+    const bannerContainer = page.locator('div[title="Kliknutím zobrazit v plné velikosti"]');
+    await expect(bannerContainer).toBeVisible();
+    await bannerContainer.click();
+
+    const modal = page.locator('#poster_modal');
+    await expect(modal).toBeVisible();
+    const modalImg = modal.locator('img');
+    await expect(modalImg).toBeVisible();
+
+    // Close via close button
+    const closeBtn = modal.locator('button[aria-label="Zavřít"]').first();
+    await closeBtn.click();
+    await expect(modal).not.toBeVisible();
   });
 
 });

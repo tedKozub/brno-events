@@ -67,6 +67,14 @@ test.describe('Student Places & Map Workflow (/mista)', () => {
     const mapEl = page.locator('#student-places-map');
     await expect(mapEl).toBeVisible();
 
+    // Ensure Leaflet map has finished asynchronous Alpine $nextTick initialization
+    await page.waitForFunction(() => {
+      const el = document.getElementById('student-places-map');
+      // @ts-ignore
+      const alpineData = window.Alpine?.$data(el?.closest('[x-data]'));
+      return Boolean(alpineData?.map && alpineData?.map?.options);
+    }, { timeout: 10000 });
+
     // Verify Leaflet instance options enable touchpad and mobile gestures
     const gestureOptions = await page.evaluate(() => {
       const el = document.getElementById('student-places-map');

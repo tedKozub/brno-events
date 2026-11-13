@@ -396,6 +396,19 @@ async def scrape_instagram_profile_async(
 
                 if os.path.exists(dest_path):
                     event["cover_image"] = f"events/covers/{filename}"
+                    event["original_image_url"] = src
+                    try:
+                        from PIL import Image
+                        with Image.open(dest_path) as im:
+                            w, h = im.size
+                            if h > 1.15 * w:
+                                event["cover_image_type"] = "poster"
+                            elif w >= 1.2 * h:
+                                event["cover_image_type"] = "banner"
+                            else:
+                                event["cover_image_type"] = "article"
+                    except Exception:
+                        event["cover_image_type"] = "banner"
 
                 event["source_url"] = f"{profile_url}#post-{img_hash}"
                 event["source_type"] = "scraper_instagram"

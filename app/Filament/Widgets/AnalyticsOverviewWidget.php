@@ -17,16 +17,21 @@ class AnalyticsOverviewWidget extends BaseWidget
         $service = app(AnalyticsService::class);
         $summary = $service->getSummaryStats(7);
         $trend = $service->getDailyTrend(7);
+        $countries = $service->getCountryStats(7);
+
+        $countrySummary = !empty($countries)
+            ? collect($countries)->take(2)->map(fn($c) => "{$c['flag']} {$c['code']} ({$c['percentage']}%)")->implode(' • ')
+            : '🇨🇿 CZ (100 %)';
 
         return [
             Stat::make('Zobrazení stránek (7 dní)', number_format($summary['pageviews'], 0, ',', ' '))
-                ->description('Anonymní zobrazení webu a akcí')
+                ->description("Reální návštěvníci • {$countrySummary}")
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
                 ->chart($trend['data'])
                 ->color('primary'),
 
             Stat::make('Unikátní návštěvníci (7 dní)', number_format($summary['unique_visitors'], 0, ',', ' '))
-                ->description('Denní anonymizovaný hash bez cookies')
+                ->description("Top státy: {$countrySummary}")
                 ->descriptionIcon('heroicon-m-user-group')
                 ->color('success'),
 
@@ -36,7 +41,7 @@ class AnalyticsOverviewWidget extends BaseWidget
                 ->color('warning'),
 
             Stat::make('Stažení do kalendáře (iCal)', number_format($summary['ical_downloads'], 0, ',', ' '))
-                ->description('Uložené akce do mobilních kalendářů')
+                ->description("Odfiltrováno {$summary['excluded_internal_events']} interních testů")
                 ->descriptionIcon('heroicon-m-calendar')
                 ->color('info'),
         ];

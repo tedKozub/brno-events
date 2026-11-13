@@ -30,13 +30,13 @@ test.describe('Homepage & Event Filters Workflow', () => {
     const searchInput = page.locator('input[placeholder*="Hledat akci"]');
     
     // Type search query
-    await searchInput.fill('Křehká svoboda');
+    await searchInput.fill('TechTalk');
     
     // Wait for debounce and Livewire re-render
     await page.waitForTimeout(600);
 
     // Verify filtered card is visible
-    await expect(page.locator('text=Křehká svoboda 2026').first()).toBeVisible();
+    await expect(page.locator('text=TechTalk').first()).toBeVisible();
 
     // Clear search
     await searchInput.fill('');

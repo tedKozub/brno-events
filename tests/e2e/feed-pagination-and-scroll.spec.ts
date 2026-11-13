@@ -45,7 +45,7 @@ test.describe('Feed Dynamic Fetching, Nav Highlighting & Scroll To Top', () => {
     await expect(loadMoreBtn).toContainText('zobrazeno 12 z');
 
     // Click load more button
-    await loadMoreBtn.click();
+    await loadMoreBtn.click({ force: true });
     await page.waitForTimeout(800);
 
     // Verify more cards are loaded

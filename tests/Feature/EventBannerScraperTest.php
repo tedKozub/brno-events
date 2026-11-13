@@ -244,8 +244,14 @@ class EventBannerScraperTest extends TestCase
         $response->assertSee('Plakát akce');
         $response->assertSee('id="poster_modal"', false);
         $response->assertSee('Celý plakát');
-        $response->assertSee('Zdroj vizuálu');
-        $response->assertSee('autorského zákona');
+        // Detail UI must remain clean without legal disclaimer clutter
+        $response->assertDontSee('zpravodajské licence');
+
+        // Licensing terms are properly maintained in Terms of Use (/podminky)
+        $termsResponse = $this->get('/podminky');
+        $termsResponse->assertStatus(200);
+        $termsResponse->assertSee('zpravodajská licence');
+        $termsResponse->assertSee('autorského zákona');
     }
 
     public function test_vertical_article_image_is_automatically_promoted_to_poster_by_aspect_ratio(): void

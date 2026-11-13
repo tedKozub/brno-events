@@ -132,4 +132,87 @@ class AnalyticsTrackingTest extends TestCase
             'event_id' => $event->id,
         ]);
     }
+
+    public function test_country_detection_resolves_cloudflare_and_custom_headers(): void
+    {
+        $service = app(AnalyticsService::class);
+
+        // Test with CF-IPCountry header
+        request()->headers->set('CF-IPCountry', 'SK');
+        $this->assertEquals('SK', $service->resolveCountry());
+
+        // Test with X-Country-Code header
+        request()->headers->remove('CF-IPCountry');
+        request()->headers->set('X-Country-Code', 'DE');
+        $this->assertEquals('DE', $service->resolveCountry());
+
+        // Test fallback to CZ
+        request()->headers->remove('X-Country-Code');
+        $this->assertEquals('CZ', $service->resolveCountry());
+    }
+
+    public function test_traffic_classification_separates_internal_and_test_traffic(): void
+    {
+        $service = app(AnalyticsService::class);
+
+        // In test runner, defaults to test
+        $classification = $service->resolveTrafficClassification();
+        $this->assertEquals('test', $classification['traffic_type']);
+        $this->assertTrue($classification['is_internal']);
+    }
+
+    public function test_analytics_toggle_device_route_toggles_internal_cookie(): void
+    {
+        // 1. First visit sets cookie brnoakce_internal=1
+        $response = $this->get('/analytics/toggle-device?redirect_to=/');
+        $response->assertRedirect('/');
+        $response->assertCookie('brnoakce_internal', '1');
+
+        // 2. Second visit with existing cookie clears it
+        $response2 = $this->withCookie('brnoakce_internal', '1')->get('/analytics/toggle-device?redirect_to=/');
+        $response2->assertRedirect('/');
+        $response2->assertCookieExpired('brnoakce_internal');
+    }
+
+    public function test_country_stats_and_traffic_breakdown_methods(): void
+    {
+        AnalyticsEvent::create([
+            'event_type' => 'pageview',
+            'path' => '/',
+            'country_code' => 'CZ',
+            'traffic_type' => 'real',
+            'is_internal' => false,
+            'created_at' => now(),
+        ]);
+
+        AnalyticsEvent::create([
+            'event_type' => 'pageview',
+            'path' => '/',
+            'country_code' => 'SK',
+            'traffic_type' => 'real',
+            'is_internal' => false,
+            'created_at' => now(),
+        ]);
+
+        AnalyticsEvent::create([
+            'event_type' => 'pageview',
+            'path' => '/',
+            'country_code' => 'CZ',
+            'traffic_type' => 'internal',
+            'is_internal' => true,
+            'created_at' => now(),
+        ]);
+
+        $service = app(AnalyticsService::class);
+        $countries = $service->getCountryStats(7, false);
+        $this->assertNotEmpty($countries);
+        $cz = collect($countries)->firstWhere('code', 'CZ');
+        $this->assertNotNull($cz);
+        $this->assertEquals('Česko', $cz['name']);
+        $this->assertEquals('🇨🇿', $cz['flag']);
+
+        $breakdown = $service->getTrafficBreakdown(7);
+        $this->assertGreaterThanOrEqual(2, $breakdown['real']);
+        $this->assertGreaterThanOrEqual(1, $breakdown['internal']);
+    }
 }
