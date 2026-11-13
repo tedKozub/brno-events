@@ -606,10 +606,17 @@
     </main>
 
     {{-- MODERNÍ FULL-SCREEN LIGHTBOX PRO ZOBRAZENÍ PLAKÁTU ČI BANNERU VE VYSOKÉM ROZLIŠENÍ --}}
-    <dialog id="poster_modal" class="modal [&:not([open])]:hidden bg-black/85 backdrop-blur-md p-2 sm:p-6 z-50">
-        <div class="relative w-full max-w-6xl max-h-[96vh] flex flex-col items-center justify-center p-0 m-auto select-none">
-            {{-- Horní ovládací lišta --}}
-            <div class="flex items-center justify-between w-full pb-3 px-2 text-white gap-3 shrink-0">
+    <dialog
+        id="poster_modal"
+        class="modal [&:not([open])]:hidden bg-black/90 backdrop-blur-md p-2 sm:p-6 z-50 cursor-pointer"
+        onclick="if (!event.target.closest('#poster_image, #poster_source_link')) this.close()"
+    >
+        <div
+            class="relative w-full max-w-6xl max-h-[96vh] flex flex-col items-center justify-center p-0 m-auto select-none"
+            onclick="if (!event.target.closest('#poster_image, #poster_source_link')) document.getElementById('poster_modal').close()"
+        >
+            {{-- Horní lišta: Titulek akce & odkaz na původní zdroj (zavření klikem/tapem mimo plakát) --}}
+            <div class="flex items-center justify-between w-full pb-3 px-2 text-white gap-3 shrink-0" onclick="event.stopPropagation()">
                 <div class="flex items-center gap-2 min-w-0">
                     <span class="text-sm sm:text-base font-black truncate drop-shadow">{{ $event->title }}</span>
                     <span class="badge badge-primary badge-sm text-[11px] font-bold shrink-0">{{ $event->cover_image_type_display }}</span>
@@ -624,11 +631,13 @@
                     @endphp
                     @if($sourceUrl)
                         <a
+                            id="poster_source_link"
                             href="{{ $sourceUrl }}"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="btn btn-xs sm:btn-sm btn-ghost text-white/90 hover:text-white hover:bg-white/15 gap-1.5 rounded-xl font-bold"
+                            class="btn btn-xs sm:btn-sm btn-ghost text-white/90 hover:text-white hover:bg-white/15 gap-1.5 rounded-xl font-bold border border-white/20"
                             title="Otevřít původní zdroj"
+                            onclick="event.stopPropagation()"
                         >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
@@ -636,24 +645,28 @@
                             <span>Původní zdroj</span>
                         </a>
                     @endif
-                    <button
-                        type="button"
-                        onclick="document.getElementById('poster_modal').close()"
-                        class="btn btn-sm btn-circle bg-white/20 hover:bg-white/35 text-white border-none shadow-md ml-1 cursor-pointer"
-                        aria-label="Zavřít"
-                    >✕</button>
                 </div>
             </div>
 
             {{-- Velký obrázek bez stísňujících rámečků --}}
-            <div class="w-full flex justify-center items-center overflow-auto max-h-[86vh] sm:max-h-[90vh] py-1">
+            <div
+                class="w-full flex flex-col justify-center items-center overflow-auto max-h-[84vh] sm:max-h-[88vh] py-1 cursor-pointer"
+                onclick="if (!event.target.closest('#poster_image, #poster_source_link')) document.getElementById('poster_modal').close()"
+            >
                 <img
+                    id="poster_image"
                     src="{{ $event->cover_image_url }}"
                     alt="{{ $event->title }}"
-                    class="max-w-full max-h-[85vh] sm:max-h-[88vh] object-contain rounded-2xl shadow-2xl"
+                    class="max-w-full max-h-[82vh] sm:max-h-[85vh] object-contain rounded-2xl shadow-2xl cursor-default"
                     loading="lazy"
+                    onclick="event.stopPropagation()"
                     onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=1200&q=80';"
                 />
+            </div>
+
+            {{-- Jemný textový hint pro zavření --}}
+            <div class="text-[11px] text-white/40 pt-2 select-none pointer-events-none">
+                Kliknutím nebo tapnutím mimo plakát okno zavřeš
             </div>
         </div>
         <form method="dialog" class="modal-backdrop">

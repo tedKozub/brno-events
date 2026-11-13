@@ -106,9 +106,13 @@ test.describe('Event Detail & Reporting Workflow', () => {
       await expect(modal).toBeVisible();
       const modalImg = modal.locator('img');
       await expect(modalImg).toBeVisible();
-      // Close modal
-      const closeBtn = modal.locator('button[aria-label="Zavřít"]').first();
-      await closeBtn.click();
+
+      // Verify explicit close button is absent (clean UI)
+      await expect(modal.locator('button[aria-label="Zavřít"]')).toHaveCount(0);
+
+      // Close modal by clicking outside the image on the backdrop
+      await modal.click({ position: { x: 5, y: 5 } });
+      await expect(modal).not.toBeVisible();
     }
   });
 
@@ -135,13 +139,17 @@ test.describe('Event Detail & Reporting Workflow', () => {
     const sourceBtn = modal.locator('a:has-text("Původní zdroj")');
     await expect(sourceBtn).toBeVisible();
 
-    // Verify download button is absent
+    // Verify download button and close button are absent
     const downloadBtn = modal.locator('a[download], a:has-text("Stáhnout")');
     await expect(downloadBtn).toHaveCount(0);
+    await expect(modal.locator('button[aria-label="Zavřít"]')).toHaveCount(0);
 
-    // Close via close button
-    const closeBtn = modal.locator('button[aria-label="Zavřít"]').first();
-    await closeBtn.click();
+    // Verify clicking on the poster image itself does NOT close the modal
+    await modalImg.click();
+    await expect(modal).toBeVisible();
+
+    // Close by clicking anywhere outside the poster image (e.g. on the top-left backdrop)
+    await modal.click({ position: { x: 10, y: 10 } });
     await expect(modal).not.toBeVisible();
   });
 
