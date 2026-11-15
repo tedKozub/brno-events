@@ -527,8 +527,9 @@ async def scrape_instagram_profile_async(
                 if not alt or "profile picture" in alt.lower() or not src:
                     continue
 
-                # Download flyer image first
-                img_hash = hashlib.md5(src.encode("utf-8")).hexdigest()[:12]
+                # Download flyer image first (strip dynamic tokens from CDN URL for stable hash)
+                clean_src = src.split("?")[0]
+                img_hash = hashlib.md5(clean_src.encode("utf-8")).hexdigest()[:12]
                 filename = f"ig_{clean_name}_{img_hash}.jpg"
                 dest_path = os.path.join(output_dir, filename)
 
