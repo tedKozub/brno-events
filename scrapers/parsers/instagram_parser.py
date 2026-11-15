@@ -6,7 +6,7 @@ import os
 import re
 import urllib.request
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 import httpx
 from playwright.async_api import async_playwright
 
@@ -67,8 +67,74 @@ def extract_weekday_from_text(text: str) -> Optional[int]:
     return None
 
 
+def extract_explicit_time_from_text(text: str) -> Optional[Tuple[int, int]]:
+    """Extracts explicit hour and minute from text without confusing with dates."""
+    # Match colon time e.g. 19:00, v 19:00, od 18:30
+    m = re.search(r"\b(?:v|ve|od|at)?\s*(\d{1,2}):(\d{2})\b", text, re.IGNORECASE)
+    if m:
+        h, mn = int(m.group(1)), int(m.group(2))
+        if 0 <= h <= 23 and 0 <= mn <= 59:
+            return h, mn
+    # Match dot time with explicit time preposition e.g. 'v 19.00' or 'od 18.30'
+    m = re.search(r"\b(?:v|ve|od|at)\s*(\d{1,2})\.(\d{2})\b", text, re.IGNORECASE)
+    if m:
+        h, mn = int(m.group(1)), int(m.group(2))
+        if 0 <= h <= 23 and 0 <= mn <= 59:
+            return h, mn
+    # Match dot time with hour unit suffix e.g. '19.00 hod' or '18.30h'
+    m = re.search(r"\b(\d{1,2})\.(\d{2})\s*(?:hod|h|hodin)\b", text, re.IGNORECASE)
+    if m:
+        h, mn = int(m.group(1)), int(m.group(2))
+        if 0 <= h <= 23 and 0 <= mn <= 59:
+            return h, mn
+    # Match hour with preposition and unit e.g. 'v 19h', 'od 18 hodin'
+    m = re.search(r"\b(?:v|ve|od|at)\s*(\d{1,2})\s*(?:h|hod|hodin)\b", text, re.IGNORECASE)
+    if m:
+        h = int(m.group(1))
+        if 0 <= h <= 23:
+            return h, 0
+    return None
+
+
+def extract_explicit_date_from_text(text: str, default_year: Optional[int] = None) -> Optional[datetime]:
+    """Extracts explicit Czech date (DD.MM.YYYY or DD.MM. or DD. [czech_month] [YYYY]) from text."""
+    if default_year is None:
+        default_year = datetime.now().year
+
+    # 1. Pattern with Czech month word: e.g. 10. listopadu 2026, 25. listopadu
+    month_pattern = "|".join(re.escape(k) for k in CZECH_MONTHS.keys())
+    m_word = re.search(r"\b(\d{1,2})\.\s*(" + month_pattern + r")(?:\s+(\d{4}))?\b", text, re.IGNORECASE)
+    if m_word:
+        day = int(m_word.group(1))
+        month_str = m_word.group(2).lower()
+        month = CZECH_MONTHS.get(month_str)
+        year = int(m_word.group(3)) if m_word.group(3) else default_year
+        if month and 1 <= day <= 31:
+            try:
+                return datetime(year, month, day)
+            except ValueError:
+                pass
+
+    # 2. Pattern DD.MM.YYYY or DD.MM.
+    m_num = re.search(r"\b(\d{1,2})\.\s*(\d{1,2})\.(?:\s*(\d{4}))?\b", text)
+    if m_num:
+        day = int(m_num.group(1))
+        month = int(m_num.group(2))
+        year = int(m_num.group(3)) if m_num.group(3) else default_year
+        if 1 <= month <= 12 and 1 <= day <= 31:
+            try:
+                return datetime(year, month, day)
+            except ValueError:
+                pass
+
+    return None
+
+
 def sanitize_extracted_event_date(event: Dict[str, Any], raw_text: str, now: Optional[datetime] = None) -> Dict[str, Any]:
-    """Validates and corrects extracted starts_at if flyer/caption mentions a specific weekday (e.g. 'středy') but LLM miscalculated the date."""
+    """Validates and corrects extracted starts_at against explicit dates and recurring weekdays in caption/flyer.
+
+    CRUCIAL: The scraper must NEVER invent or shift dates when an explicit date is written in the organizer's text.
+    """
     if not event or "starts_at" not in event or not event["starts_at"]:
         return event
 
@@ -84,13 +150,28 @@ def sanitize_extracted_event_date(event: Dict[str, Any], raw_text: str, now: Opt
         except Exception:
             return event
 
-    combined_text = f"{event.get('title', '')} {event.get('description', '')} {raw_text}"
-    has_explicit_date = bool(re.search(r"\b\d{1,2}\.\s*(\d{1,2}\.|" + "|".join(CZECH_MONTHS.keys()) + r")", combined_text, re.IGNORECASE))
+    title = event.get("title") or ""
+    desc = event.get("description") or ""
+    combined_text = f"{title} {desc} {raw_text}"
 
+    explicit_date = extract_explicit_date_from_text(combined_text, default_year=dt.year)
+    extracted_time = extract_explicit_time_from_text(combined_text)
+
+    # 1. Explicit date written in caption/flyer ALWAYS takes absolute precedence over LLM guessing or weekday heuristics
+    if explicit_date is not None:
+        target_hour = extracted_time[0] if extracted_time else dt.hour
+        target_minute = extracted_time[1] if extracted_time else dt.minute
+        corrected = explicit_date.replace(hour=target_hour, minute=target_minute, second=0)
+        event["starts_at"] = corrected.strftime("%Y-%m-%d %H:%M:%S")
+        return event
+
+    # 2. If NO explicit date is given, but a recurring weekday is mentioned (e.g. 'středy'), calculate next upcoming weekday
     target_weekday = extract_weekday_from_text(combined_text)
-    if target_weekday is not None and not has_explicit_date:
-        if dt.weekday() != target_weekday:
-            corrected = resolve_next_weekday(target_weekday, dt.hour, dt.minute, now=now)
+    if target_weekday is not None:
+        target_hour = extracted_time[0] if extracted_time else dt.hour
+        target_minute = extracted_time[1] if extracted_time else dt.minute
+        if dt.weekday() != target_weekday or dt.hour != target_hour or dt.minute != target_minute:
+            corrected = resolve_next_weekday(target_weekday, target_hour, target_minute, now=now)
             event["starts_at"] = corrected.strftime("%Y-%m-%d %H:%M:%S")
 
     return event
@@ -158,11 +239,8 @@ def extract_with_openai_vision(image_path: str, caption: str, api_key: str) -> O
 
         now = datetime.now()
         today_cz = CZECH_WEEKDAY_NAMES.get(now.weekday(), "")
-        next_wed = resolve_next_weekday(2, 19, 30, now=now).strftime("%Y-%m-%d")
-        monday_str = (now + timedelta(days=((0 - now.weekday()) % 7 or 7))).strftime("%Y-%m-%d")
 
-        prompt = f"""
-Jsi expert na brněnský studentský život. Analyzuj přiložený grafický plakát a text příspěvku z Instagramu.
+        prompt = f"""Jsi expert na brněnský studentský život. Analyzuj přiložený grafický plakát a text příspěvku z Instagramu.
 Dnešní datum je: {now.strftime('%Y-%m-%d')} ({today_cz}).
 
 Extrahuj informace o události a vrať POUZE validní JSON ve formátu:
@@ -179,12 +257,13 @@ Extrahuj informace o události a vrať POUZE validní JSON ve formátu:
   "description": "Kompletní popis a program bez emoji"
 }}
 
-DŮLEŽITÁ PRAVIDLA PRO DATUM (starts_at):
-1. Pokud je na plakátu nebo v textu konkrétní datum (např. 18.11., 25. listopadu), použij toto datum.
-2. Pokud je na plakátu nebo v textu uveden pouze den v týdnu nebo opakování (např. 'STŘEDY', 'každou středu', 've středu', 'úterý', 'čtvrtek'), vypočítej datum NEJBLIŽŠÍHO NADCHÁZEJÍCÍHO tohoto dne počínaje dneškem ({now.strftime('%Y-%m-%d')}).
-   - Příklad: Pokud je na plakátu 'STŘEDY', nejbližší nadcházející středa je {next_wed} 19:30:00! V ŽÁDNÉM PŘÍPADĚ nedávej pondělí ({monday_str}) ani jiné nesouvisející dny.
+STRIKTNÍ PRAVIDLA PRO DATUM (starts_at):
+1. POKUD JE NA PLAKÁTU NEBO V TEXTU UVEDENO KONKRÉTNÍ DATUM (např. den a měsíc jako 10.11. nebo 10. listopadu):
+   - MUSÍŠ VŽDY POUŽÍT TOTO PŘESNÉ DATUM Z PLAKÁTU ČI POPISKU!
+   - NIKDY SI DATUM NEDOMÝŠLEJ, NEPŘEPISUJ HO ANI NEPOSOUVEJ, a to ani v případě, že datum je již v minulosti vzhledem k dnešku! Plakát a popisek mají absolutní prioritu.
+2. POUZE V PŘÍPADĚ, ŽE NA PLAKÁTU ANI V TEXTU NENÍ ŽÁDNÉ KONKRÉTNÍ DATUM a je uveden pouze den v týdnu (např. 'středy', 'každé úterý'), vypočítej datum nejbližšího nadcházejícího tohoto dne počínaje dneškem ({now.strftime('%Y-%m-%d')}).
    - Dny v týdnu v češtině: Pondělí=Monday, Úterý=Tuesday, Středa/Středy=Wednesday, Čtvrtek/Čtvrtky=Thursday, Pátek/Pátky=Friday, Sobota=Saturday, Neděle=Sunday.
-3. Čas vyber dle plakátu (např. 19:30 -> 19:30:00). Pokud čas chybí, použij 18:00:00.
+3. Čas vyber dle plakátu a textu (např. 19:00 -> 19:00:00). Pokud čas chybí, použij 18:00:00.
 
 Popisek z Instagramu:
 {caption}
@@ -199,7 +278,7 @@ Popisek z Instagramu:
             "messages": [
                 {
                     "role": "system",
-                    "content": "Jsi asistent pro extrakci studentských akcí v Brně z plakátů do strukturovaného JSONu bez emoji. Striktně dodržuj uvedené dny v týdnu.",
+                    "content": "Jsi asistent pro extrakci studentských akcí v Brně z plakátů do strukturovaného JSONu bez emoji. Striktně se drž explicitně uvedených dat na plakátu a v popisku a nikdy si nedomýšlej ani neposouvej data.",
                 },
                 {
                     "role": "user",
@@ -247,11 +326,8 @@ def extract_with_gemini_vision(image_path: str, caption: str, api_key: str) -> O
 
         now = datetime.now()
         today_cz = CZECH_WEEKDAY_NAMES.get(now.weekday(), "")
-        next_wed = resolve_next_weekday(2, 19, 30, now=now).strftime("%Y-%m-%d")
-        monday_str = (now + timedelta(days=((0 - now.weekday()) % 7 or 7))).strftime("%Y-%m-%d")
 
-        prompt = f"""
-Jsi expert na brněnský studentský život. Analyzuj přiložený grafický plakát a text příspěvku z Instagramu.
+        prompt = f"""Jsi expert na brněnský studentský život. Analyzuj přiložený grafický plakát a text příspěvku z Instagramu.
 Dnešní datum je: {now.strftime('%Y-%m-%d')} ({today_cz}).
 
 Extrahuj informace o události a vrať POUZE validní JSON ve formátu:
@@ -268,12 +344,13 @@ Extrahuj informace o události a vrať POUZE validní JSON ve formátu:
   "description": "Kompletní popis a program"
 }}
 
-DŮLEŽITÁ PRAVIDLA PRO DATUM (starts_at):
-1. Pokud je na plakátu nebo v textu konkrétní datum (např. 18.11., 25. listopadu), použij toto datum.
-2. Pokud je na plakátu nebo v textu uveden pouze den v týdnu nebo opakování (např. 'STŘEDY', 'každou středu', 've středu', 'úterý', 'čtvrtek'), vypočítej datum NEJBLIŽŠÍHO NADCHÁZEJÍCÍHO tohoto dne počínaje dneškem ({now.strftime('%Y-%m-%d')}).
-   - Příklad: Pokud je na plakátu 'STŘEDY', nejbližší nadcházející středa je {next_wed} 19:30:00! V ŽÁDNÉM PŘÍPADĚ nedávej pondělí ({monday_str}) ani jiné nesouvisející dny.
+STRIKTNÍ PRAVIDLA PRO DATUM (starts_at):
+1. POKUD JE NA PLAKÁTU NEBO V TEXTU UVEDENO KONKRÉTNÍ DATUM (např. den a měsíc jako 10.11. nebo 10. listopadu):
+   - MUSÍŠ VŽDY POUŽÍT TOTO PŘESNÉ DATUM Z PLAKÁTU ČI POPISKU!
+   - NIKDY SI DATUM NEDOMÝŠLEJ, NEPŘEPISUJ HO ANI NEPOSOUVEJ, a to ani v případě, že datum je již v minulosti vzhledem k dnešku! Plakát a popisek mají absolutní prioritu.
+2. POUZE V PŘÍPADĚ, ŽE NA PLAKÁTU ANI V TEXTU NENÍ ŽÁDNÉ KONKRÉTNÍ DATUM a je uveden pouze den v týdnu (např. 'středy', 'každé úterý'), vypočítej datum nejbližšího nadcházejícího tohoto dne počínaje dneškem ({now.strftime('%Y-%m-%d')}).
    - Dny v týdnu v češtině: Pondělí=Monday, Úterý=Tuesday, Středa/Středy=Wednesday, Čtvrtek/Čtvrtky=Thursday, Pátek/Pátky=Friday, Sobota=Saturday, Neděle=Sunday.
-3. Čas vyber dle plakátu (např. 19:30 -> 19:30:00). Pokud čas chybí, použij 18:00:00.
+3. Čas vyber dle plakátu a textu (např. 19:00 -> 19:00:00). Pokud čas chybí, použij 18:00:00.
 
 Popisek z Instagramu:
 {caption}
@@ -334,40 +411,21 @@ def extract_event_from_caption(caption: str, base_url: str) -> Optional[Dict[str
 
     # Date & Time parsing
     now = datetime.now()
-    current_year = now.year
+    explicit_date = extract_explicit_date_from_text(cleaned, default_year=now.year)
+    extracted_time = extract_explicit_time_from_text(cleaned)
 
-    date_match = re.search(r"(\d{1,2})\.\s*(\d{1,2})\.(?:\s*(\d{4}))?", cleaned)
-    day = None
-    month = None
-    year = current_year
+    hour = extracted_time[0] if extracted_time else 18
+    minute = extracted_time[1] if extracted_time else 0
 
-    if date_match:
-        day = int(date_match.group(1))
-        month = int(date_match.group(2))
-        if date_match.group(3):
-            year = int(date_match.group(3))
-        elif month < now.month or (month == now.month and day < now.day - 1):
-            year = current_year + 1
-
-    time_match = re.search(r"(?:od|v|at)?\s*(\d{1,2})[:.](\d{2})", cleaned, re.IGNORECASE)
-    hour = 18
-    minute = 0
-    if time_match:
-        hour = int(time_match.group(1))
-        minute = int(time_match.group(2))
-
-    if day and month and 1 <= day <= 31 and 1 <= month <= 12:
-        try:
-            starts_at = f"{year:04d}-{month:02d}-{day:02d} {hour:02d}:{minute:02d}:00"
-        except ValueError:
-            starts_at = f"{year:04d}-11-20 18:00:00"
+    if explicit_date is not None:
+        starts_at = explicit_date.replace(hour=hour, minute=minute, second=0).strftime("%Y-%m-%d %H:%M:%S")
     else:
         weekday = extract_weekday_from_text(cleaned)
         if weekday is not None:
             resolved_dt = resolve_next_weekday(weekday, hour, minute, now=now)
             starts_at = resolved_dt.strftime("%Y-%m-%d %H:%M:%S")
         else:
-            starts_at = f"{current_year:04d}-11-20 18:00:00"
+            starts_at = f"{now.year:04d}-11-20 18:00:00"
 
     venue = "Brno"
     venue_match = re.search(r"(?:Kde|Místo|📍)\s*:?\s*([^\n]+)", cleaned, re.IGNORECASE)

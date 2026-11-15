@@ -122,6 +122,12 @@ flowchart TD
 * **SEO archiv proběhlých akcí:** Proběhlé akce (`starts_at < now()`) se nemažou ani nevedou na 404. Zůstávají zaindexovány ve vyhledávačích (`sitemap.xml`) s prioritou 0.5.
 * **UX v detailu proběhlé akce:** Detail proběhlé akce obsahuje zřetelný žlutý informační alert: *„Tato akce již proběhla ([datum]). Informace slouží jako archiv.“* Akční tlačítka pro nákup vstupenek jsou přepnuta do archivního stylu, aby nemátla návštěvníky.
 
+### 6. Pravidla extrakce datumu ze sociálních sítí (IG/FB) & ochrana proti halucinacím
+* **Absolutní přednost explicitního datumu:** Pokud popisek nebo plakát obsahuje konkrétní datum (např. `10.11.2026`, `10.11.` nebo `10. listopadu`), scraper ho MUSÍ použít přesně tak, jak je uveden organizátorem.
+* **Zákaz domýšlení a posouvání v čase:** Scraper nesmí datum svévolně posouvat do budoucna ani ho nahrazovat dnem v týdnu, a to ani v případě, že datum akce je již v minulosti. Proběhlé akce se ukládají s původním reálným datem (slouží pro roční archiv a SEO).
+* **Heuristika dnů v týdnu pouze jako fallback:** Výpočet nejbližšího nadcházejícího dne (např. *„středy 19:30“* -> nejbližší středa) se uplatní POUZE a VÝHRADNĚ tehdy, pokud na plakátu ani v textu není uvedeno ŽÁDNÉ konkrétní kalendářní datum.
+* **Dvoustupňová validace (`sanitize_extracted_event_date`):** I kdyby AI vision model vygeneroval posunuté datum, Python sanitizér detekuje explicitní datum v textu a tvrdě přepíše `starts_at` zpět na organizátorem uvedené datum.
+
 ---
 
 ## 5. Crowdsourcing Studentských Míst (`/mista`)
