@@ -407,12 +407,82 @@ class Event extends Model
             ];
         }
 
+        if (str_contains($text, 'skautský institut') || str_contains($text, 'skautskem institutu') || str_contains($text, 'skautsky institut')) {
+            return [
+                'lat' => 49.1983,
+                'lng' => 16.6075,
+                'title' => 'Skautský institut v Brně',
+                'address' => 'Moravské náměstí 12, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'trojk') || str_contains($text, 'kavárna trojka') || str_contains($text, 'kavarna trojka')) {
+            return [
+                'lat' => 49.1938,
+                'lng' => 16.6063,
+                'title' => 'Kavárna Trojka',
+                'address' => 'Dominikánská 9, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
         if (str_contains($text, 'morgal')) {
             return [
                 'lat' => 49.1979,
                 'lng' => 16.6079,
                 'title' => 'Café Morgal',
                 'address' => 'Moravské náměstí 1a, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'kabinet múz') || str_contains($text, 'kabinet muz')) {
+            return [
+                'lat' => 49.1965,
+                'lng' => 16.6111,
+                'title' => 'Kabinet MÚZ',
+                'address' => 'Sukova 4, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'music lab') || str_contains($text, 'musiclab')) {
+            return [
+                'lat' => 49.1981,
+                'lng' => 16.6060,
+                'title' => 'Music Lab',
+                'address' => 'Opletalova 1, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'šelepk') || str_contains($text, 'selepk')) {
+            return [
+                'lat' => 49.2139,
+                'lng' => 16.5919,
+                'title' => 'Klub Šelepka',
+                'address' => 'Šelepova 1, Brno – Královo Pole',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'otevřená zahrada') || str_contains($text, 'otevrena zahrada')) {
+            return [
+                'lat' => 49.1956,
+                'lng' => 16.5986,
+                'title' => 'Otevřená zahrada',
+                'address' => 'Údolní 33, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'impact hub')) {
+            return [
+                'lat' => 49.1906,
+                'lng' => 16.6198,
+                'title' => 'Impact Hub Brno',
+                'address' => 'Cyrilská 7, Brno – Trnitá',
                 'is_exact' => true,
             ];
         }
@@ -497,53 +567,180 @@ class Event extends Model
             ];
         }
 
-        // 2. Univerzitní centrály / rektoráty
-        if ($uni === 'MUNI') {
+        // 1.8 Brněnské ulice a náměstí
+        if (str_contains($text, 'kounicova')) {
             return [
-                'lat' => 49.1977,
-                'lng' => 16.6043,
-                'title' => 'Masarykova univerzita (Komenského nám.)',
-                'address' => 'Komenského nám. 2, Brno – střed',
+                'lat' => 49.2025,
+                'lng' => 16.6000,
+                'title' => 'Kounicova',
+                'address' => 'Kounicova, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'moravské náměstí') || str_contains($text, 'moravskem namesti')) {
+            return [
+                'lat' => 49.1985,
+                'lng' => 16.6078,
+                'title' => 'Moravské náměstí',
+                'address' => 'Moravské náměstí, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'dominikánsk') || str_contains($text, 'dominikansk')) {
+            return [
+                'lat' => 49.1937,
+                'lng' => 16.6066,
+                'title' => 'Dominikánská / Dominikánské nám.',
+                'address' => 'Dominikánská, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'zelný trh') || str_contains($text, 'zelnem trhu')) {
+            return [
+                'lat' => 49.1925,
+                'lng' => 16.6090,
+                'title' => 'Zelný trh',
+                'address' => 'Zelný trh, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'štefánikov') || str_contains($text, 'stefanikov')) {
+            return [
+                'lat' => 49.2096,
+                'lng' => 16.6033,
+                'title' => 'Štefánikova',
+                'address' => 'Štefánikova, Brno – Královo Pole',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'údolní') || str_contains($text, 'udolni')) {
+            return [
+                'lat' => 49.1956,
+                'lng' => 16.5986,
+                'title' => 'Údolní',
+                'address' => 'Údolní, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'pekařsk') || str_contains($text, 'pekarsk')) {
+            return [
+                'lat' => 49.1915,
+                'lng' => 16.5992,
+                'title' => 'Pekařská',
+                'address' => 'Pekařská, Brno – Staré Brno',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'lidick')) {
+            return [
+                'lat' => 49.2050,
+                'lng' => 16.6080,
+                'title' => 'Lidická',
+                'address' => 'Lidická, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'sukova')) {
+            return [
+                'lat' => 49.1965,
+                'lng' => 16.6111,
+                'title' => 'Sukova',
+                'address' => 'Sukova, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'rooseveltov')) {
+            return [
+                'lat' => 49.1963,
+                'lng' => 16.6118,
+                'title' => 'Rooseveltova',
+                'address' => 'Rooseveltova, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if (str_contains($text, 'purkyňov') || str_contains($text, 'kolejní') || str_contains($text, 'palackého vrch')) {
+            return [
+                'lat' => 49.2285,
+                'lng' => 16.5750,
+                'title' => 'Pod Palackého vrchem (VUT kolejní areál)',
+                'address' => 'Kolejní 2, Brno – Medlánky',
+                'is_exact' => true,
+            ];
+        }
+
+        // 2. Univerzitní centrály / rektoráty (pouze pokud není uvedeno specifické místo)
+        $hasCustomLoc = !empty($this->location_name) && mb_strtolower(trim($this->location_name)) !== 'brno';
+
+        if (!$hasCustomLoc) {
+            if ($uni === 'MUNI') {
+                return [
+                    'lat' => 49.1977,
+                    'lng' => 16.6043,
+                    'title' => 'Masarykova univerzita (Komenského nám.)',
+                    'address' => 'Komenského nám. 2, Brno – střed',
+                    'is_exact' => false,
+                ];
+            }
+
+            if ($uni === 'VUT') {
+                return [
+                    'lat' => 49.2023,
+                    'lng' => 16.6062,
+                    'title' => 'VUT v Brně (Antonínská)',
+                    'address' => 'Antonínská 1, Brno – střed',
+                    'is_exact' => false,
+                ];
+            }
+
+            if ($uni === 'UNOB') {
+                return [
+                    'lat' => 49.2114,
+                    'lng' => 16.5947,
+                    'title' => 'Univerzita obrany (Kasárna Černá Pole)',
+                    'address' => 'Kounicova 65, Brno – střed',
+                    'is_exact' => false,
+                ];
+            }
+
+            if ($uni === 'VETUNI') {
+                return [
+                    'lat' => 49.2173,
+                    'lng' => 16.5963,
+                    'title' => 'Veterinární univerzita Brno (Areál)',
+                    'address' => 'Palackého tř. 1946/1, Brno – Královo Pole',
+                    'is_exact' => false,
+                ];
+            }
+        }
+
+        // 3. Fallback: Pokud je k dispozici konkrétní location_name, použijeme jej místo generického "Brno centrum"
+        if ($hasCustomLoc) {
+            $loc = trim($this->location_name);
+            return [
+                'lat' => 49.1951,
+                'lng' => 16.6068,
+                'title' => $loc,
+                'address' => str_contains(mb_strtolower($loc), 'brno') ? $loc : ($loc . ', Brno'),
                 'is_exact' => false,
             ];
         }
 
-        if ($uni === 'VUT') {
-            return [
-                'lat' => 49.2023,
-                'lng' => 16.6062,
-                'title' => 'VUT v Brně (Antonínská)',
-                'address' => 'Antonínská 1, Brno – střed',
-                'is_exact' => false,
-            ];
-        }
-
-        if ($uni === 'UNOB') {
-            return [
-                'lat' => 49.2114,
-                'lng' => 16.5947,
-                'title' => 'Univerzita obrany (Kasárna Černá Pole)',
-                'address' => 'Kounicova 65, Brno – střed',
-                'is_exact' => false,
-            ];
-        }
-
-        if ($uni === 'VETUNI') {
-            return [
-                'lat' => 49.2173,
-                'lng' => 16.5963,
-                'title' => 'Veterinární univerzita Brno (Areál)',
-                'address' => 'Palackého tř. 1946/1, Brno – Královo Pole',
-                'is_exact' => false,
-            ];
-        }
-
-        // 3. Centrum Brna
+        // 4. Default pro město Brno
         return [
             'lat' => 49.1951,
             'lng' => 16.6068,
-            'title' => 'Brno centrum',
-            'address' => 'Náměstí Svobody, Brno',
+            'title' => 'Brno',
+            'address' => 'Brno',
             'is_exact' => false,
         ];
     }

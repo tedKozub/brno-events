@@ -333,13 +333,17 @@ class EventBoard extends Component
                 if (!$coords) {
                     return null;
                 }
+                $venueDisplay = ($e->location_display && mb_strtolower($e->location_display) !== 'brno')
+                    ? $e->location_display
+                    : ($coords['title'] ?: 'Brno');
+
                 return [
                     'id' => $e->id,
                     'slug' => $e->slug,
                     'title' => $e->title,
                     'lat' => (float) $coords['lat'],
                     'lng' => (float) $coords['lng'],
-                    'venue' => $coords['title'],
+                    'venue' => $venueDisplay,
                     'time' => $e->formatted_date_range,
                     'price' => $e->formatted_price,
                     'category' => $e->category?->name,

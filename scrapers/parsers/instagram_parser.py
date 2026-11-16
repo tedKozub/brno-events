@@ -416,15 +416,41 @@ def extract_event_from_caption(caption: str, base_url: str) -> Optional[Dict[str
 
     venue = "Brno"
     venue_match = re.search(r"(?:Kde|Místo|📍)\s*:?\s*([^\n]+)", cleaned, re.IGNORECASE)
+    cleaned_lower = cleaned.lower()
     if venue_match:
         venue = clean_emoji(venue_match.group(1).strip())
-        venue = re.sub(r"^(?:ve?|at|in)\s+", "", venue, flags=re.IGNORECASE).strip()
-    elif "koma lounge" in cleaned.lower():
-        venue = "Koma Lounge & Bar, Brno"
-    elif "babylon" in cleaned.lower():
-        venue = "KC Babylon, Brno"
-    elif "morgal" in cleaned.lower():
-        venue = "Café Morgal, Brno"
+        venue = re.sub(r"^(?:ve?|at|in|do)\s+", "", venue, flags=re.IGNORECASE).strip()
+    elif "koma lounge" in cleaned_lower:
+        venue = "Koma Lounge & Bar, Kounicova 42, Brno"
+    elif "skautský institut" in cleaned_lower or "skautskem institutu" in cleaned_lower:
+        venue = "Skautský institut v Brně, Moravské náměstí 12, Brno"
+    elif "babylon" in cleaned_lower:
+        venue = "KC Babylon, Kounicova 20, Brno"
+    elif "morgal" in cleaned_lower:
+        venue = "Café Morgal, Moravské náměstí 1a, Brno"
+    elif "kabinet múz" in cleaned_lower or "kabinet muz" in cleaned_lower:
+        venue = "Kabinet MÚZ, Sukova 4, Brno"
+    elif "music lab" in cleaned_lower:
+        venue = "Music Lab, Opletalova 1, Brno"
+    elif "trojk" in cleaned_lower:
+        venue = "Kavárna Trojka, Dominikánská 9, Brno"
+    elif "fleda" in cleaned_lower or "fléda" in cleaned_lower:
+        venue = "Fléda Club, Štefánikova 24, Brno"
+    elif "artbar" in cleaned_lower or "druhý pád" in cleaned_lower or "druhy pad" in cleaned_lower:
+        venue = "ArtBar Druhý Pád, Štefánikova 1, Brno"
+    elif "perpetuum" in cleaned_lower:
+        venue = "Perpetuum Club, Rooseveltova 9, Brno"
+    elif "šelepk" in cleaned_lower or "selepk" in cleaned_lower:
+        venue = "Klub Šelepka, Šelepova 1, Brno"
+    elif "impact hub" in cleaned_lower:
+        venue = "Impact Hub Brno, Cyrilská 7, Brno"
+    elif "otevřená zahrada" in cleaned_lower or "otevrena zahrada" in cleaned_lower:
+        venue = "Otevřená zahrada, Údolní 33, Brno"
+    else:
+        # Hledání adresy ve tvaru Ulice Číslo, Brno
+        addr_match = re.search(r"\b([A-ZÁ-Ž][a-zčďéěíňóřšťúůýž]+(?:\s+[a-zčďéěíňóřšťúůýž]+)?\s+\d+(?:[a-zA-Z]|\/\d+)?)(?:,\s*Brno)?\b", cleaned)
+        if addr_match:
+            venue = f"{addr_match.group(1).strip()}, Brno"
 
     price_type = "free"
     price_amount = None

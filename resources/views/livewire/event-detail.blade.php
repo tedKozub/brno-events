@@ -369,12 +369,12 @@
                             </div>
                             @if($event->venue && $event->venue->address)
                                 <div class="text-xs text-base-content/70 mt-0.5 truncate">{{ $event->venue->address }}, {{ $event->venue->city }}</div>
-                            @elseif($event->location_name && $event->location_name !== ($event->venue?->name))
+                            @elseif($event->venue && $event->location_name && $event->location_name !== $event->venue->name)
                                 <div class="text-xs text-base-content/70 mt-0.5 truncate">{{ $event->location_name }}</div>
                             @endif
                             <div class="mt-2 flex items-center gap-3">
                                 <a
-                                    href="https://www.google.com/maps/search/?api=1&query={{ urlencode(($event->venue ? $event->venue->name . ' ' : '') . $event->location_display . ' Brno') }}"
+                                    href="https://www.google.com/maps/search/?api=1&query={{ urlencode($event->location_display . ' Brno') }}"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     wire:click="trackOutbound('map')"
@@ -387,7 +387,7 @@
                                 </a>
                                 <span class="text-base-content/30">•</span>
                                 <a
-                                    href="https://mapy.cz/zakladni?q={{ urlencode(($event->venue ? $event->venue->name . ' ' : '') . $event->location_display . ' Brno') }}"
+                                    href="https://mapy.cz/zakladni?q={{ urlencode($event->location_display . ' Brno') }}"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     wire:click="trackOutbound('map')"

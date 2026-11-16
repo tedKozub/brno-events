@@ -98,6 +98,51 @@ class DatabaseSeeder extends Seeder
             'description' => 'Univerzitní kampus a park Veterinární univerzity Brno.',
         ]);
 
+        Venue::firstOrCreate(['slug' => 'koma-lounge-bar'], [
+            'name' => 'Koma Lounge & Bar',
+            'address' => 'Kounicova 42',
+            'city' => 'Brno',
+            'latitude' => 49.2040,
+            'longitude' => 16.5985,
+            'description' => 'Populární studentský lounge bar u kolejí.',
+        ]);
+
+        Venue::firstOrCreate(['slug' => 'kc-babylon'], [
+            'name' => 'KC Babylon',
+            'address' => 'Kounicova 20',
+            'city' => 'Brno',
+            'latitude' => 49.2018,
+            'longitude' => 16.6006,
+            'description' => 'Kulturní centrum a koncertní sál.',
+        ]);
+
+        Venue::firstOrCreate(['slug' => 'cafe-morgal'], [
+            'name' => 'Café Morgal',
+            'address' => 'Moravské náměstí 1a',
+            'city' => 'Brno',
+            'latitude' => 49.1979,
+            'longitude' => 16.6079,
+            'description' => 'Kavárna a kulturní prostor v Místodržitelském paláci.',
+        ]);
+
+        Venue::firstOrCreate(['slug' => 'skautsky-institut-brno'], [
+            'name' => 'Skautský institut v Brně',
+            'address' => 'Moravské náměstí 12',
+            'city' => 'Brno',
+            'latitude' => 49.1983,
+            'longitude' => 16.6075,
+            'description' => 'Otevřený prostor pro přednášky, workshopy a komunitní setkání.',
+        ]);
+
+        Venue::firstOrCreate(['slug' => 'kavarna-trojka'], [
+            'name' => 'Kavárna Trojka',
+            'address' => 'Dominikánská 9',
+            'city' => 'Brno',
+            'latitude' => 49.1938,
+            'longitude' => 16.6063,
+            'description' => 'Legendární studentská kavárna v Domě pánů z Kunštátu.',
+        ]);
+
         // 2. Categories
         $catParty = Category::create([
             'name' => 'Párty & Kluby',

@@ -194,45 +194,65 @@ class ScrapeEventsCommand extends Command
                     continue;
                 }
 
-                // Určení organizace: by default přímo fakultě nebo univerzitě (nikdy nepřiřazovat k náhodnému spolku)
+                // Určení organizace: akce mimo univerzitní weby (Instagram, Facebook, spolky) musí náležet spolkům!
                 $orgId = $source->organization_id;
                 $university = $item['university'] ?? $source->university ?? 'OTHER';
 
-                if (!$orgId && $university !== 'OTHER') {
-                    $textToCheck = mb_strtolower($title . ' ' . ($item['location_name'] ?? '') . ' ' . ($item['description'] ?? ''));
-                    $facultySlug = null;
+                if (!$orgId) {
+                    $isSocialOrExternal = in_array($source->type ?? '', ['web_instagram', 'web_facebook', 'instagram', 'facebook', 'web_ical'])
+                        || str_contains($source->url ?? '', 'instagram.com')
+                        || str_contains($source->url ?? '', 'facebook.com');
 
-                    if ($university === 'MUNI') {
-                        if (str_contains($textToCheck, 'pedagogick') || str_contains($textToCheck, 'pdf') || str_contains($textToCheck, 'poříčí')) {
-                            $facultySlug = 'muni-pdf';
-                        } elseif (str_contains($textToCheck, 'informatik') || str_contains($textToCheck, 'botanická 68') || str_contains($textToCheck, 'fi muni')) {
-                            $facultySlug = 'muni-fi';
-                        } elseif (str_contains($textToCheck, 'ekonomick') || str_contains($textToCheck, 'esf') || str_contains($textToCheck, 'lipov')) {
-                            $facultySlug = 'muni-econ';
-                        } elseif (str_contains($textToCheck, 'sociální') || str_contains($textToCheck, 'fss') || str_contains($textToCheck, 'joštov')) {
-                            $facultySlug = 'muni-fss';
-                        } elseif (str_contains($textToCheck, 'filozofick') || str_contains($textToCheck, 'arne novák')) {
-                            $facultySlug = 'muni-phil';
-                        } elseif (str_contains($textToCheck, 'právnick') || str_contains($textToCheck, 'veveří')) {
-                            $facultySlug = 'muni-law';
-                        } elseif (str_contains($textToCheck, 'lékařsk') || str_contains($textToCheck, 'bohunick') || str_contains($textToCheck, 'kamenice') || str_contains($textToCheck, 'kampus')) {
-                            $facultySlug = 'muni-med';
-                        } elseif (str_contains($textToCheck, 'přírodovědeck') || str_contains($textToCheck, 'kotlářsk') || str_contains($textToCheck, 'sci.muni') || str_contains($textToCheck, 'botanik') || str_contains($textToCheck, 'zoolog')) {
-                            $facultySlug = 'muni-sci';
-                        }
-                    } elseif ($university === 'VUT') {
-                        if (str_contains($textToCheck, 'informačních technologií') || str_contains($textToCheck, 'fit') || str_contains($textToCheck, 'božetěchov')) {
-                            $facultySlug = 'vut-fit';
+                    if ($isSocialOrExternal) {
+                        // Zkusíme najít odpovídající spolek podle target_identifier nebo url
+                        $handle = ltrim(preg_replace('#^https?://[^/]+/#', '', $source->url ?? ''), '@');
+                        $spolek = Organization::where('slug', $source->target_identifier)
+                            ->orWhere('instagram_handle', $handle)
+                            ->orWhere('slug', 'like', '%' . Str::slug($handle) . '%')
+                            ->first();
+
+                        if ($spolek) {
+                            $orgId = $spolek->id;
                         }
                     }
 
-                    if ($facultySlug) {
-                        $orgId = Organization::where('slug', $facultySlug)->value('id');
-                    }
+                    // Pro univerzitní weby určíme fakultu či univerzitu
+                    if (!$orgId && $university !== 'OTHER') {
+                        $textToCheck = mb_strtolower($title . ' ' . ($item['location_name'] ?? '') . ' ' . ($item['description'] ?? ''));
+                        $facultySlug = null;
 
-                    if (!$orgId) {
-                        $uniSlug = strtolower($university);
-                        $orgId = Organization::where('slug', $uniSlug)->value('id');
+                        if ($university === 'MUNI') {
+                            if (str_contains($textToCheck, 'pedagogick') || str_contains($textToCheck, 'pdf') || str_contains($textToCheck, 'poříčí')) {
+                                $facultySlug = 'muni-pdf';
+                            } elseif (str_contains($textToCheck, 'informatik') || str_contains($textToCheck, 'botanická 68') || str_contains($textToCheck, 'fi muni')) {
+                                $facultySlug = 'muni-fi';
+                            } elseif (str_contains($textToCheck, 'ekonomick') || str_contains($textToCheck, 'esf') || str_contains($textToCheck, 'lipov')) {
+                                $facultySlug = 'muni-econ';
+                            } elseif (str_contains($textToCheck, 'sociální') || str_contains($textToCheck, 'fss') || str_contains($textToCheck, 'joštov')) {
+                                $facultySlug = 'muni-fss';
+                            } elseif (str_contains($textToCheck, 'filozofick') || str_contains($textToCheck, 'arne novák')) {
+                                $facultySlug = 'muni-phil';
+                            } elseif (str_contains($textToCheck, 'právnick') || str_contains($textToCheck, 'veveří')) {
+                                $facultySlug = 'muni-law';
+                            } elseif (str_contains($textToCheck, 'lékařsk') || str_contains($textToCheck, 'bohunick') || str_contains($textToCheck, 'kamenice') || str_contains($textToCheck, 'kampus')) {
+                                $facultySlug = 'muni-med';
+                            } elseif (str_contains($textToCheck, 'přírodovědeck') || str_contains($textToCheck, 'kotlářsk') || str_contains($textToCheck, 'sci.muni') || str_contains($textToCheck, 'botanik') || str_contains($textToCheck, 'zoolog')) {
+                                $facultySlug = 'muni-sci';
+                            }
+                        } elseif ($university === 'VUT') {
+                            if (str_contains($textToCheck, 'informačních technologií') || str_contains($textToCheck, 'fit') || str_contains($textToCheck, 'božetěchov')) {
+                                $facultySlug = 'vut-fit';
+                            }
+                        }
+
+                        if ($facultySlug) {
+                            $orgId = Organization::where('slug', $facultySlug)->value('id');
+                        }
+
+                        if (!$orgId) {
+                            $uniSlug = strtolower($university);
+                            $orgId = Organization::where('slug', $uniSlug)->value('id');
+                        }
                     }
                 }
 
@@ -369,6 +389,33 @@ class ScrapeEventsCommand extends Command
         if (str_contains($locLower, 'morgal')) {
             return Venue::where('slug', 'cafe-morgal')->value('id');
         }
+        if (str_contains($locLower, 'skautský institut') || str_contains($locLower, 'skautsky institut')) {
+            return Venue::where('slug', 'skautsky-institut-brno')->value('id');
+        }
+        if (str_contains($locLower, 'kabinet múz') || str_contains($locLower, 'kabinet muz')) {
+            return Venue::where('slug', 'kabinet-muz')->value('id');
+        }
+        if (str_contains($locLower, 'music lab')) {
+            return Venue::where('slug', 'music-lab')->value('id');
+        }
+        if (str_contains($locLower, 'trojka') || str_contains($locLower, 'kunštát')) {
+            return Venue::where('slug', 'kavarna-trojka')->value('id');
+        }
+        if (str_contains($locLower, 'šelepka') || str_contains($locLower, 'selepka')) {
+            return Venue::where('slug', 'klub-selepka')->value('id');
+        }
+        if (str_contains($locLower, 'sono')) {
+            return Venue::where('slug', 'sono-music-club')->value('id');
+        }
+        if (str_contains($locLower, 'perpetuum')) {
+            return Venue::where('slug', 'perpetuum-club')->value('id');
+        }
+        if (str_contains($locLower, 'otevřená zahrada') || str_contains($locLower, 'otevrena zahrada')) {
+            return Venue::where('slug', 'otevrena-zahrada')->value('id');
+        }
+        if (str_contains($locLower, 'impact hub')) {
+            return Venue::where('slug', 'impact-hub-brno')->value('id');
+        }
         if (str_contains($locLower, 'poříčí') || str_contains($locLower, 'pdf muni')) {
             return Venue::where('slug', 'pdf-muni-porici')->value('id');
         }
@@ -381,8 +428,30 @@ class ScrapeEventsCommand extends Command
         if (str_contains($locLower, 'vetuni') || str_contains($locLower, 'palackého tř')) {
             return Venue::where('slug', 'kampus-vetuni-palackeho')->value('id');
         }
+        if (str_contains($locLower, 'božetěchov') || str_contains($locLower, 'fit vut')) {
+            return Venue::where('slug', 'fit-vut-bozetechova')->value('id');
+        }
+        if (str_contains($locLower, 'botanická 68') || str_contains($locLower, 'fi muni')) {
+            return Venue::where('slug', 'fi-muni-botanicka')->value('id');
+        }
+        if (str_contains($locLower, 'kotlářsk') || str_contains($locLower, 'přf muni')) {
+            return Venue::where('slug', 'prf-muni-kotlarska')->value('id');
+        }
+        if (str_contains($locLower, 'kamenice') || str_contains($locLower, 'kampus bohunice')) {
+            return Venue::where('slug', 'kampus-bohunice')->value('id');
+        }
+        if (str_contains($locLower, 'zemědělsk') || str_contains($locLower, 'mendelu')) {
+            return Venue::where('slug', 'areal-mendelu-zemedelska')->value('id');
+        }
+        if (str_contains($locLower, 'joštov') || str_contains($locLower, 'fss')) {
+            return Venue::where('slug', 'fss-muni-jostova')->value('id');
+        }
 
-        return null;
+        // Přímá shoda podle názvu nebo adresy
+        $cleanLoc = trim($location);
+        return Venue::where('name', 'like', "%{$cleanLoc}%")
+            ->orWhere('address', 'like', "%{$cleanLoc}%")
+            ->value('id');
     }
 
     private function detectCategory(string $text): ?int

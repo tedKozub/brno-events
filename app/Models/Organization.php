@@ -52,4 +52,20 @@ class Organization extends Model
     {
         return $this->hasMany(ScrapeSource::class);
     }
+
+    public function getTypeAttribute(): string
+    {
+        if (in_array($this->slug, ['muni', 'vut', 'mendelu', 'unob', 'vetuni'])) {
+            return 'university';
+        }
+        if (str_starts_with($this->slug, 'muni-') || str_starts_with($this->slug, 'vut-') || str_starts_with($this->slug, 'mendelu-')) {
+            return 'faculty';
+        }
+        return 'spolek';
+    }
+
+    public function getIsSpolekAttribute(): bool
+    {
+        return $this->type === 'spolek';
+    }
 }
