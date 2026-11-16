@@ -3,6 +3,7 @@ import time
 from typing import List, Dict, Any
 import feedparser
 from bs4 import BeautifulSoup
+from scrapers.parsers.web_parsers import is_administrative_or_irrelevant
 
 
 def parse_rss(content: str or bytes, source_url: str = "") -> List[Dict[str, Any]]:
@@ -17,14 +18,17 @@ def parse_rss(content: str or bytes, source_url: str = "") -> List[Dict[str, Any
         if not title:
             continue
 
-        link = entry.get("link", "").strip() or source_url
-
         # Description / Summary (clean HTML tags)
         summary_raw = entry.get("summary", "") or entry.get("description", "")
         clean_desc = ""
         if summary_raw:
             soup = BeautifulSoup(summary_raw, "html.parser")
             clean_desc = soup.get_text(separator=" ", strip=True)
+
+        if is_administrative_or_irrelevant(title + " " + clean_desc):
+            continue
+
+        link = entry.get("link", "").strip() or source_url
 
         short_description = clean_desc[:200] + "..." if len(clean_desc) > 200 else clean_desc
 

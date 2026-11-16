@@ -88,6 +88,9 @@ class ModerationAndScraperFilterTest extends TestCase
         $this->assertTrue($method->invoke($command, 'Řízení ke jmenování profesorkou doc. Mgr. Novákové', ''));
         $this->assertTrue($method->invoke($command, 'Akutní stavy v anestezii dětí', 'Pro NLZP'));
         $this->assertTrue($method->invoke($command, 'Zasedání akademického senátu MU', ''));
+        $this->assertTrue($method->invoke($command, 'Podávání přihlášek na LDF', 'Termíny pro zájemce o studium'));
+        $this->assertTrue($method->invoke($command, 'Přihlášky do bakalářského studia pro akademický rok 2027/2028 jsou otevřeny', ''));
+        $this->assertTrue($method->invoke($command, 'Harmonogram akademického roku 2026/2027', ''));
 
         // Skutečné akce nesmí být označeny jako irelevantní
         $this->assertFalse($method->invoke($command, 'Meziuniverzitní Beerpong Cup na PPV', 'Turnaj studentů'));

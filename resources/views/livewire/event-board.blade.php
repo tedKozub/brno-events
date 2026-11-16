@@ -355,7 +355,14 @@
                                     <svg class="w-3.5 h-3.5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
-                                    <span>{{ $event->starts_at->translatedFormat('D d. m. H:i') }}</span>
+                                    @if($event->is_ongoing && $event->ends_at)
+                                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+                                        <span class="text-amber-600 dark:text-amber-400 font-extrabold">Probíhá • do {{ $event->ends_at->translatedFormat('d. m.') }}</span>
+                                    @elseif($event->is_multi_day && $event->ends_at)
+                                        <span>{{ $event->formatted_date_range }}</span>
+                                    @else
+                                        <span>{{ $event->starts_at->translatedFormat('D d. m. H:i') }}</span>
+                                    @endif
                                 </div>
                             </a>
 
@@ -458,6 +465,157 @@
                         </button>
                     </div>
                 @endif
+            @endif
+
+            {{-- PROBÍHAJÍCÍ VÍCEDENNÍ AKCE (ODDĚLENÝ TOK VE SBALITELNÉ SEKCI) --}}
+            @if(isset($ongoingEvents) && $ongoingEvents->isNotEmpty())
+                <section
+                    x-data="{ open: true }"
+                    class="mt-12 pt-8 border-t border-base-300"
+                >
+                    <div class="flex items-center justify-between gap-3 mb-5">
+                        <button
+                            @click="open = !open"
+                            type="button"
+                            class="flex items-center gap-2.5 text-left group cursor-pointer focus:outline-hidden"
+                        >
+                            <div class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center font-black">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h3 class="font-black text-base sm:text-lg text-base-content tracking-tight">
+                                        Právě probíhající vícedenní akce
+                                    </h3>
+                                    <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25">
+                                        {{ $ongoingEvents->count() }}
+                                    </span>
+                                </div>
+                                <p class="text-xs text-base-content/60">
+                                    Festivaly, výstavy a dlouhodobé akce, které již odstartovaly a můžete je navštívit
+                                </p>
+                            </div>
+                        </button>
+
+                        <button
+                            @click="open = !open"
+                            type="button"
+                            class="btn btn-sm btn-ghost border border-base-300 rounded-xl text-xs font-bold gap-1.5 text-base-content/80 hover:text-base-content"
+                        >
+                            <span x-text="open ? 'Sbalit' : 'Zobrazit (' + {{ $ongoingEvents->count() }} + ')'"></span>
+                            <svg
+                                class="w-4 h-4 transition-transform duration-200"
+                                :class="open ? 'rotate-180' : ''"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div x-show="open" x-transition.opacity.duration.200ms class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+                        @foreach($ongoingEvents as $event)
+                            <div wire:key="ongoing-card-{{ $event->id }}" class="card bg-base-100 shadow-xs hover:shadow-lg border border-base-300 transition-all duration-200 flex flex-col justify-between overflow-hidden group rounded-2xl">
+                                {{-- Horní část: Obrázek & Odznaky --}}
+                                <a href="/akce/{{ $event->slug }}" wire:navigate.hover class="relative aspect-[16/9] w-full bg-base-300 overflow-hidden block">
+                                    <img
+                                        src="{{ $event->cover_image_url }}"
+                                        alt="{{ $event->title }}"
+                                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                        loading="lazy"
+                                        onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=1200&q=80';"
+                                    />
+
+                                    <div class="absolute top-3 left-3 flex flex-wrap gap-1.5">
+                                        @if($event->category)
+                                            <span class="px-3 py-1 rounded-lg text-xs font-bold backdrop-blur-md bg-neutral/85 text-neutral-content shadow-sm whitespace-nowrap">
+                                                {{ $event->category->name }}
+                                            </span>
+                                        @endif
+
+                                        <span class="px-2.5 py-1 rounded-lg text-[11px] font-black tracking-wide backdrop-blur-md bg-amber-500/90 text-white shadow-sm whitespace-nowrap inline-flex items-center gap-1">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                                            <span>Probíhá</span>
+                                        </span>
+                                    </div>
+
+                                    <div class="absolute top-3 right-3">
+                                        <span class="px-3 py-1 rounded-lg text-xs font-bold shadow-sm whitespace-nowrap {{ $event->price_type === 'free' ? 'bg-success text-success-content' : 'bg-primary text-primary-content' }}">
+                                            {{ $event->formatted_price }}
+                                        </span>
+                                    </div>
+
+                                    {{-- Datum --}}
+                                    <div class="absolute bottom-2.5 left-2.5 bg-base-100/95 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-bold text-base-content border border-base-300 shadow-sm flex items-center gap-1.5 whitespace-nowrap">
+                                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+                                        <span class="text-amber-600 dark:text-amber-400 font-extrabold">Probíhá • do {{ $event->ends_at->translatedFormat('d. m.') }}</span>
+                                    </div>
+                                </a>
+
+                                {{-- Tělo karty --}}
+                                <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
+                                    <div class="space-y-2">
+                                        <div class="flex items-center gap-2 text-xs">
+                                            @if($event->organization)
+                                                @php
+                                                    $uBadge = match($event->organization->university) {
+                                                        'MUNI' => 'bg-info/15 text-info border border-info/20',
+                                                        'VUT' => 'bg-error/15 text-error border border-error/20',
+                                                        'MENDELU' => 'bg-success/15 text-success border border-success/20',
+                                                        'UNOB' => 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30',
+                                                        'VETUNI' => 'bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30',
+                                                        default => 'bg-neutral/15 text-base-content/70 border border-base-300',
+                                                    };
+                                                @endphp
+                                                <span class="px-2 py-0.5 rounded text-[11px] font-black uppercase tracking-wider {{ $uBadge }}">
+                                                    {{ $event->organization->university }}
+                                                </span>
+                                                <span class="font-semibold text-base-content/80 truncate">
+                                                    {{ $event->organization->name }}
+                                                </span>
+                                            @else
+                                                <span class="font-semibold text-base-content/60">Studentská akce</span>
+                                            @endif
+                                        </div>
+
+                                        <a
+                                            href="/akce/{{ $event->slug }}"
+                                            wire:navigate.hover
+                                            class="font-black text-base sm:text-lg leading-snug tracking-tight text-base-content group-hover:text-primary transition-colors cursor-pointer line-clamp-2 block"
+                                        >
+                                            {{ $event->title }}
+                                        </a>
+
+                                        <div class="flex items-center gap-1.5 text-xs text-base-content/70">
+                                            <svg class="w-3.5 h-3.5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            </svg>
+                                            <span class="truncate">{{ $event->location_display }}</span>
+                                        </div>
+
+                                        <p class="text-xs text-base-content/70 line-clamp-2 pt-1 leading-relaxed">
+                                            {{ $event->short_description ?: strip_tags($event->description) }}
+                                        </p>
+                                    </div>
+
+                                    <div class="pt-3 border-t border-base-200">
+                                        <a
+                                            href="/akce/{{ $event->slug }}"
+                                            wire:navigate.hover
+                                            class="btn btn-ghost border border-base-300 hover:btn-primary font-bold text-xs w-full rounded-xl gap-1.5 inline-flex items-center justify-center"
+                                        >
+                                            <span>Detail akce</span>
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                            </svg>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
             @endif
         @endif
     </main>

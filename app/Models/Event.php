@@ -119,6 +119,51 @@ class Event extends Model
         return $this->location_name ?: 'Brno';
     }
 
+    public function getIsMultiDayAttribute(): bool
+    {
+        if (!$this->starts_at || !$this->ends_at) {
+            return false;
+        }
+        return $this->ends_at->isAfter($this->starts_at->copy()->endOfDay());
+    }
+
+    public function getIsLongTermAttribute(): bool
+    {
+        if (!$this->starts_at || !$this->ends_at) {
+            return false;
+        }
+        return abs($this->ends_at->diffInDays($this->starts_at)) >= 4;
+    }
+
+    public function getIsOngoingAttribute(): bool
+    {
+        if (!$this->starts_at || !$this->ends_at) {
+            return false;
+        }
+        $now = Carbon::now();
+        return $this->starts_at->isPast() && $this->ends_at->gte($now);
+    }
+
+    public function getFormattedDateRangeAttribute(): string
+    {
+        if (!$this->starts_at) {
+            return '';
+        }
+
+        if ($this->is_ongoing && $this->ends_at) {
+            return 'Probíhá • do ' . $this->ends_at->translatedFormat('d. m.');
+        }
+
+        if ($this->is_multi_day && $this->ends_at) {
+            if ($this->starts_at->month === $this->ends_at->month && $this->starts_at->year === $this->ends_at->year) {
+                return $this->starts_at->translatedFormat('d.') . ' – ' . $this->ends_at->translatedFormat('d. m.');
+            }
+            return $this->starts_at->translatedFormat('d. m.') . ' – ' . $this->ends_at->translatedFormat('d. m.');
+        }
+
+        return $this->starts_at->translatedFormat('D d. m. H:i');
+    }
+
     public function getFormattedPriceAttribute(): string
     {
         if ($this->price_type === 'free') {

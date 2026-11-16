@@ -247,7 +247,14 @@
                         <svg class="w-3.5 h-3.5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                        <span>{{ $event->starts_at->translatedFormat('l, d. F Y • H:i') }}</span>
+                        @if($event->is_ongoing && $event->ends_at)
+                            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+                            <span class="text-amber-600 dark:text-amber-400 font-extrabold">Probíhá • do {{ $event->ends_at->translatedFormat('d. F Y') }}</span>
+                        @elseif($event->is_multi_day && $event->ends_at)
+                            <span>{{ $event->starts_at->translatedFormat('d. m.') }} – {{ $event->ends_at->translatedFormat('d. m. Y') }}</span>
+                        @else
+                            <span>{{ $event->starts_at->translatedFormat('l, d. F Y • H:i') }}</span>
+                        @endif
                     </div>
                     <h1 class="text-xl sm:text-3xl lg:text-4xl font-black text-white leading-tight drop-shadow-md">
                         {{ $event->title }}
@@ -321,14 +328,29 @@
                         </div>
                         <div>
                             <div class="text-[11px] font-bold text-base-content/50 uppercase tracking-wider">Datum a čas</div>
-                            <div class="font-extrabold text-base-content">{{ $event->starts_at->translatedFormat('l, d. m. Y') }}</div>
-                            <div class="text-xs text-base-content/70 mt-0.5">
-                                {{ $event->starts_at->format('H:i') }}
-                                @if($event->ends_at)
-                                    – {{ $event->ends_at->format('H:i') }}
-                                @endif
-                                <span class="text-base-content/40">({{ $event->starts_at->diffForHumans() }})</span>
-                            </div>
+                            @if($event->is_ongoing && $event->ends_at)
+                                <div class="font-extrabold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+                                    <span>Probíhá (do {{ $event->ends_at->translatedFormat('d. m. Y') }})</span>
+                                </div>
+                                <div class="text-xs text-base-content/70 mt-0.5">
+                                    Zahájeno {{ $event->starts_at->translatedFormat('d. m. Y') }} • zbývá {{ $event->ends_at->diffForHumans(['parts' => 1]) }}
+                                </div>
+                            @elseif($event->is_multi_day && $event->ends_at)
+                                <div class="font-extrabold text-base-content">{{ $event->starts_at->translatedFormat('d. m.') }} – {{ $event->ends_at->translatedFormat('d. m. Y') }}</div>
+                                <div class="text-xs text-base-content/70 mt-0.5">
+                                    Vícedenní akce (začátek {{ $event->starts_at->diffForHumans() }})
+                                </div>
+                            @else
+                                <div class="font-extrabold text-base-content">{{ $event->starts_at->translatedFormat('l, d. m. Y') }}</div>
+                                <div class="text-xs text-base-content/70 mt-0.5">
+                                    {{ $event->starts_at->format('H:i') }}
+                                    @if($event->ends_at)
+                                        – {{ $event->ends_at->format('H:i') }}
+                                    @endif
+                                    <span class="text-base-content/40">({{ $event->starts_at->diffForHumans() }})</span>
+                                </div>
+                            @endif
                         </div>
                     </div>
 
@@ -544,7 +566,14 @@
                                     <svg class="w-3.5 h-3.5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
-                                    <span>{{ $rel->starts_at->translatedFormat('D d. m. H:i') }}</span>
+                                    @if($rel->is_ongoing && $rel->ends_at)
+                                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+                                        <span class="text-amber-600 dark:text-amber-400 font-extrabold">Probíhá • do {{ $rel->ends_at->translatedFormat('d. m.') }}</span>
+                                    @elseif($rel->is_multi_day && $rel->ends_at)
+                                        <span>{{ $rel->formatted_date_range }}</span>
+                                    @else
+                                        <span>{{ $rel->starts_at->translatedFormat('D d. m. H:i') }}</span>
+                                    @endif
                                 </div>
                             </a>
 

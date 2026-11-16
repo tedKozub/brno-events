@@ -439,8 +439,12 @@ class ScrapeEventsCommand extends Command
             // Zdravotnické kurzy pro zaměstnance nemocnic
             'pro nlzp', 'nelékařských zdravotnických', 'kontinuální vzdělávání lékařů', 'atestační příprava',
             'simulační kurz akutních stavů',
-            // Administrativní úkony
-            'přijímací řízení', 'zápis do studia', 'uzávěrka přihlášek', 'termín pro odevzdání',
+            // Administrativní úkony a lhůty pro přihlášky/studium
+            'přijímací řízení', 'zápis do studia', 'zápis ke studiu', 'uzávěrka přihlášek', 'termín pro odevzdání',
+            'podávání přihlášek', 'podání přihlášek', 'termín přihlášek', 'přihlášky do bakalářského',
+            'přihlášky do magisterského', 'přihlášky do doktorského', 'přihlášky do studia', 'přihlášky ke studiu',
+            'elektronická přihláška', 'harmonogram akademického roku', 'státní závěrečné zkoušky', 'státní zkoušky',
+            'lhůta pro podání', 'uzávěrka odevzdání', 'výběrové řízení',
         ];
 
         foreach ($articlePhrases as $phrase) {

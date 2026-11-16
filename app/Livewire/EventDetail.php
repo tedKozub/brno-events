@@ -54,6 +54,10 @@ class EventDetail extends Component
         $ics .= "DTSTAMP:" . gmdate('Ymd\THis\Z') . "\r\n";
         $ics .= "DTSTART:{$start}\r\n";
         $ics .= "DTEND:{$end}\r\n";
+        if ($event->is_multi_day) {
+            $ics .= "TRANSP:TRANSPARENT\r\n";
+            $ics .= "X-MICROSOFT-CDO-BUSYSTATUS:FREE\r\n";
+        }
         $ics .= "SUMMARY:{$title}\r\n";
         $ics .= "DESCRIPTION:{$desc}\r\n";
         $ics .= "LOCATION:{$loc}\r\n";

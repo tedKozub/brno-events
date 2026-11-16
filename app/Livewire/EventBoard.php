@@ -124,6 +124,10 @@ class EventBoard extends Component
         $ics .= "DTSTAMP:" . gmdate('Ymd\THis\Z') . "\r\n";
         $ics .= "DTSTART:{$start}\r\n";
         $ics .= "DTEND:{$end}\r\n";
+        if ($event->is_multi_day) {
+            $ics .= "TRANSP:TRANSPARENT\r\n";
+            $ics .= "X-MICROSOFT-CDO-BUSYSTATUS:FREE\r\n";
+        }
         $ics .= "SUMMARY:{$title}\r\n";
         $ics .= "DESCRIPTION:{$desc}\r\n";
         $ics .= "LOCATION:{$loc}\r\n";
@@ -158,7 +162,7 @@ class EventBoard extends Component
                 $now->copy()->addWeek()->startOfWeek(Carbon::MONDAY)->startOfDay(),
                 $now->copy()->addWeek()->endOfWeek(Carbon::FRIDAY)->setTime(23, 59, 59)
             ]),
-            default => null,
+            default => $baseQuery->where('starts_at', '>=', Carbon::today()),
         };
 
         // Filtr univerzity přes rychlý indexovaný IN dotaz namísto pomalého correlated whereHas
@@ -291,9 +295,40 @@ class EventBoard extends Component
             $events = $query->orderBy('starts_at', 'asc')->get();
         }
 
+        // Probíhající vícedenní akce (které začaly dříve, ale stále probíhají)
+        $ongoingQuery = Event::with(['organization', 'venue', 'category'])
+            ->published()
+            ->where('starts_at', '<', Carbon::today())
+            ->where('ends_at', '>=', $now);
+
+        if (!empty($this->selectedUniversity)) {
+            $orgIds = Organization::where('university', $this->selectedUniversity)->pluck('id');
+            $ongoingQuery->whereIn('organization_id', $orgIds);
+        }
+        if ($this->onlyFree) {
+            $ongoingQuery->where('price_type', 'free');
+        }
+        if (!empty($this->selectedCategory)) {
+            $catId = Category::where('slug', $this->selectedCategory)->value('id');
+            if ($catId) {
+                $ongoingQuery->where('category_id', $catId);
+            }
+        }
+        if (!empty($this->search)) {
+            $term = '%' . trim($this->search) . '%';
+            $ongoingQuery->where(function (Builder $q) use ($term) {
+                $q->where('title', 'like', $term)
+                  ->orWhere('short_description', 'like', $term)
+                  ->orWhere('description', 'like', $term)
+                  ->orWhere('location_name', 'like', $term);
+            });
+        }
+        $ongoingEvents = $ongoingQuery->orderBy('ends_at', 'asc')->get();
+
         // Optimalizace: Markery pro mapu počítáme POUZE v režimu mapy (ušetří 30-50ms CPU a 15KB JSON payloadu na každý klik)
         if ($this->viewMode === 'map') {
-            $this->mapMarkers = $events->map(function ($e) {
+            $allMapEvents = $events->concat($ongoingEvents);
+            $this->mapMarkers = $allMapEvents->map(function ($e) {
                 $coords = $e->map_coordinates;
                 if (!$coords) {
                     return null;
@@ -305,7 +340,7 @@ class EventBoard extends Component
                     'lat' => (float) $coords['lat'],
                     'lng' => (float) $coords['lng'],
                     'venue' => $coords['title'],
-                    'time' => $e->starts_at->translatedFormat('D d. m. H:i'),
+                    'time' => $e->formatted_date_range,
                     'price' => $e->formatted_price,
                     'category' => $e->category?->name,
                 ];
@@ -333,6 +368,7 @@ class EventBoard extends Component
 
         return view('livewire.event-board', [
             'events' => $paginatedEvents,
+            'ongoingEvents' => $ongoingEvents,
             'totalEventsCount' => $totalFilteredCount,
             'hasMore' => $hasMore,
             'categories' => $categories,

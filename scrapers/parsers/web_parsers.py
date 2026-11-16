@@ -22,6 +22,24 @@ CZECH_MONTHS = {
     'september': 9, 'october': 10, 'november': 11, 'december': 12
 }
 
+ADMINISTRATIVE_EXCLUDE_PATTERNS = [
+    r"cžv", r"celoživotn", r"vzdělávací kurz",
+    r"pro studenty středních škol", r"pro žáky", r"pro učitele", r"žáků zuš",
+    r"pro nlzp", r"nelékařsk", r"řízení ke jmenování",
+    r"habilitačn", r"inaugurač", r"akademický senát", r"vědecká rada",
+    r"disertačn", r"rigorózní", r"přijímací řízení", r"zápis do studia", r"zápis ke studiu",
+    r"simulační kurz akutních stavů", r"kontinuální vzdělávání lékařů",
+    r"podávání přihlášek", r"podání přihlášek", r"termín přihlášek",
+    r"přihlášky do (?:bakalářského|magisterského|doktorského)?\s*studia",
+    r"uzávěrka přihlášek", r"harmonogram akademického roku", r"státní závěrečné zkoušky",
+    r"státní zkoušky", r"výběrové řízení", r"lhůta pro podání", r"uzávěrka odevzdání",
+]
+
+
+def is_administrative_or_irrelevant(text: str) -> bool:
+    text_lower = text.lower()
+    return any(re.search(pat, text_lower) for pat in ADMINISTRATIVE_EXCLUDE_PATTERNS)
+
 
 def parse_mendelu(html: str, base_url: str = "https://mendelu.cz/akce/") -> List[Dict[str, Any]]:
     """
@@ -34,6 +52,10 @@ def parse_mendelu(html: str, base_url: str = "https://mendelu.cz/akce/") -> List
     for item in soup.select("li.event-card__item, .event-card"):
         card = item if item.name == "a" else item.find("a", class_="event-card")
         if not card:
+            continue
+
+        full_card_text = card.get_text(" ", strip=True)
+        if is_administrative_or_irrelevant(full_card_text):
             continue
 
         url = urljoin(base_url, card.get("href", ""))
@@ -108,6 +130,9 @@ def parse_fit_vut(html: str, base_url: str = "https://www.fit.vut.cz/fit/calenda
     now = datetime.datetime.now()
 
     for item in soup.select("li.c-events__item, .c-events__item"):
+        if is_administrative_or_irrelevant(item.get_text(" ", strip=True)):
+            continue
+
         link_el = item.find("a")
         if not link_el:
             continue
@@ -194,6 +219,8 @@ def parse_unob(html: str, base_url: str = "https://unob.cz/univerzita/media-a-ve
 
     for p in soup.select("p, li"):
         text = p.get_text(strip=True)
+        if is_administrative_or_irrelevant(text):
+            continue
         # Matches patterns like: "5. prosince 2026 – Dny otevřených dveří..." or "16. ledna 2027 –..."
         match = re.match(r"^(\d{1,2})\.\s*([a-zA-Zá-žÁ-Ž]+)\s*(\d{4})?\s*[–—-]\s*(.+)$", text)
         if not match:
@@ -241,22 +268,13 @@ def parse_muni(html: str, base_url: str = "https://www.muni.cz/kalendar") -> Lis
     events = []
     current_year = datetime.datetime.now().year
 
-    exclude_patterns = [
-        r"cžv", r"celoživotn", r"vzdělávací kurz",
-        r"pro studenty středních škol", r"pro žáky", r"pro učitele", r"žáků zuš",
-        r"pro nlzp", r"nelékařsk", r"řízení ke jmenování",
-        r"habilitačn", r"inaugurač", r"akademický senát", r"vědecká rada",
-        r"disertačn", r"rigorózní", r"přijímací řízení", r"zápis do studia",
-        r"simulační kurz akutních stavů", r"kontinuální vzdělávání lékařů",
-    ]
-
     for item in soup.select(".box-event"):
         # Remove any decorative badge like "TOP AKCE" or ribbons
         for badge in item.select(".box-event__badge, .badge, .ribbon"):
             badge.decompose()
 
-        full_card_text = item.get_text(" ", strip=True).lower()
-        if any(re.search(pat, full_card_text) for pat in exclude_patterns):
+        full_card_text = item.get_text(" ", strip=True)
+        if is_administrative_or_irrelevant(full_card_text):
             continue
 
         link_el = item.find("a")
