@@ -31,7 +31,7 @@ class InstagramScraperTest extends TestCase
         ]);
     }
 
-    public function test_czech_recurring_weekday_caption_resolves_to_correct_upcoming_day(): void
+    public function test_recurring_weekday_without_explicit_calendar_date_is_ignored(): void
     {
         $pythonBin = base_path('scrapers/.venv/bin/python');
         if (!file_exists($pythonBin)) {
@@ -42,28 +42,29 @@ class InstagramScraperTest extends TestCase
 from datetime import datetime
 from scrapers.parsers.instagram_parser import (
     extract_event_from_caption,
-    resolve_next_weekday,
     sanitize_extracted_event_date
 )
 
-ref = datetime(2026, 11, 13, 10, 0, 0) # Friday
-wed = resolve_next_weekday(2, 19, 30, now=ref)
-assert wed == datetime(2026, 11, 18, 19, 30, 0)
-
+# Vague recurring weekday post without explicit calendar date MUST be ignored
 caption = "SP-PDF BEERPONG LIGA 10. SEZONA\nKOMA LOUNGE & BAR\nSTREDY 19:30"
 ev = extract_event_from_caption(caption, "https://instagram.com/sppdf_muni")
-assert ev is not None
-dt = datetime.strptime(ev['starts_at'], "%Y-%m-%d %H:%M:%S")
-assert dt.weekday() == 2 # Wednesday
+assert ev is None, f"Expected None for vague beerpong weekday but got {ev}"
 
 hallucinated = {
     'title': 'SP-PDF BEERPONG LIGA 10. SEZONA',
-    'starts_at': '2026-11-16 19:30:00',
+    'starts_at': '2026-11-18 19:30:00',
     'description': 'Stredy v Koma Lounge'
 }
-corrected = sanitize_extracted_event_date(hallucinated, 'STREDY 19:30', now=ref)
-assert corrected['starts_at'] == '2026-11-18 19:30:00'
-print("OK")
+sanitized = sanitize_extracted_event_date(hallucinated, 'STREDY 19:30')
+assert sanitized is None, f"Expected None from sanitizer for vague weekday without date but got {sanitized}"
+
+# If caption HAS an explicit date, it is accepted
+with_date = "SP-PDF BEERPONG FINALE\n18.11.2026 v 19:30 v Koma Lounge"
+ev_date = extract_event_from_caption(with_date, "https://instagram.com/sppdf_muni")
+assert ev_date is not None
+assert ev_date['starts_at'] == '2026-11-18 19:30:00'
+
+print("OK_VAGUE_WEEKDAY_IGNORED")
 PY;
 
         $proc = \Illuminate\Support\Facades\Process::path(base_path())
@@ -71,14 +72,14 @@ PY;
             ->run([$pythonBin, '-c', $script]);
 
         $this->assertTrue($proc->successful(), $proc->errorOutput() ?: $proc->output());
-        $this->assertStringContainsString('OK', $proc->output());
+        $this->assertStringContainsString('OK_VAGUE_WEEKDAY_IGNORED', $proc->output());
     }
 
-    public function test_sppdf_beerpong_event_resolves_to_wednesday(): void
+    public function test_explicit_calendar_date_event_can_be_created(): void
     {
         $event = Event::create([
-            'title' => 'SP-PDF BEERPONG LIGA 10. SEZÓNA',
-            'slug' => 'sp-pdf-beerpong-test-' . uniqid(),
+            'title' => 'SP-PDF BEERPONG FINÁLE',
+            'slug' => 'sp-pdf-beerpong-finale-' . uniqid(),
             'starts_at' => Carbon::parse('2026-11-18 19:30:00'),
             'source_url' => 'https://www.instagram.com/sppdf_muni/#post-d69dc02efbac',
             'status' => 'published',

@@ -130,25 +130,27 @@ def extract_explicit_date_from_text(text: str, default_year: Optional[int] = Non
     return None
 
 
-def sanitize_extracted_event_date(event: Dict[str, Any], raw_text: str, now: Optional[datetime] = None) -> Dict[str, Any]:
-    """Validates and corrects extracted starts_at against explicit dates and recurring weekdays in caption/flyer.
+def sanitize_extracted_event_date(event: Dict[str, Any], raw_text: str, now: Optional[datetime] = None) -> Optional[Dict[str, Any]]:
+    """Validates and corrects extracted starts_at against explicit dates in caption/flyer.
 
-    CRUCIAL: The scraper must NEVER invent or shift dates when an explicit date is written in the organizer's text.
+    CRUCIAL: Events MUST have an explicit calendar date (e.g. 10.11.2026, 18.11., 25. listopadu).
+    If a post mentions only recurring days like 'středy' or 'každé úterý' without an explicit date,
+    we cannot determine which date it refers to, so such events MUST be ignored (return None).
     """
     if not event or "starts_at" not in event or not event["starts_at"]:
-        return event
+        return None
 
     if now is None:
         now = datetime.now()
 
-    starts_at_str = event["starts_at"]
+    starts_at_str = str(event["starts_at"])
     try:
         dt = datetime.strptime(starts_at_str[:19], "%Y-%m-%d %H:%M:%S")
     except ValueError:
         try:
             dt = datetime.fromisoformat(starts_at_str.replace("Z", "+00:00"))
         except Exception:
-            return event
+            return None
 
     title = event.get("title") or ""
     desc = event.get("description") or ""
@@ -157,7 +159,7 @@ def sanitize_extracted_event_date(event: Dict[str, Any], raw_text: str, now: Opt
     explicit_date = extract_explicit_date_from_text(combined_text, default_year=dt.year)
     extracted_time = extract_explicit_time_from_text(combined_text)
 
-    # 1. Explicit date written in caption/flyer ALWAYS takes absolute precedence over LLM guessing or weekday heuristics
+    # 1. Explicit date written in caption/flyer ALWAYS takes absolute precedence
     if explicit_date is not None:
         target_hour = extracted_time[0] if extracted_time else dt.hour
         target_minute = extracted_time[1] if extracted_time else dt.minute
@@ -165,16 +167,9 @@ def sanitize_extracted_event_date(event: Dict[str, Any], raw_text: str, now: Opt
         event["starts_at"] = corrected.strftime("%Y-%m-%d %H:%M:%S")
         return event
 
-    # 2. If NO explicit date is given, but a recurring weekday is mentioned (e.g. 'středy'), calculate next upcoming weekday
-    target_weekday = extract_weekday_from_text(combined_text)
-    if target_weekday is not None:
-        target_hour = extracted_time[0] if extracted_time else dt.hour
-        target_minute = extracted_time[1] if extracted_time else dt.minute
-        if dt.weekday() != target_weekday or dt.hour != target_hour or dt.minute != target_minute:
-            corrected = resolve_next_weekday(target_weekday, target_hour, target_minute, now=now)
-            event["starts_at"] = corrected.strftime("%Y-%m-%d %H:%M:%S")
-
-    return event
+    # 2. If NO explicit date exists, do NOT guess or invent upcoming dates (e.g. beerpong "středy").
+    # Return None so the event without a specific calendar date is ignored.
+    return None
 
 
 def clean_emoji(text: str) -> str:
@@ -258,11 +253,8 @@ Extrahuj informace o události a vrať POUZE validní JSON ve formátu:
 }}
 
 STRIKTNÍ PRAVIDLA PRO DATUM (starts_at):
-1. POKUD JE NA PLAKÁTU NEBO V TEXTU UVEDENO KONKRÉTNÍ DATUM (např. den a měsíc jako 10.11. nebo 10. listopadu):
-   - MUSÍŠ VŽDY POUŽÍT TOTO PŘESNÉ DATUM Z PLAKÁTU ČI POPISKU!
-   - NIKDY SI DATUM NEDOMÝŠLEJ, NEPŘEPISUJ HO ANI NEPOSOUVEJ, a to ani v případě, že datum je již v minulosti vzhledem k dnešku! Plakát a popisek mají absolutní prioritu.
-2. POUZE V PŘÍPADĚ, ŽE NA PLAKÁTU ANI V TEXTU NENÍ ŽÁDNÉ KONKRÉTNÍ DATUM a je uveden pouze den v týdnu (např. 'středy', 'každé úterý'), vypočítej datum nejbližšího nadcházejícího tohoto dne počínaje dneškem ({now.strftime('%Y-%m-%d')}).
-   - Dny v týdnu v češtině: Pondělí=Monday, Úterý=Tuesday, Středa/Středy=Wednesday, Čtvrtek/Čtvrtky=Thursday, Pátek/Pátky=Friday, Sobota=Saturday, Neděle=Sunday.
+1. AKCI EXTRAHUJ POUZE V PŘÍPADĚ, ŽE JE NA PLAKÁTU NEBO V POPISKU UVEDENO KONKRÉTNÍ KALENDÁŘNÍ DATUM (např. 10.11., 18.11., 25. listopadu, 4.3.2027). Použij přesně toto datum z plakátu či popisku bez jakéhokoliv domýšlení či posouvání v čase!
+2. POKUD JE NA PLAKÁTU NEBO V TEXTU UVEDEN POUZE DEN V TÝDNU NEBO OPAKOVÁNÍ (např. 'středy', 'každé úterý', 'čtvrtek') BEZ KONKRÉTNÍHO KALENDÁŘNÍHO DATA, VRAŤ "starts_at": null, PROTOŽE AKCE BEZ KONKRÉTNÍHO KALENDÁŘNÍHO DATA IGNORUJEME.
 3. Čas vyber dle plakátu a textu (např. 19:00 -> 19:00:00). Pokud čas chybí, použij 18:00:00.
 
 Popisek z Instagramu:
@@ -278,7 +270,7 @@ Popisek z Instagramu:
             "messages": [
                 {
                     "role": "system",
-                    "content": "Jsi asistent pro extrakci studentských akcí v Brně z plakátů do strukturovaného JSONu bez emoji. Striktně se drž explicitně uvedených dat na plakátu a v popisku a nikdy si nedomýšlej ani neposouvej data.",
+                    "content": "Jsi asistent pro extrakci studentských akcí v Brně z plakátů do strukturovaného JSONu bez emoji. Striktně se drž explicitně uvedených dat na plakátu a v popisku a akce bez konkrétního kalendářního data ignoruj s starts_at: null.",
                 },
                 {
                     "role": "user",
@@ -304,6 +296,8 @@ Popisek z Instagramu:
                 data = resp.json()
                 content = data["choices"][0]["message"]["content"]
                 extracted = json.loads(content)
+                if not extracted or not extracted.get("starts_at"):
+                    return None
                 extracted["title"] = clean_emoji(extracted.get("title", ""))
                 extracted["location_name"] = clean_emoji(extracted.get("location_name", "Brno"))
                 extracted["short_description"] = clean_emoji(extracted.get("short_description", ""))
@@ -345,11 +339,8 @@ Extrahuj informace o události a vrať POUZE validní JSON ve formátu:
 }}
 
 STRIKTNÍ PRAVIDLA PRO DATUM (starts_at):
-1. POKUD JE NA PLAKÁTU NEBO V TEXTU UVEDENO KONKRÉTNÍ DATUM (např. den a měsíc jako 10.11. nebo 10. listopadu):
-   - MUSÍŠ VŽDY POUŽÍT TOTO PŘESNÉ DATUM Z PLAKÁTU ČI POPISKU!
-   - NIKDY SI DATUM NEDOMÝŠLEJ, NEPŘEPISUJ HO ANI NEPOSOUVEJ, a to ani v případě, že datum je již v minulosti vzhledem k dnešku! Plakát a popisek mají absolutní prioritu.
-2. POUZE V PŘÍPADĚ, ŽE NA PLAKÁTU ANI V TEXTU NENÍ ŽÁDNÉ KONKRÉTNÍ DATUM a je uveden pouze den v týdnu (např. 'středy', 'každé úterý'), vypočítej datum nejbližšího nadcházejícího tohoto dne počínaje dneškem ({now.strftime('%Y-%m-%d')}).
-   - Dny v týdnu v češtině: Pondělí=Monday, Úterý=Tuesday, Středa/Středy=Wednesday, Čtvrtek/Čtvrtky=Thursday, Pátek/Pátky=Friday, Sobota=Saturday, Neděle=Sunday.
+1. AKCI EXTRAHUJ POUZE V PŘÍPADĚ, ŽE JE NA PLAKÁTU NEBO V POPISKU UVEDENO KONKRÉTNÍ KALENDÁŘNÍ DATUM (např. 10.11., 18.11., 25. listopadu, 4.3.2027). Použij přesně toto datum z plakátu či popisku bez jakéhokoliv domýšlení či posouvání v čase!
+2. POKUD JE NA PLAKÁTU NEBO V TEXTU UVEDEN POUZE DEN V TÝDNU NEBO OPAKOVÁNÍ (např. 'středy', 'každé úterý', 'čtvrtek') BEZ KONKRÉTNÍHO KALENDÁŘNÍHO DATA, VRAŤ "starts_at": null, PROTOŽE AKCE BEZ KONKRÉTNÍHO KALENDÁŘNÍHO DATA IGNORUJEME.
 3. Čas vyber dle plakátu a textu (např. 19:00 -> 19:00:00). Pokud čas chybí, použij 18:00:00.
 
 Popisek z Instagramu:
@@ -381,6 +372,8 @@ Popisek z Instagramu:
                 data = resp.json()
                 text = data["candidates"][0]["content"]["parts"][0]["text"]
                 extracted = json.loads(text)
+                if not extracted or not extracted.get("starts_at"):
+                    return None
                 extracted["title"] = clean_emoji(extracted.get("title", ""))
                 extracted["location_name"] = clean_emoji(extracted.get("location_name", "Brno"))
                 extracted["short_description"] = clean_emoji(extracted.get("short_description", ""))
@@ -412,20 +405,14 @@ def extract_event_from_caption(caption: str, base_url: str) -> Optional[Dict[str
     # Date & Time parsing
     now = datetime.now()
     explicit_date = extract_explicit_date_from_text(cleaned, default_year=now.year)
-    extracted_time = extract_explicit_time_from_text(cleaned)
+    if explicit_date is None:
+        # Vague recurring events without an explicit calendar date (e.g. beerpong "středy") are ignored
+        return None
 
+    extracted_time = extract_explicit_time_from_text(cleaned)
     hour = extracted_time[0] if extracted_time else 18
     minute = extracted_time[1] if extracted_time else 0
-
-    if explicit_date is not None:
-        starts_at = explicit_date.replace(hour=hour, minute=minute, second=0).strftime("%Y-%m-%d %H:%M:%S")
-    else:
-        weekday = extract_weekday_from_text(cleaned)
-        if weekday is not None:
-            resolved_dt = resolve_next_weekday(weekday, hour, minute, now=now)
-            starts_at = resolved_dt.strftime("%Y-%m-%d %H:%M:%S")
-        else:
-            starts_at = f"{now.year:04d}-11-20 18:00:00"
+    starts_at = explicit_date.replace(hour=hour, minute=minute, second=0).strftime("%Y-%m-%d %H:%M:%S")
 
     venue = "Brno"
     venue_match = re.search(r"(?:Kde|Místo|📍)\s*:?\s*([^\n]+)", cleaned, re.IGNORECASE)
@@ -553,6 +540,8 @@ async def scrape_instagram_profile_async(
                     continue
 
                 event = sanitize_extracted_event_date(event, alt)
+                if not event or not event.get("starts_at"):
+                    continue
 
                 if os.path.exists(dest_path):
                     event["cover_image"] = f"events/covers/{filename}"

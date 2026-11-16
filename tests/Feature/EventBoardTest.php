@@ -54,6 +54,12 @@ class EventBoardTest extends TestCase
 
     public function test_semantic_search_finds_relevant_events(): void
     {
+        // Ensure Jam event is upcoming regardless of current test run date
+        Event::where('title', 'like', '%Jam%')->update([
+            'starts_at' => Carbon::now()->addDays(2),
+            'status' => 'published',
+        ]);
+
         // Dotaz "hudba" by měl najít hudební akce jako Jam & Acoustic Night nebo Fléda Mecheche
         Livewire::test(\App\Livewire\EventBoard::class)
             ->set('search', 'hudba')
