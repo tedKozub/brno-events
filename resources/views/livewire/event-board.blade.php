@@ -317,7 +317,7 @@
                                     alt="{{ $event->title }}"
                                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                     loading="lazy"
-                                    onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=1200&q=80';"
+                                    onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=800&q=75';"
                                 />
 
                                 {{-- Odznaky přes obrázek --}}
@@ -523,7 +523,7 @@
                                         alt="{{ $event->title }}"
                                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                         loading="lazy"
-                                        onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=1200&q=80';"
+                                        onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=800&q=75';"
                                     />
 
                                     <div class="absolute top-3 left-3 flex flex-wrap gap-1.5">

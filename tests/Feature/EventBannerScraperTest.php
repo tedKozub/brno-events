@@ -311,4 +311,109 @@ class EventBannerScraperTest extends TestCase
             ->assertSee('Unikátní Přednáška s plakátem')
             ->assertSee('Plakát');
     }
+
+    public function test_muni_generic_placeholder_and_sidebar_links_are_ignored(): void
+    {
+        $dummyImage = $this->createDummyImageBytes(600, 400);
+
+        Http::fake([
+            'https://www.muni.cz/kalendar/u/test-bienale' => Http::response('
+                <!DOCTYPE html>
+                <html>
+                <body>
+                    <h1>Bienále české lingvistiky 2026</h1>
+                    <div class="main-content">
+                        <p>Text o konferenci bez vlastního plakátu.</p>
+                    </div>
+                    <article class="box-article-grid">
+                        <a href="/vyzkum">
+                            <img src="https://cdn.muni.cz/media/3016087/img_3624.jpg?mode=crop&width=278" alt="Přečtěte si o výzkumu na MUNI" />
+                        </a>
+                    </article>
+                    <footer>
+                        <img src="https://www.muni.cz/media/footer_campus.jpg" alt="Patička" />
+                    </footer>
+                </body>
+                </html>
+            ', 200),
+            'https://cdn.muni.cz/media/3016087/img_3624.jpg' => Http::response($dummyImage, 200),
+        ]);
+
+        $event = Event::create([
+            'title' => 'Bienále české lingvistiky 2026 Test',
+            'starts_at' => Carbon::tomorrow(),
+            'source_url' => 'https://www.muni.cz/kalendar/u/test-bienale',
+            'status' => 'published',
+        ]);
+
+        $service = app(EventBannerService::class);
+        $result = $service->enrichEvent($event);
+
+        // Generic recommendation placeholder img_3624 should be ignored completely
+        $this->assertFalse($result);
+        $event->refresh();
+
+        $this->assertEquals('stock', $event->effective_cover_image_type);
+        $this->assertTrue($event->isStockImage());
+        $this->assertStringContainsString('images.unsplash.com', $event->cover_image_url);
+    }
+
+    public function test_downloaded_images_are_automatically_optimized(): void
+    {
+        // Create an oversized 2400x1600 dummy image
+        $oversizedImage = $this->createDummyImageBytes(2400, 1600);
+
+        Http::fake([
+            'https://example.com/events/highres' => Http::response('
+                <!DOCTYPE html>
+                <html>
+                <body>
+                    <h1>Akce s obřím bannerem</h1>
+                    <img src="https://example.com/huge_banner.jpg" class="banner" />
+                </body>
+                </html>
+            ', 200),
+            'https://example.com/huge_banner.jpg' => Http::response($oversizedImage, 200, ['Content-Type' => 'image/jpeg']),
+        ]);
+
+        $event = Event::create([
+            'title' => 'Akce s obřím bannerem',
+            'starts_at' => Carbon::tomorrow(),
+            'source_url' => 'https://example.com/events/highres',
+            'status' => 'published',
+        ]);
+
+        $service = app(EventBannerService::class);
+        $result = $service->enrichEvent($event);
+
+        $this->assertTrue($result);
+        $event->refresh();
+
+        $savedPath = Storage::disk('public')->path($event->cover_image);
+        $this->assertFileExists($savedPath);
+
+        $size = getimagesize($savedPath);
+        $this->assertLessThanOrEqual(1200, $size[0], 'Width should be scaled down to <= 1200px');
+        $this->assertLessThanOrEqual(900, $size[1], 'Height should be scaled down to <= 900px');
+    }
+
+    public function test_optimize_images_command_compresses_oversized_files(): void
+    {
+        // Store an oversized 2000x1500 file in fake storage
+        $oversizedImage = $this->createDummyImageBytes(2000, 1500);
+        $storagePath = 'events/covers/banner_oversized_test.jpg';
+        Storage::disk('public')->put($storagePath, $oversizedImage);
+
+        $fullPath = Storage::disk('public')->path($storagePath);
+        $originalSize = filesize($fullPath);
+
+        $this->artisan('images:optimize', ['--path' => $storagePath, '--force' => true])
+            ->assertExitCode(0);
+
+        $newSize = filesize($fullPath);
+        $this->assertLessThan($originalSize, $newSize);
+
+        $dims = getimagesize($fullPath);
+        $this->assertLessThanOrEqual(1200, $dims[0]);
+    }
 }

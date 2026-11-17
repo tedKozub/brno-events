@@ -36,10 +36,10 @@ class EventBannerService
         'arrow', 'chevron', 'pixel', 'tracker', 'ad-', 'banner-ad',
         'footer', 'cookie', 'flag', 'search', 'svg', '1x1',
         // Site-wide generic portal placeholders & fallback og images
-        'dsc_1382_fb', 'adsc_7448', '3128009', 'default_og', 'default-og',
+        'dsc_1382_fb', 'adsc_7448', '3128009', '3016087', 'img_3624', 'default_og', 'default-og',
         'og-default', 'share-fb', 'muni_default', 'unob_default', 'vut_default',
         'mendelu_default', 'placeholder', 'hero_box_', 'openday', 'open-day',
-        'site-header', 'campus', 'budova', 'layout', 'portal'
+        'site-header', 'campus', 'budova', 'layout', 'portal', 'box-article-grid', 'vyzkum'
     ];
 
     /**
@@ -251,6 +251,26 @@ class EventBannerService
                     continue;
                 }
 
+                // Skip images nested in footer, header, navigation, sidebar or portal recommendation boxes
+                $currentAncestor = $img->parentNode;
+                $insideExcludedElement = false;
+                while ($currentAncestor instanceof \DOMElement) {
+                    $ancestorTag = strtolower($currentAncestor->tagName);
+                    if (in_array($ancestorTag, ['footer', 'nav', 'aside'])) {
+                        $insideExcludedElement = true;
+                        break;
+                    }
+                    $ancestorClass = strtolower($currentAncestor->getAttribute('class') ?: '');
+                    if (str_contains($ancestorClass, 'footer') || str_contains($ancestorClass, 'sidebar') || str_contains($ancestorClass, 'box-article-grid')) {
+                        $insideExcludedElement = true;
+                        break;
+                    }
+                    $currentAncestor = $currentAncestor->parentNode;
+                }
+                if ($insideExcludedElement) {
+                    continue;
+                }
+
                 $alt = $img->getAttribute('alt');
                 $title = $img->getAttribute('title');
                 $class = $img->getAttribute('class');
@@ -382,7 +402,10 @@ class EventBannerService
             $filename = "{$typePrefix}_{$eventPrefix}{$urlHash}.{$ext}";
             $relativePath = "events/covers/{$filename}";
 
-            Storage::disk('public')->put($relativePath, $bytes);
+            // Optimize and compress raw image to lightweight web resolution
+            $optimizedBytes = app(ImageOptimizerService::class)->optimizeBytes($bytes, $detectedType);
+
+            Storage::disk('public')->put($relativePath, $optimizedBytes);
 
             return $relativePath;
         } catch (\Throwable $e) {
