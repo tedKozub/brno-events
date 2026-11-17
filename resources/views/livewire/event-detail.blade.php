@@ -721,7 +721,7 @@
         return {
             map: null,
             init() {
-                this.$nextTick(() => {
+                const render = () => {
                     if (typeof L === 'undefined' || !this.$refs.detailMapCanvas) return;
 
                     const lat = parseFloat(coords.lat);
@@ -774,6 +774,14 @@
                             this.map.invalidateSize();
                         }
                     }, 200);
+                };
+
+                this.$nextTick(() => {
+                    if (typeof L !== 'undefined') {
+                        render();
+                    } else {
+                        window.addEventListener('load', () => render(), { once: true });
+                    }
                 });
             },
             destroy() {

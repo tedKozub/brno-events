@@ -109,14 +109,18 @@
         </script>
     @endif
 
-    <!-- Google Font: Inter -->
+    <!-- Google Font: Inter (Asynchronously loaded to eliminate render-blocking) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" data-navigate-once>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin data-navigate-once>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" data-navigate-once>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" as="style" data-navigate-once>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'" data-navigate-once>
+    <noscript>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    </noscript>
 
-    <!-- Leaflet Map CSS & JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" data-navigate-once/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" data-navigate-once></script>
+    <!-- Leaflet Map CSS & JS (Self-hosted & deferred to eliminate external unpkg CDN latency) -->
+    <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" data-navigate-once/>
+    <script src="/vendor/leaflet/leaflet.js" defer data-navigate-once></script>
 
     <!-- Vite Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])

@@ -382,7 +382,11 @@
 
             init() {
                 this.$nextTick(() => {
-                    this.initMap();
+                    if (typeof L !== 'undefined') {
+                        this.initMap();
+                    } else {
+                        window.addEventListener('load', () => this.initMap(), { once: true });
+                    }
                 });
 
                 this._resizeHandler = () => {

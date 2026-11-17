@@ -635,7 +635,11 @@
 
             init() {
                 this.$nextTick(() => {
-                    this.initLeaflet();
+                    if (typeof L !== 'undefined') {
+                        this.initLeaflet();
+                    } else {
+                        window.addEventListener('load', () => this.initLeaflet(), { once: true });
+                    }
                 });
             },
 
