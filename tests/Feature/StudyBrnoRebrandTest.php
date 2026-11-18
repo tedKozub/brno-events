@@ -64,29 +64,29 @@ class StudyBrnoRebrandTest extends TestCase
 
     public function test_event_detail_renders_dynamic_title_for_studybrno(): void
     {
-        $category = Category::create([
+        $category = Category::first() ?? Category::create([
             'name' => 'Párty',
-            'slug' => 'party',
+            'slug' => 'party-' . uniqid(),
             'color' => '#ea580c',
             'icon' => 'sparkles',
         ]);
 
-        $venue = Venue::create([
-            'name' => 'Fléda Club',
-            'slug' => 'fleda-club',
+        $venue = Venue::first() ?? Venue::create([
+            'name' => 'Test Venue',
+            'slug' => 'test-venue-' . uniqid(),
             'address' => 'Štefánikova 24, Brno',
             'latitude' => 49.2098,
             'longitude' => 16.6025,
         ]);
 
-        $org = Organization::create([
+        $org = Organization::first() ?? Organization::create([
             'name' => 'Studentská unie',
-            'slug' => 'studentska-unie',
+            'slug' => 'studentska-unie-' . uniqid(),
         ]);
 
         $event = Event::create([
             'title' => 'Velká Studentská Párty',
-            'slug' => 'velka-studentska-party',
+            'slug' => 'velka-studentska-party-' . uniqid(),
             'category_id' => $category->id,
             'venue_id' => $venue->id,
             'organization_id' => $org->id,
