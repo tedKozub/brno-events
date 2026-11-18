@@ -3,9 +3,8 @@
         {{-- HORNÍ ČÁST: BRAND & AKČNÍ TLAČÍTKA --}}
         <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
             <div class="space-y-1">
-                <div class="flex items-center justify-center sm:justify-start gap-2">
+                <div class="flex items-center justify-center sm:justify-start">
                     {!! \App\Helpers\BrandHelper::logoHtml('sm') !!}
-                    <span>{{ \App\Helpers\BrandHelper::isStudyBrno() ? 'Průvodce studentským a městským životem v Brně' : 'Nezávislý studentský agregátor v Brně' }}</span>
                 </div>
                 <p class="text-[11px] text-base-content/50">
                     Otevřená nástěnka pro studentský život a spolky na MUNI, VUT, MENDELU, UNOB & VETUNI.

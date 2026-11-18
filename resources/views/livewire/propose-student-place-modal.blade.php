@@ -4,12 +4,9 @@
         wire:click="openModal"
         type="button"
         id="btn-propose-place"
-        class="btn btn-sm sm:btn-md btn-primary font-bold rounded-xl gap-2 shadow-xs hover:shadow-md transition-all shrink-0 cursor-pointer"
+        class="btn btn-sm sm:btn-md btn-primary font-bold rounded-xl shadow-xs hover:shadow-md transition-all shrink-0 cursor-pointer"
         title="Doporučit nové studentské místo v Brně"
     >
-        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
-        </svg>
         <span>Přidat místo</span>
     </button>
 

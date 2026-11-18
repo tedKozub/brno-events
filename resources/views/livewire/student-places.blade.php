@@ -91,13 +91,7 @@
         {{-- ÚVODNÍ HLAVIČKA --}}
         <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
             <div>
-                <h1 class="text-2xl sm:text-3xl font-black text-base-content tracking-tight flex items-center gap-2.5">
-                    <span class="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
-                    </span>
+                <h1 class="text-2xl sm:text-3xl font-black text-base-content tracking-tight">
                     Studentská místa v Brně
                 </h1>
                 <p class="text-xs sm:text-sm text-base-content/70 mt-1">
@@ -152,19 +146,6 @@
                             wire:click="setCategory('{{ $key }}')"
                             class="px-4 py-2 rounded-full text-xs font-bold shrink-0 transition-all cursor-pointer whitespace-nowrap border flex items-center gap-1.5 {{ $isActive ? 'bg-primary text-primary-content border-primary shadow-sm' : 'bg-base-200 text-base-content/80 border-base-300 hover:bg-base-300' }}"
                         >
-                            @if($key === 'study')
-                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v16"/><path d="M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
-                            @elseif($key === 'cafes')
-                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/><path d="M6 2v2"/></svg>
-                            @elseif($key === 'date')
-                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-                            @elseif($key === 'pubs')
-                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 11h1a3 3 0 0 1 0 6h-1"/><path d="M9 12v6"/><path d="M13 12v6"/><path d="M14 7.5c-1 0-1.44.5-3 .5s-2-.5-3-.5-1.72.5-2.5.5a2.5 2.5 0 0 1 0-5c.78 0 1.57.5 2.5.5S9.44 2 11 2s2 1.5 3 1.5 1.72-.5 2.5-.5a2.5 2.5 0 0 1 0 5c-.78 0-1.5-.5-2.5-.5Z"/><path d="M5 8v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8"/></svg>
-                            @elseif($key === 'parks')
-                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 10v.2A3 3 0 0 1 8.9 16H5a3 3 0 0 1-1-5.8V10a3 3 0 0 1 6 0Z"/><path d="M7 16v6"/><path d="M13 19v3"/><path d="M12 19h8.3a1 1 0 0 0 .7-1.7L18 14h.3a1 1 0 0 0 .7-1.7L16 9h.2a1 1 0 0 0 .8-1.7L13 3l-1.4 1.5"/></svg>
-                            @else
-                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
-                            @endif
                             <span>{{ $cat['name'] }}</span>
                             <span class="opacity-80 text-[11px] font-semibold">({{ $count }})</span>
                         </button>
@@ -185,12 +166,8 @@
             >
                 <div class="card-body p-3.5 sm:p-5 space-y-3">
                     <div class="flex flex-wrap items-center justify-between gap-2">
-                        <h2 class="text-sm sm:text-base font-bold flex items-center gap-2 text-base-content">
-                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                            <span>Interaktivní mapa míst pro studenty</span>
+                        <h2 class="text-sm sm:text-base font-bold text-base-content">
+                            Interaktivní mapa míst pro studenty
                         </h2>
                         <span class="text-xs text-base-content/60 font-semibold">
                             Kliknutím na špendlík nebo kartu zobrazíte detail
@@ -253,21 +230,8 @@
                                 <div class="card-body p-4 sm:p-5 space-y-3">
                                     {{-- Horní štítky (stručné a čisté) --}}
                                     <div class="flex items-center justify-between gap-2">
-                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border flex items-center gap-1 {{ $badgeColor }}">
-                                            @if($place['category'] === 'study')
-                                                <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v16"/><path d="M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
-                                            @elseif($place['category'] === 'cafes')
-                                                <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/><path d="M6 2v2"/></svg>
-                                            @elseif($place['category'] === 'date')
-                                                <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-                                            @elseif($place['category'] === 'pubs')
-                                                <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 11h1a3 3 0 0 1 0 6h-1"/><path d="M9 12v6"/><path d="M13 12v6"/><path d="M14 7.5c-1 0-1.44.5-3 .5s-2-.5-3-.5-1.72.5-2.5.5a2.5 2.5 0 0 1 0-5c.78 0 1.57.5 2.5.5S9.44 2 11 2s2 1.5 3 1.5 1.72-.5 2.5-.5a2.5 2.5 0 0 1 0 5c-.78 0-1.5-.5-2.5-.5Z"/><path d="M5 8v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8"/></svg>
-                                            @elseif($place['category'] === 'parks')
-                                                <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 10v.2A3 3 0 0 1 8.9 16H5a3 3 0 0 1-1-5.8V10a3 3 0 0 1 6 0Z"/><path d="M7 16v6"/><path d="M13 19v3"/><path d="M12 19h8.3a1 1 0 0 0 .7-1.7L18 14h.3a1 1 0 0 0 .7-1.7L16 9h.2a1 1 0 0 0 .8-1.7L13 3l-1.4 1.5"/></svg>
-                                            @else
-                                                <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
-                                            @endif
-                                            <span>{{ $categories[$place['category']]['short_name'] ?? $place['category'] }}</span>
+                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border {{ $badgeColor }}">
+                                            {{ $categories[$place['category']]['short_name'] ?? $place['category'] }}
                                         </span>
                                         <span class="text-[10px] font-bold text-base-content/50 uppercase tracking-wider truncate">
                                             {{ $place['highlight'] }}
@@ -282,11 +246,8 @@
                                         >
                                             {{ $place['name'] }}
                                         </h3>
-                                        <p class="text-xs text-base-content/60 font-medium flex items-center gap-1 mt-0.5">
-                                            <svg class="w-3.5 h-3.5 shrink-0 text-base-content/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                                            </svg>
-                                            <span class="truncate">{{ $place['address'] }}</span>
+                                        <p class="text-xs text-base-content/60 font-medium mt-0.5 truncate">
+                                            {{ $place['address'] }}
                                         </p>
                                     </div>
 
@@ -294,15 +255,6 @@
                                     <p class="text-xs text-base-content/80 leading-relaxed">
                                         {{ $place['description'] }}
                                     </p>
-
-                                    {{-- Stručné tagy (max 3 nejvýznamnější) --}}
-                                    <div class="flex flex-wrap gap-1.5 pt-1">
-                                        @foreach(array_slice($place['tags'], 0, 3) as $tag)
-                                            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-base-200 text-base-content/70">
-                                                {{ $tag }}
-                                            </span>
-                                        @endforeach
-                                    </div>
                                 </div>
 
                                 {{-- Spodní akční tlačítka: Ukázat na mapě + Navigace (horizontálně vedle sebe, žádný overflow) --}}
@@ -313,9 +265,6 @@
                                         class="btn btn-xs sm:btn-sm btn-ghost border border-base-300 hover:border-primary flex-1 font-bold text-xs"
                                         title="Vycentrovat na mapě"
                                     >
-                                        <svg class="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        </svg>
                                         <span>Na mapě</span>
                                     </button>
 
@@ -323,12 +272,9 @@
                                         href="{{ $gMapsUrl }}"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        class="btn btn-xs sm:btn-sm btn-ghost border border-base-300 hover:border-sky-500 text-sky-600 dark:text-sky-400 font-bold text-xs px-2 sm:px-2.5"
+                                        class="btn btn-xs sm:btn-sm btn-ghost border border-base-300 hover:border-sky-500 text-sky-600 dark:text-sky-400 font-bold text-xs px-2.5 sm:px-3"
                                         title="Otevřít v Google Maps"
                                     >
-                                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                                        </svg>
                                         <span>Google</span>
                                     </a>
 
@@ -336,12 +282,9 @@
                                         href="{{ $mapyCzUrl }}"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        class="btn btn-xs sm:btn-sm btn-ghost border border-base-300 hover:border-red-500 text-red-600 dark:text-red-400 font-bold text-xs px-2 sm:px-2.5"
+                                        class="btn btn-xs sm:btn-sm btn-ghost border border-emerald-500/40 hover:border-emerald-500 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs px-2.5 sm:px-3"
                                         title="Otevřít v Mapy.cz"
                                     >
-                                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14.93V19h-2v-2.07c-3.1-.38-5.55-2.83-5.93-5.93H3v-2h2.07c.38-3.1 2.83-5.55 5.93-5.93V3h2v2.07c3.1.38 5.55 2.83 5.93 5.93H21v2h-2.07c-.38 3.1-2.83 5.55-5.93 5.93z"/>
-                                        </svg>
                                         <span>Mapy.cz</span>
                                     </a>
                                 </div>
@@ -514,7 +457,7 @@
                                 <a href="${gMapsUrl}" target="_blank" rel="noopener noreferrer" style="flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 700; background-color: #0284c7; color: white; border-radius: 8px; text-decoration: none; text-align: center;">
                                     Google Maps
                                 </a>
-                                <a href="${mapyCzUrl}" target="_blank" rel="noopener noreferrer" style="flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 700; background-color: #dc2626; color: white; border-radius: 8px; text-decoration: none; text-align: center;">
+                                <a href="${mapyCzUrl}" target="_blank" rel="noopener noreferrer" style="flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 700; background-color: #16a34a; color: white; border-radius: 8px; text-decoration: none; text-align: center;">
                                     Mapy.cz
                                 </a>
                             </div>

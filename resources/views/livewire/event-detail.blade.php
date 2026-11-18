@@ -54,55 +54,54 @@
             </div>
 
             {{-- Pravá část: 1-tlačítkový rotující přepínač témat (BEZ TEXTU, Systém -> Tmavý -> Světlý) --}}
-            <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-                <div
-                    x-data="{
-                        preference: localStorage.getItem('brno_events_theme') || 'system',
-                        cycleTheme() {
-                            if (this.preference === 'system') {
-                                this.setTheme('dark');
-                            } else if (this.preference === 'dark' || this.preference === 'events-dark') {
-                                this.setTheme('light');
-                            } else {
-                                this.setTheme('system');
-                            }
-                        },
-                        setTheme(val) {
-                            this.preference = val;
-                            localStorage.setItem('brno_events_theme', val);
-                            if (window.applyAppTheme) {
-                                window.applyAppTheme();
-                            }
-                            window.dispatchEvent(new CustomEvent('theme-changed', { detail: val }));
+            <div class="ml-auto"
+                x-data="{
+                    preference: localStorage.getItem('brno_events_theme') || 'system',
+                    cycleTheme() {
+                        if (this.preference === 'system') {
+                            this.setTheme('dark');
+                        } else if (this.preference === 'dark' || this.preference === 'events-dark') {
+                            this.setTheme('light');
+                        } else {
+                            this.setTheme('system');
                         }
-                    }"
-                    @theme-changed.window="preference = $event.detail"
+                    },
+                    setTheme(val) {
+                        this.preference = val;
+                        localStorage.setItem('brno_events_theme', val);
+                        if (window.applyAppTheme) {
+                            window.applyAppTheme();
+                        }
+                        window.dispatchEvent(new CustomEvent('theme-changed', { detail: val }));
+                    }
+                }"
+                @theme-changed.window="preference = $event.detail"
+                class="shrink-0"
+            >
+                <button
+                    type="button"
+                    @click="cycleTheme()"
+                    class="btn btn-sm btn-ghost border border-base-300 bg-base-100 hover:bg-base-200 rounded-xl w-9 h-9 min-h-[36px] p-0 flex items-center justify-center transition-colors shadow-2xs"
+                    :title="preference === 'system' ? 'Režim: Systém (kliknutím přepnout na Tmavý)' : ((preference === 'dark' || preference === 'events-dark') ? 'Režim: Tmavý (kliknutím přepnout na Světlý)' : 'Režim: Světlý (kliknutím přepnout na Systém)')"
+                    aria-label="Přepnout motiv vzhledu"
                 >
-                    <button
-                        type="button"
-                        @click="cycleTheme()"
-                        class="btn btn-sm btn-ghost border border-base-300 bg-base-100 hover:bg-base-200 rounded-xl w-9 h-9 min-h-[36px] p-0 flex items-center justify-center transition-colors shadow-2xs"
-                        :title="preference === 'system' ? 'Režim: Systém (kliknutím přepnout na Tmavý)' : ((preference === 'dark' || preference === 'events-dark') ? 'Režim: Tmavý (kliknutím přepnout na Světlý)' : 'Režim: Světlý (kliknutím přepnout na Systém)')"
-                        aria-label="Přepnout motiv vzhledu"
-                    >
-                        {{-- 1. Stav: Systém (Auto) - kontrastní půlkruh --}}
-                        <svg x-show="preference === 'system'" class="w-4 h-4 text-base-content/80 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <circle cx="12" cy="12" r="9" stroke-width="2" />
-                            <path fill="currentColor" d="M12 3a9 9 0 0 1 0 18V3z" />
-                        </svg>
+                    {{-- 1. Stav: Systém (Auto) - kontrastní půlkruh (standard pro Auto/Systém) --}}
+                    <svg x-show="preference === 'system'" class="w-4 h-4 text-base-content/80 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="12" cy="12" r="9" stroke-width="2" />
+                        <path fill="currentColor" d="M12 3a9 9 0 0 1 0 18V3z" />
+                    </svg>
 
-                        {{-- 2. Stav: Tmavý - měsíc --}}
-                        <svg x-show="preference === 'dark' || preference === 'events-dark'" class="w-4 h-4 text-sky-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                        </svg>
+                    {{-- 2. Stav: Tmavý - měsíc --}}
+                    <svg x-show="preference === 'dark' || preference === 'events-dark'" class="w-4 h-4 text-sky-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
 
-                        {{-- 3. Stav: Světlý - slunce --}}
-                        <svg x-show="preference === 'light' || preference === 'events-light'" class="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="4" stroke-width="2"></circle>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m14.14-14.14l-1.41 1.41"></path>
-                        </svg>
-                    </button>
-                </div>
+                    {{-- 3. Stav: Světlý - slunce --}}
+                    <svg x-show="preference === 'light' || preference === 'events-light'" class="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="4" stroke-width="2"></circle>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m14.14-14.14l-1.41 1.41"></path>
+                    </svg>
+                </button>
             </div>
         </div>
     </header>
@@ -121,7 +120,7 @@
     </div>
 
     {{-- HLAVNÍ OBSAH DETAILU --}}
-    <main class="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-6 flex-1 w-full">
+    <main class="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-3.5 sm:py-6 space-y-4 sm:space-y-6 flex-1 w-full">
 
         {{-- DROBEČKOVÁ NAVIGACE --}}
         <div class="flex items-center gap-2 sm:gap-3 text-xs">
@@ -218,7 +217,7 @@
                         @elseif($event->is_multi_day && $event->ends_at)
                             <span>{{ $event->starts_at->translatedFormat('d. m.') }} – {{ $event->ends_at->translatedFormat('d. m. Y') }}</span>
                         @else
-                            <span>{{ $event->starts_at->translatedFormat('l, d. F Y • H:i') }}</span>
+                            <span>{{ \Illuminate\Support\Str::ucfirst($event->starts_at->translatedFormat('l, d. F Y • H:i')) }}</span>
                         @endif
                     </div>
                     <h1 class="text-xl sm:text-3xl lg:text-4xl font-black text-white leading-tight drop-shadow-md">
@@ -228,7 +227,7 @@
             </div>
 
             {{-- TĚLO KARTY --}}
-            <div class="p-4 sm:p-6 lg:p-8 space-y-6">
+            <div class="p-3.5 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
 
                 {{-- ORGANIZÁTOR PANEL (BEZ CIRCLE ICONS) --}}
                 @if($event->organization)
@@ -283,89 +282,75 @@
                 @endif
 
                 {{-- KLÍČOVÉ INFORMACE GRID --}}
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 p-4 sm:p-5 bg-base-200/50 rounded-2xl border border-base-300 text-xs sm:text-sm">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 p-3.5 sm:p-5 bg-base-200/50 rounded-2xl border border-base-300 text-xs sm:text-sm">
                     {{-- Datum & Čas --}}
-                    <div class="flex items-start gap-3">
-                        <div class="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <div class="text-[11px] font-bold text-base-content/50 uppercase tracking-wider">Datum a čas</div>
-                            @if($event->is_ongoing && $event->ends_at)
-                                <div class="font-extrabold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
-                                    <span>Probíhá (do {{ $event->ends_at->translatedFormat('d. m. Y') }})</span>
-                                </div>
-                                <div class="text-xs text-base-content/70 mt-0.5">
-                                    Zahájeno {{ $event->starts_at->translatedFormat('d. m. Y') }} • zbývá {{ $event->ends_at->diffForHumans(['parts' => 1]) }}
-                                </div>
-                            @elseif($event->is_multi_day && $event->ends_at)
-                                <div class="font-extrabold text-base-content">{{ $event->starts_at->translatedFormat('d. m.') }} – {{ $event->ends_at->translatedFormat('d. m. Y') }}</div>
-                                <div class="text-xs text-base-content/70 mt-0.5">
-                                    Vícedenní akce (začátek {{ $event->starts_at->diffForHumans() }})
-                                </div>
-                            @else
-                                <div class="font-extrabold text-base-content">{{ $event->starts_at->translatedFormat('l, d. m. Y') }}</div>
-                                <div class="text-xs text-base-content/70 mt-0.5">
-                                    {{ $event->starts_at->format('H:i') }}
-                                    @if($event->ends_at)
-                                        – {{ $event->ends_at->format('H:i') }}
-                                    @endif
-                                    <span class="text-base-content/40">({{ $event->starts_at->diffForHumans() }})</span>
-                                </div>
-                            @endif
-                        </div>
+                    <div class="space-y-1">
+                        <div class="text-[11px] font-bold text-base-content/50 uppercase tracking-wider">Datum a čas</div>
+                        @if($event->is_ongoing && $event->ends_at)
+                            <div class="font-extrabold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+                                <span>Probíhá (do {{ $event->ends_at->translatedFormat('d. m. Y') }})</span>
+                            </div>
+                            <div class="text-xs text-base-content/70 mt-0.5">
+                                Zahájeno {{ $event->starts_at->translatedFormat('d. m. Y') }} • zbývá {{ $event->ends_at->diffForHumans(['parts' => 1]) }}
+                            </div>
+                        @elseif($event->is_multi_day && $event->ends_at)
+                            <div class="font-extrabold text-base-content">{{ $event->starts_at->translatedFormat('d. m.') }} – {{ $event->ends_at->translatedFormat('d. m. Y') }}</div>
+                            <div class="text-xs text-base-content/70 mt-0.5">
+                                Vícedenní akce (začátek {{ $event->starts_at->diffForHumans() }})
+                            </div>
+                        @else
+                            <div class="font-extrabold text-base-content">{{ $event->starts_at->translatedFormat('l, d. m. Y') }}</div>
+                            <div class="text-xs text-base-content/70 mt-0.5">
+                                {{ $event->starts_at->format('H:i') }}
+                                @if($event->ends_at)
+                                    – {{ $event->ends_at->format('H:i') }}
+                                @endif
+                                <span class="text-base-content/40">({{ $event->starts_at->diffForHumans() }})</span>
+                            </div>
+                        @endif
                     </div>
 
                     {{-- Místo konání --}}
-                    <div class="flex items-start gap-3">
-                        <div class="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            </svg>
+                    <div class="space-y-1 min-w-0">
+                        <div class="text-[11px] font-bold text-base-content/50 uppercase tracking-wider">Místo konání</div>
+                        <div class="font-extrabold text-base-content truncate">
+                            {{ $event->venue ? $event->venue->name : ($event->location_name ?: 'Brno') }}
                         </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="text-[11px] font-bold text-base-content/50 uppercase tracking-wider">Místo konání</div>
-                            <div class="font-extrabold text-base-content truncate">
-                                {{ $event->venue ? $event->venue->name : ($event->location_name ?: 'Brno') }}
-                            </div>
-                            @if($event->venue && $event->venue->address)
-                                <div class="text-xs text-base-content/70 mt-0.5 truncate">{{ $event->venue->address }}, {{ $event->venue->city }}</div>
-                            @elseif($event->venue && $event->location_name && $event->location_name !== $event->venue->name)
-                                <div class="text-xs text-base-content/70 mt-0.5 truncate">{{ $event->location_name }}</div>
-                            @endif
-                            <div class="mt-2 flex items-center gap-3">
-                                <a
-                                    href="https://www.google.com/maps/search/?api=1&query={{ urlencode($event->location_display . ' Brno') }}"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    wire:click="trackOutbound('map')"
-                                    class="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1"
-                                >
-                                    <span>Google Mapy</span>
-                                    <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                                    </svg>
-                                </a>
-                                <span class="text-base-content/30">•</span>
-                                <a
-                                    href="https://mapy.cz/zakladni?q={{ urlencode($event->location_display . ' Brno') }}"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    wire:click="trackOutbound('map')"
-                                    class="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1"
-                                >
-                                    <span>Mapy.cz</span>
-                                    <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                                    </svg>
-                                </a>
-                            </div>
+                        @if($event->venue && $event->venue->address)
+                            <div class="text-xs text-base-content/70 mt-0.5 truncate">{{ $event->venue->address }}, {{ $event->venue->city }}</div>
+                        @elseif($event->venue && $event->location_name && $event->location_name !== $event->venue->name)
+                            <div class="text-xs text-base-content/70 mt-0.5 truncate">{{ $event->location_name }}</div>
+                        @endif
+                        <div class="mt-2 flex items-center gap-3">
+                            <a
+                                href="https://www.google.com/maps/search/?api=1&query={{ urlencode($event->location_display . ' Brno') }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                wire:click="trackOutbound('map')"
+                                class="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1"
+                            >
+                                <span>Google Mapy</span>
+                                <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                </svg>
+                            </a>
+                            <span class="text-base-content/30">•</span>
+                            <a
+                                href="https://mapy.cz/zakladni?q={{ urlencode($event->location_display . ' Brno') }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                wire:click="trackOutbound('map')"
+                                class="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1"
+                            >
+                                <span>Mapy.cz</span>
+                                <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                </svg>
+                            </a>
                         </div>
                     </div>
+                </div>
                 </div>
 
                 {{-- POPIS AKCE --}}
@@ -518,7 +503,7 @@
                                     </span>
                                 </div>
 
-                                {{-- Datum v levém dolním rohu bez ikony hodin, lokalizované --}}
+                                {{-- Datum v levém dolním rohu bez ikony hodin --}}
                                 <div class="absolute bottom-2.5 left-2.5 bg-base-100/95 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-bold text-base-content border border-base-300 shadow-sm flex items-center gap-1.5 whitespace-nowrap">
                                     @if($rel->is_ongoing && $rel->ends_at)
                                         <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
@@ -526,32 +511,7 @@
                                     @elseif($rel->is_multi_day && $rel->ends_at)
                                         <span>{{ $rel->formatted_date_range }}</span>
                                     @else
-                                        <time
-                                            datetime="{{ $rel->starts_at->toIso8601String() }}"
-                                            x-data="{
-                                                text: '{{ $rel->formatted_date_range }}',
-                                                init() {
-                                                    try {
-                                                        const d = new Date('{{ $rel->starts_at->toIso8601String() }}');
-                                                        const loc = navigator.language || 'cs-CZ';
-                                                        if (loc.startsWith('cs') || loc.startsWith('sk')) {
-                                                            const days = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
-                                                            this.text = `${days[d.getDay()]} ${d.getDate()}. ${d.getMonth() + 1}. ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-                                                        } else {
-                                                            this.text = new Intl.DateTimeFormat(loc, {
-                                                                weekday: 'short',
-                                                                day: 'numeric',
-                                                                month: 'numeric',
-                                                                hour: '2-digit',
-                                                                minute: '2-digit',
-                                                                hour12: false
-                                                            }).format(d);
-                                                        }
-                                                    } catch(e) {}
-                                                }
-                                            }"
-                                            x-text="text"
-                                        >{{ $rel->formatted_date_range }}</time>
+                                        <span>{{ $rel->formatted_date_range }}</span>
                                     @endif
                                 </div>
                             </a>

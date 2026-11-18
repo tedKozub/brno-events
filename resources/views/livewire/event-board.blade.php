@@ -329,7 +329,7 @@
                                     </span>
                                 </div>
 
-                                {{-- Datum v levém dolním rohu bez ikony hodin, lokalizované podle prohlížeče --}}
+                                {{-- Datum v levém dolním rohu bez ikony hodin --}}
                                 <div class="absolute bottom-2.5 left-2.5 bg-base-100/95 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-bold text-base-content border border-base-300 shadow-sm flex items-center gap-1.5 whitespace-nowrap">
                                     @if($event->is_ongoing && $event->ends_at)
                                         <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
@@ -337,32 +337,7 @@
                                     @elseif($event->is_multi_day && $event->ends_at)
                                         <span>{{ $event->formatted_date_range }}</span>
                                     @else
-                                        <time
-                                            datetime="{{ $event->starts_at->toIso8601String() }}"
-                                            x-data="{
-                                                text: '{{ $event->formatted_date_range }}',
-                                                init() {
-                                                    try {
-                                                        const d = new Date('{{ $event->starts_at->toIso8601String() }}');
-                                                        const loc = navigator.language || 'cs-CZ';
-                                                        if (loc.startsWith('cs') || loc.startsWith('sk')) {
-                                                            const days = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
-                                                            this.text = `${days[d.getDay()]} ${d.getDate()}. ${d.getMonth() + 1}. ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-                                                        } else {
-                                                            this.text = new Intl.DateTimeFormat(loc, {
-                                                                weekday: 'short',
-                                                                day: 'numeric',
-                                                                month: 'numeric',
-                                                                hour: '2-digit',
-                                                                minute: '2-digit',
-                                                                hour12: false
-                                                            }).format(d);
-                                                        }
-                                                    } catch(e) {}
-                                                }
-                                            }"
-                                            x-text="text"
-                                        >{{ $event->formatted_date_range }}</time>
+                                        <span>{{ $event->formatted_date_range }}</span>
                                     @endif
                                 </div>
                             </a>
