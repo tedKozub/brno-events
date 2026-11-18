@@ -293,7 +293,7 @@ class EventBannerScraperTest extends TestCase
         $this->assertStringStartsWith('events/covers/poster_', $event->cover_image);
     }
 
-    public function test_event_board_renders_poster_tag_on_card(): void
+    public function test_event_board_does_not_render_poster_tag_on_feed_card(): void
     {
         $dummyImage = $this->createDummyImageBytes(600, 900);
         $storagePath = 'events/covers/poster_card_test.jpg';
@@ -309,7 +309,7 @@ class EventBannerScraperTest extends TestCase
 
         Livewire::test(\App\Livewire\EventBoard::class)
             ->assertSee('Unikátní Přednáška s plakátem')
-            ->assertSee('Plakát');
+            ->assertDontSee('Plakát');
     }
 
     public function test_muni_generic_placeholder_and_sidebar_links_are_ignored(): void
