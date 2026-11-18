@@ -3,6 +3,15 @@ import argparse
 import json
 import sys
 import os
+
+# Ensure both scrapers directory and project root are in sys.path
+scrapers_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(scrapers_dir)
+if scrapers_dir not in sys.path:
+    sys.path.insert(0, scrapers_dir)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 import httpx
 
 from parsers.ical_parser import parse_ical

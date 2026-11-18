@@ -3,7 +3,10 @@ import time
 from typing import List, Dict, Any
 import feedparser
 from bs4 import BeautifulSoup
-from scrapers.parsers.web_parsers import is_administrative_or_irrelevant
+try:
+    from parsers.web_parsers import is_administrative_or_irrelevant
+except ImportError:
+    from scrapers.parsers.web_parsers import is_administrative_or_irrelevant
 
 
 def parse_rss(content: str or bytes, source_url: str = "") -> List[Dict[str, Any]]:
