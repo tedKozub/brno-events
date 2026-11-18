@@ -72,7 +72,7 @@
     <meta property="og:description" content="{{ $effectiveDescription }}">
     <meta property="og:type" content="{{ $ogType }}">
     <meta property="og:url" content="{{ $ogUrl ?? url()->current() }}">
-    <meta property="og:image" content="{{ $ogImage ?? asset('images/og-brnoakce.jpg') }}">
+    <meta property="og:image" content="{{ $ogImage ?? asset('images/og-livebrno.jpg') }}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:locale" content="cs_CZ">
@@ -81,7 +81,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $effectiveTitle }}">
     <meta name="twitter:description" content="{{ $effectiveDescription }}">
-    <meta name="twitter:image" content="{{ $ogImage ?? asset('images/og-brnoakce.jpg') }}">
+    <meta name="twitter:image" content="{{ $ogImage ?? asset('images/og-livebrno.jpg') }}">
 
     <!-- Favicon & Mobile Icons -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">

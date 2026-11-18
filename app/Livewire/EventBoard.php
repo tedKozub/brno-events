@@ -383,7 +383,7 @@ class EventBoard extends Component
         ])->layout('components.layouts.app', [
             'title' => \App\Helpers\BrandHelper::metaTitle(),
             'description' => \App\Helpers\BrandHelper::metaDescription(),
-            'ogImage' => asset('images/og-brnoakce.jpg'),
+            'ogImage' => asset('images/og-livebrno.jpg'),
             'ogType' => 'website',
             'ogUrl' => url('/'),
         ]);
