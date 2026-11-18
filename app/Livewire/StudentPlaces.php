@@ -535,7 +535,7 @@ class StudentPlaces extends Component
             'categoryCounts' => $this->categoryCounts,
             'categories' => $this->categories,
         ])->layout('components.layouts.app', [
-            'title' => 'Mapa studentských míst v Brně | BrnoAkce',
+            'title' => 'Mapa studentských míst v Brně | ' . \App\Helpers\BrandHelper::brandName(),
             'description' => 'Průvodce nejlepšími místy pro studenty v Brně: oblíbené studovny, knihovny s Eduroamem, kavárny na učení s laptopy, romantická místa na rande a kultovní studentské hospody.',
         ]);
     }

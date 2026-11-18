@@ -381,8 +381,8 @@ class EventBoard extends Component
             'selectedEvent' => $selectedEvent,
             'totalUpcomingCount' => Event::published()->upcoming()->count(),
         ])->layout('components.layouts.app', [
-            'title' => 'Studentské Akce Brno | Průvodce studentským životem (MUNI, VUT, MENDELU)',
-            'description' => 'Aktuální přehled studentských párty, festivalů, přednášek, turnajů a kulturních akcí v Brně. Interaktivní mapa, kalendář a vyhledávání.',
+            'title' => \App\Helpers\BrandHelper::metaTitle(),
+            'description' => \App\Helpers\BrandHelper::metaDescription(),
             'ogImage' => asset('images/og-brnoakce.jpg'),
             'ogType' => 'website',
             'ogUrl' => url('/'),

@@ -21,8 +21,8 @@ class EventBoardTest extends TestCase
 
         $response = $this->get('/');
         $response->assertStatus(200);
-        $response->assertSee('AKCE');
-        $response->assertSee('BRNO');
+        $response->assertSee('Brno');
+        $response->assertSee('Akce');
         if ($event) {
             $response->assertSee(e($event->title), false);
         }

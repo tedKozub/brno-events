@@ -3,18 +3,11 @@
     <header class="border-b border-base-300 bg-base-100/90 backdrop-blur-md sticky top-0 z-30 transition-colors shadow-xs">
         <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-2 sm:gap-3">
             {{-- Logo --}}
-            <a href="/" wire:navigate class="flex items-center gap-2 sm:gap-3 group shrink-0">
-                <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary flex items-center justify-center text-primary-content font-black shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
-                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                </div>
-                <div class="flex items-center gap-1.5 sm:gap-2">
-                    {!! \App\Helpers\BrandHelper::logoHtml() !!}
-                    <span class="hidden xs:inline-block px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20">
-                        {{ \App\Helpers\BrandHelper::badgeText() }}
-                    </span>
-                </div>
+            <a href="/" wire:navigate class="flex items-center gap-1.5 sm:gap-2.5 group shrink-0">
+                {!! \App\Helpers\BrandHelper::logoHtml() !!}
+                <span class="hidden xs:inline-block px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20">
+                    {{ \App\Helpers\BrandHelper::badgeText() }}
+                </span>
             </a>
 
             {{-- Středová navigace: Akce vs Místa --}}
@@ -22,11 +15,8 @@
                 <a
                     href="/"
                     wire:navigate
-                    class="px-3 sm:px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 transition-all text-base-content/70 hover:text-base-content hover:bg-base-200"
+                    class="px-3.5 sm:px-4 py-1.5 rounded-xl font-bold text-xs sm:text-sm inline-flex items-center transition-all text-base-content/70 hover:text-base-content hover:bg-base-200"
                 >
-                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
                     <span>Akce</span>
                 </a>
                 <a

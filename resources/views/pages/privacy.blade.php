@@ -7,12 +7,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16 sm:h-20 gap-4">
                 <div class="flex items-center gap-3">
-                    <a href="/" wire:navigate class="flex items-center gap-2 group">
-                        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-primary to-orange-500 flex items-center justify-center text-primary-content shadow-md shadow-primary/20 group-hover:scale-105 transition-transform duration-200">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                        </div>
+                    <a href="/" wire:navigate class="flex items-center gap-2.5 group">
                         <div>
                             <span class="font-black text-xl tracking-tight text-base-content block leading-tight">{!! \App\Helpers\BrandHelper::logoHtml() !!}</span>
                             <span class="text-[10px] font-bold uppercase tracking-wider text-base-content/50 block">Studentský rozcestník</span>

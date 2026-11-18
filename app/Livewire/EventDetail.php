@@ -139,7 +139,7 @@ class EventDetail extends Component
             'event' => $event,
             'relatedEvents' => $relatedEvents,
         ])->layout('components.layouts.app', [
-            'title' => $event->title . ' • BrnoAkce',
+            'title' => $event->title . ' • ' . \App\Helpers\BrandHelper::brandName(),
             'description' => $cleanDescription,
             'ogImage' => !empty($event->cover_image) ? (str_starts_with($event->cover_image_url, 'http') ? $event->cover_image_url : url($event->cover_image_url)) : route('event.og-image', ['slug' => $event->slug]),
             'ogType' => 'event',

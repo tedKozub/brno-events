@@ -14,19 +14,9 @@ class StudyBrnoRebrandTest extends TestCase
 {
     use DatabaseTransactions;
 
-    public function test_default_host_renders_brnoakce_branding(): void
+    public function test_main_livebrno_host_renders_studybrno_livebrno_branding(): void
     {
-        $response = $this->get('http://brnoakce.tadeaskozub.com/');
-
-        $response->assertStatus(200);
-        $response->assertSee('BrnoAkce');
-        $response->assertSee('AKCE<span class="text-primary">BRNO</span>', false);
-        $response->assertSee('<meta property="og:site_name" content="BrnoAkce">', false);
-    }
-
-    public function test_studybrno_host_renders_studybrno_livebrno_branding(): void
-    {
-        $response = $this->get('http://studybrno.tadeaskozub.com/');
+        $response = $this->get('http://livebrno.tadeaskozub.com/');
 
         $response->assertStatus(200);
         $response->assertSee('studyBrno|liveBrno');
@@ -37,18 +27,18 @@ class StudyBrnoRebrandTest extends TestCase
         $response->assertSee('live</span>Brno', false);
     }
 
-    public function test_livebrno_host_renders_studybrno_livebrno_branding(): void
+    public function test_navbar_has_no_calendar_icon(): void
     {
         $response = $this->get('http://livebrno.tadeaskozub.com/');
 
         $response->assertStatus(200);
-        $response->assertSee('studyBrno|liveBrno');
-        $response->assertSee('<meta property="og:site_name" content="studyBrno|liveBrno">', false);
+        // Ensure calendar SVG icon in logo box was removed
+        $response->assertDontSee('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>', false);
     }
 
     public function test_sslip_io_subdomains_render_studybrno_livebrno_branding(): void
     {
-        $response = $this->get('http://studybrno.116.203.250.252.sslip.io/');
+        $response = $this->get('http://livebrno.116.203.250.252.sslip.io/');
 
         $response->assertStatus(200);
         $response->assertSee('studyBrno|liveBrno');
@@ -56,7 +46,7 @@ class StudyBrnoRebrandTest extends TestCase
 
     public function test_places_page_renders_dynamic_title_for_studybrno(): void
     {
-        $response = $this->get('http://studybrno.tadeaskozub.com/mista');
+        $response = $this->get('http://livebrno.tadeaskozub.com/mista');
 
         $response->assertStatus(200);
         $response->assertSee('<title>Mapa studentských míst v Brně | studyBrno|liveBrno</title>', false);
@@ -95,49 +85,28 @@ class StudyBrnoRebrandTest extends TestCase
             'description' => 'Test event description',
         ]);
 
-        $studyResponse = $this->get('http://studybrno.tadeaskozub.com/akce/' . $event->slug);
+        $studyResponse = $this->get('http://livebrno.tadeaskozub.com/akce/' . $event->slug);
 
         $studyResponse->assertStatus(200);
         $studyResponse->assertSee('<title>Velká Studentská Párty • studyBrno|liveBrno</title>', false);
-
-        $brnoAkceResponse = $this->get('http://brnoakce.tadeaskozub.com/akce/' . $event->slug);
-        $brnoAkceResponse->assertStatus(200);
-        $brnoAkceResponse->assertSee('<title>Velká Studentská Párty • BrnoAkce</title>', false);
     }
 
-    public function test_dynamic_manifest_json_adapts_to_domain(): void
+    public function test_dynamic_manifest_json_for_livebrno(): void
     {
-        $studyResponse = $this->get('http://studybrno.tadeaskozub.com/manifest.json');
+        $studyResponse = $this->get('http://livebrno.tadeaskozub.com/manifest.json');
 
         $studyResponse->assertStatus(200);
         $studyResponse->assertJsonFragment([
             'name' => 'studyBrno|liveBrno – Studentský a městský život v Brně',
-            'short_name' => 'studyBrno',
-        ]);
-
-        $defaultResponse = $this->get('http://brnoakce.tadeaskozub.com/manifest.json');
-        $defaultResponse->assertStatus(200);
-        $defaultResponse->assertJsonFragment([
-            'name' => 'BrnoAkce – Studentské akce v Brně',
-            'short_name' => 'BrnoAkce',
+            'short_name' => 'liveBrno',
         ]);
     }
 
-    public function test_query_param_override_activates_studybrno(): void
+    public function test_brand_helper_methods(): void
     {
-        $response = $this->get('/?brand=studybrno');
-
-        $response->assertStatus(200);
-        $response->assertSee('studyBrno|liveBrno');
-    }
-
-    public function test_brand_helper_env_configuration(): void
-    {
-        config(['app.brand' => 'studybrno']);
         $this->assertTrue(BrandHelper::isStudyBrno());
         $this->assertEquals('studyBrno|liveBrno', BrandHelper::brandName());
-
-        config(['app.brand' => 'auto']);
-        $this->assertEquals('BrnoAkce', BrandHelper::brandName());
+        $this->assertEquals('liveBrno', BrandHelper::shortName());
+        $this->assertEquals('Student & Life', BrandHelper::badgeText());
     }
 }

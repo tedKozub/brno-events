@@ -6,31 +6,17 @@ class BrandHelper
 {
     /**
      * Check if the current request is for the studyBrno|liveBrno brand.
+     * Default brand for the entire platform is studyBrno|liveBrno.
      */
     public static function isStudyBrno(): bool
     {
-        // 1. Explicit environment configuration override
-        $configured = strtolower((string) config('app.brand', ''));
-        if ($configured === 'studybrno' || $configured === 'studybrno|livebrno') {
-            return true;
+        // Explicitly disabled only if configured as 'brnoakce'
+        $configured = strtolower((string) config('app.brand', 'studybrno'));
+        if ($configured === 'brnoakce') {
+            return false;
         }
 
-        // 2. Query parameter for easy local/manual testing (?brand=studybrno)
-        try {
-            if (request()->query('brand') === 'studybrno') {
-                return true;
-            }
-
-            // 3. Request host check (supports domains with studybrno or livebrno)
-            $host = strtolower((string) request()->getHost());
-            if (str_contains($host, 'studybrno') || str_contains($host, 'livebrno')) {
-                return true;
-            }
-        } catch (\Throwable $e) {
-            // CLI commands or environments without active HTTP request
-        }
-
-        return false;
+        return true;
     }
 
     /**
@@ -50,11 +36,7 @@ class BrandHelper
      */
     public static function shortName(): string
     {
-        if (self::isStudyBrno()) {
-            return 'studyBrno';
-        }
-
-        return 'BrnoAkce';
+        return 'liveBrno';
     }
 
     /**

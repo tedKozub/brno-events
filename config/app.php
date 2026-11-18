@@ -15,7 +15,7 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
-    'brand' => env('APP_BRAND', 'auto'),
+    'brand' => env('APP_BRAND', 'studybrno'),
 
     /*
     |--------------------------------------------------------------------------

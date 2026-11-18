@@ -82,7 +82,7 @@ class SeoAndPwaTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('rel="manifest" href="/manifest.json"', false);
         $response->assertSee('name="theme-color" content="#6366f1"', false);
-        $response->assertSee('property="og:site_name" content="BrnoAkce"', false);
+        $response->assertSee('property="og:site_name" content="' . \App\Helpers\BrandHelper::brandName() . '"', false);
         $response->assertSee('property="og:image"', false);
         $response->assertSee('name="twitter:card" content="summary_large_image"', false);
         $response->assertSee('Přidat na plochu / PWA', false);
@@ -112,7 +112,7 @@ class SeoAndPwaTest extends TestCase
         $response = $this->get('/akce/' . $event->slug);
 
         $response->assertStatus(200);
-        $response->assertSee('property="og:title" content="' . e($event->title) . ' • BrnoAkce"', false);
+        $response->assertSee('property="og:title" content="' . e($event->title) . ' • ' . \App\Helpers\BrandHelper::brandName() . '"', false);
         $response->assertSee('property="og:image" content="https://example.com/poster.jpg"', false);
         $response->assertSee('name="twitter:card" content="summary_large_image"', false);
         $response->assertSee('application/ld+json', false);
