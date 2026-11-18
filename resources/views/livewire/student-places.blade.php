@@ -108,24 +108,24 @@
 
         {{-- VYHLEDÁVÁNÍ A FILTRY KATEGORIÍ --}}
         <section class="card bg-base-100 shadow-sm border border-base-300 overflow-hidden">
-            <div class="card-body p-3.5 sm:p-5 space-y-3.5">
+            <div class="card-body p-3 sm:p-5 space-y-3 sm:space-y-3.5">
                 {{-- Search bar --}}
                 <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-base-content/40">
-                        <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 sm:pl-4 flex items-center pointer-events-none text-base-content/40">
+                        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
                     </div>
                     <input
                         type="text"
                         wire:model.live.debounce.300ms="search"
-                        placeholder="Hledat kavárnu, studovnu, výhled na rande, hospodu u fakulty..."
-                        class="input h-12 sm:h-14 input-bordered w-full pl-12 sm:pl-14 pr-11 bg-base-200/60 hover:bg-base-200 text-sm sm:text-base font-semibold focus:border-primary focus:bg-base-100 focus:outline-none rounded-2xl shadow-xs transition-all"
+                        placeholder="Hledat kavárnu, studovnu, hospodu..."
+                        class="input h-11 sm:h-13 input-bordered w-full pl-10 sm:pl-12 pr-10 bg-base-200/60 hover:bg-base-200 text-sm sm:text-base font-semibold focus:border-primary focus:bg-base-100 focus:outline-none rounded-xl sm:rounded-2xl shadow-xs transition-all"
                     />
                     @if(!empty($search))
                         <button
                             wire:click="$set('search', '')"
-                            class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-base-content/40 hover:text-base-content"
+                            class="absolute inset-y-0 right-0 pr-3 sm:pr-3.5 flex items-center text-base-content/40 hover:text-base-content"
                             title="Vymazat hledání"
                         >
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
