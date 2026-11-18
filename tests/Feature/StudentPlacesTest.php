@@ -37,4 +37,20 @@ class StudentPlacesTest extends TestCase
             ->assertSee('Na Božence')
             ->assertDontSee('Moravská zemská knihovna (MZK)');
     }
+
+    public function test_search_for_coffee_finds_cafes_and_updates_category_counts(): void
+    {
+        $component = Livewire::test(StudentPlaces::class)
+            ->set('search', 'káva');
+
+        // Musí najít typické brněnské kavárny
+        $component->assertSee('Skøg Urban Hub')
+            ->assertSee('V Melounovém cukru')
+            ->assertSee('Punkt cafe');
+
+        // Počty kategorií se musí dynamicky aktualizovat dle výsledků hledání
+        $counts = $component->get('categoryCounts');
+        $this->assertGreaterThan(0, $counts['cafes']);
+        $this->assertEquals(0, $counts['date']); // Rande & výhledy nemají kávu
+    }
 }
