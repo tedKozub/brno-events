@@ -434,6 +434,9 @@ class ScrapeEventsCommand extends Command
         if (str_contains($locLower, 'perpetuum')) {
             return Venue::where('slug', 'perpetuum-club')->value('id');
         }
+        if (str_contains($locLower, 'maison')) {
+            return Venue::where('slug', 'maison-club-lounge')->value('id');
+        }
         if (str_contains($locLower, 'otevřená zahrada') || str_contains($locLower, 'otevrena zahrada')) {
             return Venue::where('slug', 'otevrena-zahrada')->value('id');
         }

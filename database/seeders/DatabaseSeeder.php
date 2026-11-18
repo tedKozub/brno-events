@@ -143,6 +143,15 @@ class DatabaseSeeder extends Seeder
             'description' => 'Legendární studentská kavárna v Domě pánů z Kunštátu.',
         ]);
 
+        Venue::firstOrCreate(['slug' => 'maison-club-lounge'], [
+            'name' => 'Maison Club & Lounge',
+            'address' => 'Běhounská 9',
+            'city' => 'Brno',
+            'latitude' => 49.1962,
+            'longitude' => 16.6089,
+            'description' => 'Studentský hudební klub a lounge bar v centru Brna.',
+        ]);
+
         // 2. Categories
         $catParty = Category::create([
             'name' => 'Párty & Kluby',

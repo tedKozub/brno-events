@@ -116,11 +116,13 @@ def extract_explicit_date_from_text(text: str, default_year: Optional[int] = Non
                 pass
 
     # 2. Pattern DD.MM.YYYY or DD.MM.
-    m_num = re.search(r"\b(\d{1,2})\.\s*(\d{1,2})\.(?:\s*(\d{4}))?\b", text)
+    m_num = re.search(r"(?<!\d)(\d{1,2})\.\s*(\d{1,2})\.(?:\s*(\d{4}))?(?!\d)", text)
     if m_num:
         day = int(m_num.group(1))
         month = int(m_num.group(2))
         year = int(m_num.group(3)) if m_num.group(3) else default_year
+        if not m_num.group(3) and month < datetime.now().month - 1:
+            year += 1
         if 1 <= month <= 12 and 1 <= day <= 31:
             try:
                 return datetime(year, month, day)
@@ -397,6 +399,7 @@ def extract_event_from_caption(caption: str, base_url: str) -> Optional[Dict[str
     # Title: typically the first clean line
     raw_title = lines[0]
     title = clean_emoji(raw_title)
+    title = re.sub(r"^(?:Je tu|Přichází|Zveme vás na:?)\s+", "", title, flags=re.IGNORECASE).strip()
     if len(title) < 4 and len(lines) > 1:
         title = clean_emoji(lines[1])
     if len(title) > 90:
@@ -417,9 +420,13 @@ def extract_event_from_caption(caption: str, base_url: str) -> Optional[Dict[str
     venue = "Brno"
     venue_match = re.search(r"(?:Kde|Místo|📍)\s*:?\s*([^\n]+)", cleaned, re.IGNORECASE)
     cleaned_lower = cleaned.lower()
-    if venue_match:
+    if "maison" in cleaned_lower:
+        venue = "Maison Club & Lounge, Běhounská 9, Brno"
+    elif venue_match:
         venue = clean_emoji(venue_match.group(1).strip())
         venue = re.sub(r"^(?:ve?|at|in|do)\s+", "", venue, flags=re.IGNORECASE).strip()
+        if "maison" in venue.lower():
+            venue = "Maison Club & Lounge, Běhounská 9, Brno"
     elif "koma lounge" in cleaned_lower:
         venue = "Koma Lounge & Bar, Kounicova 42, Brno"
     elif "skautský institut" in cleaned_lower or "skautskem institutu" in cleaned_lower:
@@ -454,15 +461,20 @@ def extract_event_from_caption(caption: str, base_url: str) -> Optional[Dict[str
 
     price_type = "free"
     price_amount = None
-    price_match = re.search(r"(\d+)\s*(?:Kč|czk)", cleaned, re.IGNORECASE)
-    if price_match:
+    vstup_match = re.search(r"(?:vstup|vstupné|startovné)(?:[^:\n]*:)?\s*(?:[^\d\n]*\s*)?(\d+)\s*(?:Kč|czk|,-)", cleaned, re.IGNORECASE)
+    if vstup_match:
         price_type = "paid"
-        price_amount = int(price_match.group(1))
-    elif any(k in cleaned.lower() for k in ["vstupné", "startovné", "vstup"]):
-        if "zdarma" in cleaned.lower() or "free" in cleaned.lower():
-            price_type = "free"
-        else:
+        price_amount = int(vstup_match.group(1))
+    else:
+        price_match = re.search(r"(\d+)\s*(?:Kč|czk)", cleaned, re.IGNORECASE)
+        if price_match:
             price_type = "paid"
+            price_amount = int(price_match.group(1))
+        elif any(k in cleaned.lower() for k in ["vstupné", "startovné", "vstup"]):
+            if "zdarma" in cleaned.lower() or "free" in cleaned.lower():
+                price_type = "free"
+            else:
+                price_type = "paid"
 
     cat_slug = "kultura-umeni"
     lower_c = cleaned.lower()

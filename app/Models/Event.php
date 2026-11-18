@@ -417,6 +417,16 @@ class Event extends Model
             ];
         }
 
+        if (str_contains($text, 'maison')) {
+            return [
+                'lat' => 49.1962,
+                'lng' => 16.6089,
+                'title' => 'Maison Club & Lounge',
+                'address' => 'Běhounská 9, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
         if (str_contains($text, 'trojk') || str_contains($text, 'kavárna trojka') || str_contains($text, 'kavarna trojka')) {
             return [
                 'lat' => 49.1938,
