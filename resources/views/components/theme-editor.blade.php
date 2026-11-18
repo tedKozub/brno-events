@@ -471,9 +471,9 @@
                 base200: '#050505',
                 base300: '#222226',
                 baseContent: '#ffffff',
-                roundedBox: '12px',
-                roundedBtn: '4px',
-                roundedBadge: '4px',
+                roundedBox: '16px',
+                roundedBtn: '12px',
+                roundedBadge: '9999px',
                 borderBtn: '1px',
             },
 
@@ -491,9 +491,9 @@
                     base200: '#050505',
                     base300: '#222226',
                     baseContent: '#ffffff',
-                    roundedBox: '12px',
-                    roundedBtn: '4px',
-                    roundedBadge: '4px',
+                    roundedBox: '16px',
+                    roundedBtn: '12px',
+                    roundedBadge: '9999px',
                     borderBtn: '1px',
                 },
                 sunset_legacy: {
@@ -508,8 +508,8 @@
                     base300: '#1e293b',
                     baseContent: '#f8fafc',
                     roundedBox: '16px',
-                    roundedBtn: '4px',
-                    roundedBadge: '4px',
+                    roundedBtn: '12px',
+                    roundedBadge: '9999px',
                     borderBtn: '1px',
                 },
                 zinc_orange: {
@@ -848,14 +848,14 @@
                         --border-btn: ${bBtn} !important;
                     }
 
-                    /* Vynutit živé zaoblení na reálných kartách a komponentách webu */
-                    .card, .rounded-2xl {
+                    /* Vynutit živé zaoblení na základních DaisyUI komponentách webu */
+                    .card {
                         border-radius: ${rBox} !important;
                     }
-                    .btn, .rounded-xl, .rounded-sm {
+                    .btn:not(.btn-circle):not(.btn-square) {
                         border-radius: ${rBtn} !important;
                     }
-                    .badge, .rounded-full:not(.animate-pulse):not(.w-2):not(.w-1\\.5):not(.w-2\\.5) {
+                    .badge:not(.badge-outline) {
                         border-radius: ${rBadge} !important;
                     }
 

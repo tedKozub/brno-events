@@ -1,14 +1,3 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Respect DaisyUI theme box & button radius variables across cards & buttons */
-[data-theme] .card, [data-theme] .rounded-2xl {
-    border-radius: var(--rounded-box, 0.75rem);
-}
-[data-theme] .btn, [data-theme] .rounded-xl, [data-theme] .rounded-sm {
-    border-radius: var(--rounded-btn, 0.25rem);
-}
-[data-theme] .badge {
-    border-radius: var(--rounded-badge, 0.25rem);
-}

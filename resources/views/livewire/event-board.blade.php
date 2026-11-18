@@ -173,7 +173,7 @@
                         @foreach(['' => 'Všechny', 'MUNI' => 'MUNI', 'VUT' => 'VUT', 'MENDELU' => 'MENDELU', 'UNOB' => 'UNOB', 'VETUNI' => 'VETUNI'] as $code => $uLabel)
                             <button
                                 wire:click="setUniversity('{{ $code }}')"
-                                class="px-3 py-1 rounded-lg text-xs font-bold shrink-0 transition-all cursor-pointer whitespace-nowrap {{ $selectedUniversity === $code ? 'bg-neutral text-neutral-content shadow-xs' : 'bg-base-200/80 text-base-content/70 hover:bg-base-300' }}"
+                                class="px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer whitespace-nowrap {{ $selectedUniversity === $code ? 'bg-primary text-primary-content border border-primary shadow-sm font-extrabold' : 'bg-base-200 text-base-content/75 hover:bg-base-300 hover:text-base-content border border-base-300' }}"
                             >
                                 {{ $uLabel }}
                             </button>
