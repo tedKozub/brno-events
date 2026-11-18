@@ -257,12 +257,12 @@
                                     </p>
                                 </div>
 
-                                {{-- Spodní akční tlačítka: Ukázat na mapě + Navigace (horizontálně vedle sebe, žádný overflow) --}}
+                                {{-- Spodní akční tlačítka: Ukázat na mapě + Navigace (barevné pozadí, barevný text, pohodlný padding, bez ikon) --}}
                                 <div class="px-4 pb-4 pt-1 sm:px-5 sm:pb-5 border-t border-base-200 flex items-center gap-2">
                                     <button
                                         type="button"
                                         @click="$dispatch('place-selected', { id: {{ $place['id'] }}, lat: {{ $place['lat'] }}, lng: {{ $place['lng'] }} })"
-                                        class="btn btn-xs sm:btn-sm btn-ghost border border-base-300 hover:border-primary flex-1 font-bold text-xs"
+                                        class="btn btn-sm bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 hover:border-primary flex-1 font-bold text-xs h-9 min-h-[36px] px-3.5 rounded-xl transition-all shadow-2xs"
                                         title="Vycentrovat na mapě"
                                     >
                                         <span>Na mapě</span>
@@ -272,7 +272,7 @@
                                         href="{{ $gMapsUrl }}"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        class="btn btn-xs sm:btn-sm btn-ghost border border-base-300 hover:border-sky-500 text-sky-600 dark:text-sky-400 font-bold text-xs px-2.5 sm:px-3"
+                                        class="btn btn-sm bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/25 hover:border-sky-500 font-bold text-xs px-3 sm:px-3.5 h-9 min-h-[36px] rounded-xl transition-all shadow-2xs"
                                         title="Otevřít v Google Maps"
                                     >
                                         <span>Google</span>
@@ -282,7 +282,7 @@
                                         href="{{ $mapyCzUrl }}"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        class="btn btn-xs sm:btn-sm btn-ghost border border-emerald-500/40 hover:border-emerald-500 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs px-2.5 sm:px-3"
+                                        class="btn btn-sm bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 hover:border-emerald-500 font-bold text-xs px-3 sm:px-3.5 h-9 min-h-[36px] rounded-xl transition-all shadow-2xs"
                                         title="Otevřít v Mapy.cz"
                                     >
                                         <span>Mapy.cz</span>
