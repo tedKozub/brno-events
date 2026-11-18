@@ -45,6 +45,32 @@ export default {
                     "error-content": "#ffffff",
                 },
                 "events-dark": {
+                    "primary": "#f6732c",         // Obsidian Warm Orange
+                    "primary-content": "#ffffff",
+                    "secondary": "#a1a1aa",       // Zinc-400
+                    "secondary-content": "#050505",
+                    "accent": "#ffffff",          // Pure White
+                    "accent-content": "#050505",
+                    "neutral": "#1c1c20",         // Deep Zinc-900
+                    "neutral-content": "#ffffff",
+                    "base-100": "#121214",        // Matte Elevated Dark Surface
+                    "base-200": "#050505",        // Pitch Obsidian Background
+                    "base-300": "#222226",        // Subtle Dark Border
+                    "base-content": "#ffffff",    // Pure White High Contrast Text
+                    "info": "#38bdf8",
+                    "info-content": "#050505",
+                    "success": "#22c55e",
+                    "success-content": "#050505",
+                    "warning": "#f59e0b",
+                    "warning-content": "#050505",
+                    "error": "#ef4444",
+                    "error-content": "#ffffff",
+                    "--rounded-box": "12px",
+                    "--rounded-btn": "4px",
+                    "--rounded-badge": "4px",
+                    "--border-btn": "1px",
+                },
+                "events-dark-legacy": {
                     "primary": "#f97316",         // Vivid Sunset Orange
                     "primary-content": "#0b0f19",
                     "secondary": "#38bdf8",       // Sky Blue accent
@@ -65,6 +91,10 @@ export default {
                     "warning-content": "#0b0f19",
                     "error": "#ef4444",
                     "error-content": "#ffffff",
+                    "--rounded-box": "16px",
+                    "--rounded-btn": "4px",
+                    "--rounded-badge": "4px",
+                    "--border-btn": "1px",
                 },
             },
         ],
