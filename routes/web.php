@@ -53,6 +53,15 @@ Route::get('/manifest.json', function () {
 Route::view('/podminky', 'pages.terms')->name('terms');
 Route::view('/ochrana-soukromi', 'pages.privacy')->name('privacy');
 
+// DaisyUI Live Theme Generator & Konfigurátor
+Route::get('/theme-generator', function () {
+    return redirect('/?theme-editor=1');
+})->name('theme.generator');
+
+Route::get('/theme', function () {
+    return redirect('/?theme-editor=1');
+});
+
 // Přepínač interního / osobního testovacího režimu pro vývojáře a adminy (vyloučení zařízení z analytiky)
 Route::get('/analytics/toggle-device', function () {
     $current = request()->cookie('brnoakce_internal') === '1';

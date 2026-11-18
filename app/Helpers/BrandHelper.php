@@ -5,6 +5,27 @@ namespace App\Helpers;
 class BrandHelper
 {
     /**
+     * Check if theme editor should be enabled for this request.
+     */
+    public static function isThemeEditor(): bool
+    {
+        $host = request()->getHost();
+        if (str_starts_with($host, 'theme.') || str_contains($host, 'theme-')) {
+            return true;
+        }
+
+        if (request()->has('theme-editor') || request()->has('theme') || request()->is('theme*')) {
+            return true;
+        }
+
+        if (session('theme_editor_active', false) || request()->cookie('theme_editor_active') === '1') {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Check if the current request is for the studyBrno|liveBrno brand.
      * Default brand for the entire platform is studyBrno|liveBrno.
      */

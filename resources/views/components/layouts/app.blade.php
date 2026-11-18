@@ -245,5 +245,9 @@
             });
         }
     </script>
+
+    @if(\App\Helpers\BrandHelper::isThemeEditor())
+        <x-theme-editor />
+    @endif
 </body>
 </html>
