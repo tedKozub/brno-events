@@ -64,8 +64,7 @@
                     <div class="font-bold text-base-content text-sm">Správce údajů</div>
                     <p class="text-xs text-base-content/75">
                         <strong>Tadeáš Kozub</strong>, fyzická osoba podnikající dle živnostenského zákona<br>
-                        IČO: <span class="font-mono">24601381</span><br>
-                        Sídlo: Šumice 428, 687 31 Šumice
+                        IČO: <span class="font-mono">24601381</span>
                     </p>
                 </div>
                 <p>

@@ -66,7 +66,6 @@
                     <p class="text-xs text-base-content/75">
                         <strong>Tadeáš Kozub</strong>, fyzická osoba podnikající dle živnostenského zákona<br>
                         IČO: <span class="font-mono">24601381</span><br>
-                        Sídlo: Šumice 428, 687 31 Šumice<br>
                         Kontakt: <a href="mailto:info@brnoakce.cz" class="link link-primary">info@brnoakce.cz</a>
                     </p>
                 </div>
