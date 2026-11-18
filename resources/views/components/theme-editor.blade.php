@@ -44,6 +44,15 @@
             <div class="flex items-center gap-1.5">
                 <button
                     type="button"
+                    @click="randomizeHarmonic()"
+                    class="btn btn-ghost btn-xs text-[10px] text-base-content/70 hover:text-primary gap-1"
+                    title="Vygenerovat harmonické barvy (teorie barev)"
+                >
+                    <span>🎲</span>
+                    <span>Náhodné</span>
+                </button>
+                <button
+                    type="button"
                     @click="resetToDefault()"
                     class="btn btn-ghost btn-xs text-[10px] text-base-content/60 hover:text-base-content"
                     title="Vrátit výchozí hodnoty"
@@ -101,6 +110,22 @@
         <div class="p-4 overflow-y-auto space-y-4 flex-1 overscroll-contain">
             {{-- TAB 1: BARVY --}}
             <div x-show="activeTab === 'colors'" class="space-y-3.5">
+                {{-- Harmonický generátor tlačítko --}}
+                <div class="p-2.5 rounded-xl bg-base-200/80 border border-base-300 flex flex-col gap-2">
+                    <button
+                        type="button"
+                        @click="randomizeHarmonic()"
+                        class="btn btn-sm btn-primary w-full gap-2 font-bold shadow-sm"
+                    >
+                        <span>🎲</span>
+                        <span>Vygenerovat harmonickou paletu</span>
+                    </button>
+                    <div class="flex items-center justify-between text-[10px] text-base-content/60 px-0.5">
+                        <span>Pravidla harmonie: triády, doplňkové & černý/šedý základ</span>
+                        <span x-show="lastHarmonized" class="badge badge-xs badge-neutral font-mono font-normal" x-text="lastHarmonized"></span>
+                    </div>
+                </div>
+
                 <div class="text-[11px] text-base-content/70 pb-1">
                     Klikněte na čtvereček pro výběr barvy nebo vepište HEX kód:
                 </div>
@@ -434,6 +459,7 @@
             isOpen: true,
             activeTab: 'colors',
             copied: false,
+            lastHarmonized: null,
 
             // Výchozí hodnoty (aktuální studyBrno|liveBrno dark paleta)
             defaults: {
@@ -618,6 +644,107 @@
             saveToLocalStorage() {
                 localStorage.setItem('theme_editor_config', JSON.stringify(this.config));
                 alert('Konfigurace tématu byla úspěšně uložena do vašeho prohlížeče.');
+            },
+
+            // Pomocná funkce pro převod HSL na HEX
+            hslToHex(h, s, l) {
+                h = (h % 360 + 360) % 360;
+                s = Math.max(0, Math.min(100, s)) / 100;
+                l = Math.max(0, Math.min(100, l)) / 100;
+                const c = (1 - Math.abs(2 * l - 1)) * s;
+                const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+                const m = l - c / 2;
+                let r = 0, g = 0, b = 0;
+                if (h < 60) { r = c; g = x; b = 0; }
+                else if (h < 120) { r = x; g = c; b = 0; }
+                else if (h < 180) { r = 0; g = c; b = x; }
+                else if (h < 240) { r = 0; g = x; b = c; }
+                else if (h < 300) { r = x; g = 0; b = c; }
+                else { r = c; g = 0; b = x; }
+                const toHex = n => Math.round((n + m) * 255).toString(16).padStart(2, '0');
+                return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+            },
+
+            // Inteligentní generátor harmonických barev (dodržující pravidla teorie barev)
+            randomizeHarmonic() {
+                // 1. Výběr základního tónu (Hue):
+                // ~75 % šance na spektrum teplé oranžové, jantaru a mědi (16° - 42°)
+                // ~25 % šance na decentní doplňkové tóny (např. teplé zlato 48°, korálová 350°, břidlice 220°, petrol 180°)
+                const isWarmOrange = Math.random() < 0.75;
+                const baseHue = isWarmOrange
+                    ? (16 + Math.floor(Math.random() * 26))
+                    : [48, 350, 218, 185][Math.floor(Math.random() * 4)];
+
+                // 2. Výběr harmonického režimu podle teorie barev
+                const modes = ['analogous', 'split_comp', 'monochrome_warm', 'triad', 'complementary'];
+                const mode = modes[Math.floor(Math.random() * modes.length)];
+
+                let primaryHex = this.hslToHex(baseHue, 92 + Math.floor(Math.random() * 8), 53 + Math.floor(Math.random() * 6));
+                let secondaryHex = '#71717a';
+                let accentHex = '#fbbf24';
+                let modeLabel = '';
+
+                if (mode === 'analogous') {
+                    // Analogické tóny (sousední na barevném kruhu) – harmonické, plynulé
+                    secondaryHex = this.hslToHex((baseHue + 28) % 360, 75, 54);
+                    accentHex = this.hslToHex((baseHue - 22 + 360) % 360, 90, 58);
+                    modeLabel = 'Analogická';
+                } else if (mode === 'split_comp') {
+                    // Dělená komplementární (Split-Complementary) – vysoký kontrast, ale decentní díky nižší saturaci
+                    secondaryHex = this.hslToHex((baseHue + 150) % 360, 42, 60);
+                    accentHex = this.hslToHex((baseHue + 210) % 360, 48, 64);
+                    modeLabel = 'Dělená doplňková';
+                } else if (mode === 'complementary') {
+                    // Komplementární kontrast (např. teplá oranž + tlumená břidlicová modř/petrol)
+                    secondaryHex = this.hslToHex((baseHue + 180) % 360, 40, 62);
+                    accentHex = this.hslToHex((baseHue + 24) % 360, 85, 62);
+                    modeLabel = 'Komplementární';
+                } else if (mode === 'triad') {
+                    // Triáda (rovnostranný trojúhelník s decentní desaturací pro zachování seriózního vzhledu)
+                    secondaryHex = this.hslToHex((baseHue + 120) % 360, 38, 58);
+                    accentHex = this.hslToHex((baseHue + 240) % 360, 45, 64);
+                    modeLabel = 'Triáda';
+                } else if (mode === 'monochrome_warm') {
+                    // Monochromatický základ (černá/grafit + čistá bílá + výrazný primární highlight)
+                    secondaryHex = '#a1a1aa';
+                    accentHex = '#ffffff';
+                    modeLabel = 'Monochromatická';
+                }
+
+                // 3. Elegantní tmavé pozadí (černá, zinc, charcoal, temná břidlice)
+                const darkBases = [
+                    { b1: '#18181b', b2: '#09090b', b3: '#27272a', n: '#27272a', bc: '#f4f4f5' }, // Zinc
+                    { b1: '#121214', b2: '#050505', b3: '#222226', n: '#1c1c20', bc: '#ffffff' }, // Pure obsidian
+                    { b1: '#1c1917', b2: '#0c0a09', b3: '#292524', n: '#292524', bc: '#fafaf9' }, // Warm Charcoal
+                    { b1: '#0f172a', b2: '#0b0f19', b3: '#1e293b', n: '#1e293b', bc: '#f8fafc' }, // Slate Navy
+                ];
+                const bg = darkBases[Math.floor(Math.random() * darkBases.length)];
+
+                // 4. Zaoblení tvarů (minimalistické: 0px, 2px, 4px, 8px, 12px)
+                const radiusStyles = [
+                    { rBox: '0px', rBtn: '0px', rBadge: '0px', bBtn: '1px' },
+                    { rBox: '4px', rBtn: '2px', rBadge: '2px', bBtn: '1px' },
+                    { rBox: '8px', rBtn: '4px', rBadge: '4px', bBtn: '1px' },
+                    { rBox: '12px', rBtn: '4px', rBadge: '4px', bBtn: '1px' },
+                    { rBox: '16px', rBtn: '4px', rBadge: '4px', bBtn: '1px' },
+                ];
+                const rad = radiusStyles[Math.floor(Math.random() * radiusStyles.length)];
+
+                this.config.primary = primaryHex;
+                this.config.secondary = secondaryHex;
+                this.config.accent = accentHex;
+                this.config.neutral = bg.n;
+                this.config.base100 = bg.b1;
+                this.config.base200 = bg.b2;
+                this.config.base300 = bg.b3;
+                this.config.baseContent = bg.bc;
+                this.config.roundedBox = rad.rBox;
+                this.config.roundedBtn = rad.rBtn;
+                this.config.roundedBadge = rad.rBadge;
+                this.config.borderBtn = rad.bBtn;
+
+                this.lastHarmonized = modeLabel;
+                this.applyTheme();
             },
 
             // Převod HEX na OKLCH (formát očekávaný DaisyUI 4: "L C H")
