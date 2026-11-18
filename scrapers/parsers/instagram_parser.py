@@ -169,8 +169,17 @@ def sanitize_extracted_event_date(event: Dict[str, Any], raw_text: str, now: Opt
         event["starts_at"] = corrected.strftime("%Y-%m-%d %H:%M:%S")
         return event
 
-    # 2. If NO explicit date exists, do NOT guess or invent upcoming dates (e.g. beerpong "středy").
-    # Return None so the event without a specific calendar date is ignored.
+    # 2. If NO explicit date exists in text, but recurring weekday is mentioned (e.g. beerpong 'středy'),
+    # we cannot determine which date it refers to, so such events MUST be ignored (return None).
+    if extract_weekday_from_text(raw_text) is not None:
+        return None
+
+    # 3. If dt was extracted directly from the graphic flyer image (multimodal vision),
+    # preserve the exact date from the flyer without any shifting or guessing.
+    if dt is not None and event.get("title"):
+        event["starts_at"] = dt.strftime("%Y-%m-%d %H:%M:%S")
+        return event
+
     return None
 
 
@@ -255,9 +264,11 @@ Extrahuj informace o události a vrať POUZE validní JSON ve formátu:
 }}
 
 STRIKTNÍ PRAVIDLA PRO DATUM (starts_at):
-1. AKCI EXTRAHUJ POUZE V PŘÍPADĚ, ŽE JE NA PLAKÁTU NEBO V POPISKU UVEDENO KONKRÉTNÍ KALENDÁŘNÍ DATUM (např. 10.11., 18.11., 25. listopadu, 4.3.2027). Použij přesně toto datum z plakátu či popisku bez jakéhokoliv domýšlení či posouvání v čase!
+1. AKCI EXTRAHUJ POUZE V PŘÍPADĚ, ŽE JE NA PLAKÁTU NEBO V POPISKU UVEDENO KONKRÉTNÍ KALENDÁŘNÍ DATUM (např. 11.11., 18.11., 25. listopadu, 4.3.2027).
+   - POUŽIJ PŘESNĚ TOTO DATUM Z PLAKÁTU ČI POPISKU BEZ JAKÉHOKOLIV DOMÝŠLENÍ ČI POSOUVÁNÍ V ČASE!
+   - A TO I V PŘÍPADĚ, ŽE DATUM Z PLAKÁTU JE JIŽ V MINULOSTI VZHLEDEM K DNEŠKU ({now.strftime('%Y-%m-%d')})! Pokud je na plakátu 11.11.2026, MUSÍŠ vrátit 2026-11-11 a NIKDY ho neposouvat na 18.11. ani jiný nadcházející týden!
 2. POKUD JE NA PLAKÁTU NEBO V TEXTU UVEDEN POUZE DEN V TÝDNU NEBO OPAKOVÁNÍ (např. 'středy', 'každé úterý', 'čtvrtek') BEZ KONKRÉTNÍHO KALENDÁŘNÍHO DATA, VRAŤ "starts_at": null, PROTOŽE AKCE BEZ KONKRÉTNÍHO KALENDÁŘNÍHO DATA IGNORUJEME.
-3. Čas vyber dle plakátu a textu (např. 19:00 -> 19:00:00). Pokud čas chybí, použij 18:00:00.
+3. Čas vyber dle plakátu a textu (např. 16:00 -> 16:00:00). Pokud čas chybí, použij 18:00:00.
 
 Popisek z Instagramu:
 {caption}
@@ -341,9 +352,11 @@ Extrahuj informace o události a vrať POUZE validní JSON ve formátu:
 }}
 
 STRIKTNÍ PRAVIDLA PRO DATUM (starts_at):
-1. AKCI EXTRAHUJ POUZE V PŘÍPADĚ, ŽE JE NA PLAKÁTU NEBO V POPISKU UVEDENO KONKRÉTNÍ KALENDÁŘNÍ DATUM (např. 10.11., 18.11., 25. listopadu, 4.3.2027). Použij přesně toto datum z plakátu či popisku bez jakéhokoliv domýšlení či posouvání v čase!
+1. AKCI EXTRAHUJ POUZE V PŘÍPADĚ, ŽE JE NA PLAKÁTU NEBO V POPISKU UVEDENO KONKRÉTNÍ KALENDÁŘNÍ DATUM (např. 11.11., 18.11., 25. listopadu, 4.3.2027).
+   - POUŽIJ PŘESNĚ TOTO DATUM Z PLAKÁTU ČI POPISKU BEZ JAKÉHOKOLIV DOMÝŠLENÍ ČI POSOUVÁNÍ V ČASE!
+   - A TO I V PŘÍPADĚ, ŽE DATUM Z PLAKÁTU JE JIŽ V MINULOSTI VZHLEDEM K DNEŠKU ({now.strftime('%Y-%m-%d')})! Pokud je na plakátu 11.11.2026, MUSÍŠ vrátit 2026-11-11 a NIKDY ho neposouvat na 18.11. ani jiný nadcházející týden!
 2. POKUD JE NA PLAKÁTU NEBO V TEXTU UVEDEN POUZE DEN V TÝDNU NEBO OPAKOVÁNÍ (např. 'středy', 'každé úterý', 'čtvrtek') BEZ KONKRÉTNÍHO KALENDÁŘNÍHO DATA, VRAŤ "starts_at": null, PROTOŽE AKCE BEZ KONKRÉTNÍHO KALENDÁŘNÍHO DATA IGNORUJEME.
-3. Čas vyber dle plakátu a textu (např. 19:00 -> 19:00:00). Pokud čas chybí, použij 18:00:00.
+3. Čas vyber dle plakátu a textu (např. 16:00 -> 16:00:00). Pokud čas chybí, použij 18:00:00.
 
 Popisek z Instagramu:
 {caption}

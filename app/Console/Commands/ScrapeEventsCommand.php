@@ -192,13 +192,14 @@ class ScrapeEventsCommand extends Command
 
                 // Deduplikace podle unikátního source_url nebo titulku/slugu a data
                 // DŮLEŽITÉ: Kontrolujeme i withTrashed(), aby se smazané nebo zamítnuté akce nescrapovaly znovu!
+                // Kontrolujeme i rozmezí +/- 7 dní, aby se neimportoval duplikát se špatně posunutým datem!
                 $baseSlug = Str::slug($title);
                 $existing = Event::withTrashed()->where(function ($q) use ($title, $baseSlug, $startsAt, $sourceUrl) {
                     if (!empty($sourceUrl)) {
                         $q->where('source_url', $sourceUrl);
                     }
                     $q->orWhere(function ($sub) use ($title, $baseSlug, $startsAt) {
-                        $sub->whereDate('starts_at', $startsAt->toDateString())
+                        $sub->whereBetween('starts_at', [$startsAt->copy()->subDays(7), $startsAt->copy()->addDays(7)])
                             ->where(function ($matchQ) use ($title, $baseSlug) {
                                 $matchQ->where('title', $title)
                                     ->orWhere('slug', $baseSlug)

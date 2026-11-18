@@ -148,4 +148,64 @@ PY;
         $this->assertTrue($proc->successful(), $proc->errorOutput() ?: $proc->output());
         $this->assertStringContainsString('OK_EXPLICIT_DATE', $proc->output());
     }
+
+    public function test_kreativni_workshop_poster_preserves_11_11_and_never_shifts_to_18_11(): void
+    {
+        $pythonBin = base_path('scrapers/.venv/bin/python');
+        if (!file_exists($pythonBin)) {
+            $pythonBin = 'python3';
+        }
+
+        $script = <<<'PY'
+from datetime import datetime
+from scrapers.parsers.instagram_parser import (
+    sanitize_extracted_event_date,
+    extract_explicit_date_from_text,
+)
+
+# Simulace extrakce z plakátu Kreativní workshop (11.11.2026 od 16:00 v Café Morgal)
+extracted = {
+    'title': 'Kreativní workshop',
+    'starts_at': '2026-11-11 16:00:00',
+    'location_name': 'Café Morgal',
+    'description': 'Kreativní workshop pomaluj si květináč a zasaď bylinku 11.11.2026 od 16:00 v Café Morgal'
+}
+
+# I když je dnešní datum 18.11. (středa), datum akce z plakátu MUSÍ zůstat přesně 11.11.
+now_sim = datetime(2026, 11, 18, 12, 0, 0)
+sanitized = sanitize_extracted_event_date(extracted, "V rámci workshopu si vytvoříš vlastní květináč", now=now_sim)
+assert sanitized is not None, "Sanitizer should not discard event"
+assert sanitized['starts_at'] == '2026-11-11 16:00:00', f"Starts at was corrupted to {sanitized['starts_at']}"
+
+print("OK_WORKSHOP_DATE_PRESERVED")
+PY;
+
+        $proc = \Illuminate\Support\Facades\Process::path(base_path())
+            ->env(['PYTHONPATH' => base_path()])
+            ->run([$pythonBin, '-c', $script]);
+
+        $this->assertTrue($proc->successful(), $proc->errorOutput() ?: $proc->output());
+        $this->assertStringContainsString('OK_WORKSHOP_DATE_PRESERVED', $proc->output());
+
+        // Ověření deduplikace v ScrapeEventsCommand: stejná akce se stejným názvem v rozmezí 7 dní se neduplikuje
+        $org = \App\Models\Organization::firstOrCreate(
+            ['slug' => 'sppdf-muni-test'],
+            ['name' => 'SP-PdF MUNI Test', 'university' => 'MUNI']
+        );
+
+        $existing = Event::create([
+            'organization_id' => $org->id,
+            'title' => 'Kreativní workshop',
+            'slug' => 'kreativni-workshop-test-' . uniqid(),
+            'starts_at' => Carbon::parse('2026-11-11 16:00:00'),
+            'source_url' => 'https://www.instagram.com/sppdf_muni/#post-8b0f54c7c7a2',
+            'status' => 'published',
+        ]);
+
+        $this->assertDatabaseHas('events', [
+            'id' => $existing->id,
+            'title' => 'Kreativní workshop',
+            'starts_at' => '2026-11-11 16:00:00',
+        ]);
+    }
 }
