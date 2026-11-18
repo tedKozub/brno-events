@@ -5,7 +5,7 @@
             <div class="space-y-1">
                 <div class="flex items-center justify-center sm:justify-start gap-2">
                     {!! \App\Helpers\BrandHelper::logoHtml('sm') !!}
-                    <span>— {{ \App\Helpers\BrandHelper::isStudyBrno() ? 'Průvodce studentským a městským životem v Brně' : 'Nezávislý studentský agregátor v Brně' }}</span>
+                    <span>{{ \App\Helpers\BrandHelper::isStudyBrno() ? 'Průvodce studentským a městským životem v Brně' : 'Nezávislý studentský agregátor v Brně' }}</span>
                 </div>
                 <p class="text-[11px] text-base-content/50">
                     Otevřená nástěnka pro studentský život a spolky na MUNI, VUT, MENDELU, UNOB & VETUNI.
