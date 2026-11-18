@@ -178,12 +178,15 @@ class EventBoard extends Component
 
         // Vyhledávání: Hybridní (vektorový sémantický embedding + fulltext keyword match)
         if (!empty($this->search)) {
-            $searchTerm = trim($this->search);
+            $searchTerm = mb_substr(trim($this->search), 0, 100);
             $normSearch = mb_strtolower($searchTerm);
             $keywords = array_filter(explode(' ', $normSearch), fn ($w) => mb_strlen($w) >= 2);
 
-            $embeddingService = app(\App\Services\EmbeddingService::class);
-            $queryVector = $embeddingService->getEmbedding($searchTerm);
+            $queryVector = null;
+            if (mb_strlen($searchTerm) >= 3) {
+                $embeddingService = app(\App\Services\EmbeddingService::class);
+                $queryVector = $embeddingService->getEmbedding($searchTerm);
+            }
 
             if ($queryVector) {
                 // Načteme kandidáty dle ostatních filtrů bez kategorie

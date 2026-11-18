@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Models\Event;
+use App\Models\StudentPlace;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 
 class EmbeddingService
 {
@@ -22,11 +24,33 @@ class EmbeddingService
     public function getEmbedding(string $text): ?array
     {
         $clean = trim($text);
-        if (empty($clean)) {
+        if (empty($clean) || mb_strlen($clean) < 3) {
             return null;
         }
 
+        if (mb_strlen($clean) > 300) {
+            $clean = mb_substr($clean, 0, 300);
+        }
+
         $cacheKey = 'emb_' . md5(mb_strtolower($clean));
+
+        // Pokud je v cache, vrátíme ihned bez čerpání rate limitu
+        if (Cache::has($cacheKey)) {
+            return Cache::get($cacheKey);
+        }
+
+        // Antispam ochrana: omezit počet nových embedding dotazů na IP (max 60 za minutu)
+        $clientIp = request()->ip() ?? 'cli';
+        $rateLimitKey = 'embed_rate:' . $clientIp;
+
+        if ($clientIp !== 'cli' && RateLimiter::tooManyAttempts($rateLimitKey, 60)) {
+            Log::info("Embedding rate limit exceeded for IP: {$clientIp}");
+            return null;
+        }
+
+        if ($clientIp !== 'cli') {
+            RateLimiter::hit($rateLimitKey, 60);
+        }
 
         return Cache::remember($cacheKey, 86400, function () use ($clean) {
             try {
@@ -109,6 +133,51 @@ class EmbeddingService
 
         if ($vector && is_array($vector)) {
             $event->updateQuietly(['embedding' => $vector]);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Sestaví reprezentativní sémantický text místa pro embedding.
+     */
+    public function buildPlaceSearchText(StudentPlace $place): string
+    {
+        $parts = [
+            $place->name,
+            $place->address,
+            $place->description,
+        ];
+
+        if (!empty($place->highlight)) {
+            $parts[] = $place->highlight;
+        }
+
+        $tags = is_array($place->tags) ? $place->tags : [];
+        if (!empty($tags)) {
+            $parts[] = 'Tagy: ' . implode(', ', $tags);
+        }
+
+        if ($place->category) {
+            $parts[] = 'Kategorie: ' . $place->category->name;
+        }
+
+        return implode('. ', array_filter($parts));
+    }
+
+    /**
+     * Vygeneruje a uloží embedding pro konkrétní místo.
+     */
+    public function updatePlaceEmbedding(StudentPlace $place): bool
+    {
+        $text = $this->buildPlaceSearchText($place);
+        $vector = $this->getEmbedding($text);
+
+        if ($vector && is_array($vector)) {
+            $place->updateQuietly(['embedding' => json_encode($vector)]);
+            Cache::forget('student_place_emb_' . $place->id);
+            Cache::forget('student_places_all');
             return true;
         }
 

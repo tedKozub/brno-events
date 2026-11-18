@@ -74,21 +74,23 @@ class StudentPlaces extends Component
 
     public function getAllPlacesProperty(): array
     {
-        try {
-            $dbPlaces = StudentPlace::with('category')
-                ->where('is_active', true)
-                ->orderBy('sort_order')
-                ->orderBy('id')
-                ->get();
+        return Cache::remember('student_places_all', 3600, function () {
+            try {
+                $dbPlaces = StudentPlace::with('category')
+                    ->where('is_active', true)
+                    ->orderBy('sort_order')
+                    ->orderBy('id')
+                    ->get();
 
-            if ($dbPlaces->isNotEmpty()) {
-                return $dbPlaces->map(fn ($p) => $p->toFrontendArray())->toArray();
+                if ($dbPlaces->isNotEmpty()) {
+                    return $dbPlaces->map(fn ($p) => $p->toFrontendArray())->toArray();
+                }
+            } catch (\Throwable $e) {
+                // Fallback if table not ready
             }
-        } catch (\Throwable $e) {
-            // Fallback if table not ready
-        }
 
-        return $this->getDefaultPlaces();
+            return $this->getDefaultPlaces();
+        });
     }
 
     public function getDefaultCategories(): array
@@ -403,9 +405,14 @@ class StudentPlaces extends Component
 
     public function getPlaceEmbedding(array $place): ?array
     {
-        $id = $place['id'];
+        if (!empty($place['embedding']) && is_array($place['embedding'])) {
+            return $place['embedding'];
+        }
+
+        $id = $place['id'] ?? 0;
         return Cache::remember('student_place_emb_' . $id, 86400 * 30, function () use ($place) {
-            $text = "{$place['name']}. {$place['address']}. {$place['description']}. Tagy: " . implode(', ', $place['tags']) . '. ' . ($place['highlight'] ?? '');
+            $tags = is_array($place['tags'] ?? null) ? $place['tags'] : [];
+            $text = "{$place['name']}. {$place['address']}. {$place['description']}. Tagy: " . implode(', ', $tags) . '. ' . ($place['highlight'] ?? '');
             return app(EmbeddingService::class)->getEmbedding($text);
         });
     }
@@ -421,12 +428,15 @@ class StudentPlaces extends Component
 
         // Hybridní vyhledávání (vektorový sémantický embedding + fulltext shoda)
         if (!empty(trim($this->search))) {
-            $searchTerm = trim($this->search);
+            $searchTerm = mb_substr(trim($this->search), 0, 100);
             $normSearch = mb_strtolower($searchTerm);
             $keywords = array_filter(explode(' ', $normSearch), fn ($w) => mb_strlen($w) >= 2);
 
-            $embeddingService = app(EmbeddingService::class);
-            $queryVector = $embeddingService->getEmbedding($searchTerm);
+            $queryVector = null;
+            if (mb_strlen($searchTerm) >= 3) {
+                $embeddingService = app(EmbeddingService::class);
+                $queryVector = $embeddingService->getEmbedding($searchTerm);
+            }
 
             $scored = [];
             $hasAnyKeywordMatch = false;
