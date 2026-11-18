@@ -51,10 +51,10 @@
         </div>
 
         {{-- Sekce 1: Povaha služby --}}
-        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-6 sm:p-8 space-y-4">
-            <h2 class="text-xl font-bold text-base-content flex items-center gap-2.5">
-                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center">1</span>
-                Povaha a účel platformy
+        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-5 sm:p-8 space-y-4">
+            <h2 class="text-lg sm:text-xl font-bold text-base-content flex items-start gap-2.5 sm:gap-3">
+                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center shrink-0 mt-0.5">1</span>
+                <span>Povaha a účel platformy</span>
             </h2>
             <div class="text-xs sm:text-sm text-base-content/80 space-y-3 leading-relaxed">
                 <p>
@@ -67,10 +67,10 @@
         </section>
 
         {{-- Sekce 2: Zdroje dat a agregace --}}
-        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-6 sm:p-8 space-y-4">
-            <h2 class="text-xl font-bold text-base-content flex items-center gap-2.5">
-                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center">2</span>
-                Zdroje informací a způsob jejich zpracování
+        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-5 sm:p-8 space-y-4">
+            <h2 class="text-lg sm:text-xl font-bold text-base-content flex items-start gap-2.5 sm:gap-3">
+                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center shrink-0 mt-0.5">2</span>
+                <span>Zdroje informací a způsob jejich zpracování</span>
             </h2>
             <div class="text-xs sm:text-sm text-base-content/80 space-y-3 leading-relaxed">
                 <p>
@@ -87,10 +87,10 @@
         </section>
 
         {{-- Sekce 3: Autorskoprávní rámec v ČR a EU --}}
-        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-6 sm:p-8 space-y-4">
-            <h2 class="text-xl font-bold text-base-content flex items-center gap-2.5">
-                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center">3</span>
-                Autorskoprávní rámec (Zákon č. 121/2000 Sb. a právo EU)
+        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-5 sm:p-8 space-y-4">
+            <h2 class="text-lg sm:text-xl font-bold text-base-content flex items-start gap-2.5 sm:gap-3">
+                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center shrink-0 mt-0.5">3</span>
+                <span>Autorskoprávní rámec (Zákon č. 121/2000 Sb. a právo EU)</span>
             </h2>
             <div class="text-xs sm:text-sm text-base-content/80 space-y-3 leading-relaxed">
                 <p>
@@ -117,10 +117,10 @@
         </section>
 
         {{-- Sekce 4: Plakáty a grafické materiály --}}
-        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-6 sm:p-8 space-y-4">
-            <h2 class="text-xl font-bold text-base-content flex items-center gap-2.5">
-                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center">4</span>
-                Použití plakátů, bannerů a grafických materiálů
+        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-5 sm:p-8 space-y-4">
+            <h2 class="text-lg sm:text-xl font-bold text-base-content flex items-start gap-2.5 sm:gap-3">
+                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center shrink-0 mt-0.5">4</span>
+                <span>Použití plakátů, bannerů a grafických materiálů</span>
             </h2>
             <div class="text-xs sm:text-sm text-base-content/80 space-y-3 leading-relaxed">
                 <p>
@@ -139,14 +139,11 @@
         </section>
 
         {{-- Sekce 5: Notice and Takedown --}}
-        <section id="takedown" class="card bg-base-100 border border-primary/30 shadow-md rounded-2xl p-6 sm:p-8 space-y-4 scroll-mt-24">
-            <div class="flex items-center justify-between gap-3">
-                <h2 class="text-xl font-bold text-base-content flex items-center gap-2.5">
-                    <span class="w-7 h-7 rounded-lg bg-primary text-primary-content font-black text-xs flex items-center justify-center">5</span>
-                    Postup pro nahlášení a stažení obsahu (Notice & Takedown / DSA)
-                </h2>
-                <span class="badge badge-primary font-bold text-xs">Aktivní ochrana</span>
-            </div>
+        <section id="takedown" class="card bg-base-100 border border-primary/30 shadow-md rounded-2xl p-5 sm:p-8 space-y-4 scroll-mt-24">
+            <h2 class="text-lg sm:text-xl font-bold text-base-content flex items-start gap-2.5 sm:gap-3">
+                <span class="w-7 h-7 rounded-lg bg-primary text-primary-content font-black text-xs flex items-center justify-center shrink-0 mt-0.5">5</span>
+                <span>Postup pro nahlášení a stažení obsahu (Notice & Takedown / DSA)</span>
+            </h2>
             <div class="text-xs sm:text-sm text-base-content/80 space-y-3 leading-relaxed">
                 <p>
                     V souladu s <strong>§ 5 zákona č. 480/2004 Sb.</strong> o některých službách informační společnosti a <strong>Nařízením Evropského parlamentu a Rady (EU) 2022/2065 (Digital Services Act – DSA)</strong> uplatňuje provozovatel důsledný systém rychlého stažení či úpravy obsahu.
@@ -183,10 +180,10 @@
         </section>
 
         {{-- Sekce 6: Vyloučení odpovědnosti --}}
-        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-6 sm:p-8 space-y-4">
-            <h2 class="text-xl font-bold text-base-content flex items-center gap-2.5">
-                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center">6</span>
-                Vyloučení odpovědnosti za změny akcí
+        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-5 sm:p-8 space-y-4">
+            <h2 class="text-lg sm:text-xl font-bold text-base-content flex items-start gap-2.5 sm:gap-3">
+                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center shrink-0 mt-0.5">6</span>
+                <span>Vyloučení odpovědnosti za změny akcí</span>
             </h2>
             <div class="text-xs sm:text-sm text-base-content/80 space-y-3 leading-relaxed">
                 <p>
@@ -199,10 +196,10 @@
         </section>
 
         {{-- Sekce 7: Pravidla pro spolky --}}
-        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-6 sm:p-8 space-y-4">
-            <h2 class="text-xl font-bold text-base-content flex items-center gap-2.5">
-                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center">7</span>
-                Pravidla pro studentské spolky a pořadatele
+        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-5 sm:p-8 space-y-4">
+            <h2 class="text-lg sm:text-xl font-bold text-base-content flex items-start gap-2.5 sm:gap-3">
+                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center shrink-0 mt-0.5">7</span>
+                <span>Pravidla pro studentské spolky a pořadatele</span>
             </h2>
             <div class="text-xs sm:text-sm text-base-content/80 space-y-3 leading-relaxed">
                 <p>

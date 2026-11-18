@@ -51,10 +51,10 @@
         </div>
 
         {{-- Sekce 1: Správce údajů --}}
-        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-6 sm:p-8 space-y-4">
-            <h2 class="text-xl font-bold text-base-content flex items-center gap-2.5">
-                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center">1</span>
-                Správce osobních údajů
+        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-5 sm:p-8 space-y-4">
+            <h2 class="text-lg sm:text-xl font-bold text-base-content flex items-start gap-2.5 sm:gap-3">
+                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center shrink-0 mt-0.5">1</span>
+                <span>Správce osobních údajů</span>
             </h2>
             <div class="text-xs sm:text-sm text-base-content/80 space-y-2 leading-relaxed">
                 <p>
@@ -68,10 +68,10 @@
         </section>
 
         {{-- Sekce 2: Zásada minimalizace údajů --}}
-        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-6 sm:p-8 space-y-4">
-            <h2 class="text-xl font-bold text-base-content flex items-center gap-2.5">
-                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center">2</span>
-                Zásada minimalizace dat: Prohlížení bez registrace
+        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-5 sm:p-8 space-y-4">
+            <h2 class="text-lg sm:text-xl font-bold text-base-content flex items-start gap-2.5 sm:gap-3">
+                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center shrink-0 mt-0.5">2</span>
+                <span>Zásada minimalizace dat: Prohlížení bez registrace</span>
             </h2>
             <div class="text-xs sm:text-sm text-base-content/80 space-y-3 leading-relaxed">
                 <div class="p-4 rounded-xl bg-success/10 border border-success/20 text-success-content flex items-start gap-3">
@@ -87,10 +87,10 @@
         </section>
 
         {{-- Sekce 3: Jaké údaje zpracováváme --}}
-        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-6 sm:p-8 space-y-4">
-            <h2 class="text-xl font-bold text-base-content flex items-center gap-2.5">
-                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center">3</span>
-                Kategorie zpracovávaných údajů a právní základy
+        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-5 sm:p-8 space-y-4">
+            <h2 class="text-lg sm:text-xl font-bold text-base-content flex items-start gap-2.5 sm:gap-3">
+                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center shrink-0 mt-0.5">3</span>
+                <span>Kategorie zpracovávaných údajů a právní základy</span>
             </h2>
             <div class="text-xs sm:text-sm text-base-content/80 space-y-4 leading-relaxed">
                 {{-- A) Návštěvníci --}}
@@ -126,10 +126,10 @@
         </section>
 
         {{-- Sekce 4: Cookies a lokální úložiště --}}
-        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-6 sm:p-8 space-y-4">
-            <h2 class="text-xl font-bold text-base-content flex items-center gap-2.5">
-                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center">4</span>
-                Cookies a lokální úložiště (Zákon č. 374/2021 Sb.)
+        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-5 sm:p-8 space-y-4">
+            <h2 class="text-lg sm:text-xl font-bold text-base-content flex items-start gap-2.5 sm:gap-3">
+                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center shrink-0 mt-0.5">4</span>
+                <span>Cookies a lokální úložiště (Zákon č. 374/2021 Sb.)</span>
             </h2>
             <div class="text-xs sm:text-sm text-base-content/80 space-y-3 leading-relaxed">
                 <p>
@@ -175,10 +175,10 @@
         </section>
 
         {{-- Sekce 5: Zabezpečení --}}
-        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-6 sm:p-8 space-y-4">
-            <h2 class="text-xl font-bold text-base-content flex items-center gap-2.5">
-                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center">5</span>
-                Zabezpečení a předávání dat
+        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-5 sm:p-8 space-y-4">
+            <h2 class="text-lg sm:text-xl font-bold text-base-content flex items-start gap-2.5 sm:gap-3">
+                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center shrink-0 mt-0.5">5</span>
+                <span>Zabezpečení a předávání dat</span>
             </h2>
             <div class="text-xs sm:text-sm text-base-content/80 space-y-3 leading-relaxed">
                 <p>
@@ -194,10 +194,10 @@
         </section>
 
         {{-- Sekce 6: Práva subjektů údajů --}}
-        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-6 sm:p-8 space-y-4">
-            <h2 class="text-xl font-bold text-base-content flex items-center gap-2.5">
-                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center">6</span>
-                Vaše práva dle GDPR
+        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-5 sm:p-8 space-y-4">
+            <h2 class="text-lg sm:text-xl font-bold text-base-content flex items-start gap-2.5 sm:gap-3">
+                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center shrink-0 mt-0.5">6</span>
+                <span>Vaše práva dle GDPR</span>
             </h2>
             <div class="text-xs sm:text-sm text-base-content/80 space-y-3 leading-relaxed">
                 <p>
