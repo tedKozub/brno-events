@@ -11,27 +11,27 @@
             </a>
 
             {{-- Středová navigace: Akce vs Místa --}}
-            <nav class="flex items-center gap-1 sm:gap-2">
-                <a
-                    href="/"
-                    wire:navigate
-                    class="px-3.5 sm:px-4 py-1.5 rounded-xl font-bold text-xs sm:text-sm inline-flex items-center transition-all bg-primary text-primary-content shadow-xs"
-                >
-                    <span>Akce</span>
-                </a>
-                <a
-                    href="/mista"
-                    wire:navigate
-                    class="px-3 sm:px-3.5 py-1.5 rounded-xl font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 transition-all text-base-content/70 hover:text-base-content hover:bg-base-200"
-                >
-                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    <span class="hidden sm:inline">Studentská místa</span>
-                    <span class="sm:hidden">Místa</span>
-                </a>
-            </nav>
+            <div class="flex items-center gap-0">
+                {{-- Svislý oddělovač od loga --}}
+                <div class="hidden xs:block w-px h-5 bg-base-content/20 mr-3 sm:mr-4"></div>
+                <nav class="flex items-center gap-0.5 sm:gap-1">
+                    <a
+                        href="/"
+                        wire:navigate
+                        class="px-3.5 sm:px-4 py-1.5 rounded-sm font-bold text-xs sm:text-sm inline-flex items-center transition-all bg-primary text-primary-content"
+                    >
+                        <span>Akce</span>
+                    </a>
+                    <a
+                        href="/mista"
+                        wire:navigate
+                        class="px-3 sm:px-3.5 py-1.5 rounded-sm font-bold text-xs sm:text-sm inline-flex items-center transition-all text-base-content/70 hover:text-base-content hover:bg-base-200"
+                    >
+                        <span class="hidden sm:inline">Studentská místa</span>
+                        <span class="sm:hidden">Místa</span>
+                    </a>
+                </nav>
+            </div>
 
             {{-- Pravá část: 1-tlačítkový rotující přepínač témat (BEZ TEXTU, Systém -> Tmavý -> Světlý) --}}
             <div
