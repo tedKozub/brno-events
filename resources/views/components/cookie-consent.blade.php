@@ -32,14 +32,14 @@
             </button>
             <button
                 type="button"
-                onclick="window.setCookieConsent({ essential: true, analytics: false, marketing: false })"
+                onclick="window.setCookieConsent({ essential: true, analytics: false })"
                 class="btn btn-outline border-base-300 btn-xs sm:btn-sm text-xs font-bold rounded-xl"
             >
                 Pouze nezbytné
             </button>
             <button
                 type="button"
-                onclick="window.setCookieConsent({ essential: true, analytics: true, marketing: false })"
+                onclick="window.setCookieConsent({ essential: true, analytics: true })"
                 class="btn btn-primary btn-xs sm:btn-sm text-xs font-bold rounded-xl shadow-xs"
             >
                 Přijmout vše
@@ -148,7 +148,6 @@
             const consentData = {
                 essential: true,
                 analytics: Boolean(choices.analytics),
-                marketing: Boolean(choices.marketing),
                 updated_at: new Date().toISOString()
             };
 
@@ -185,8 +184,7 @@
             const analyticsCheckbox = document.getElementById('cookie_pref_analytics');
             window.setCookieConsent({
                 essential: true,
-                analytics: analyticsCheckbox ? analyticsCheckbox.checked : false,
-                marketing: false
+                analytics: analyticsCheckbox ? analyticsCheckbox.checked : false
             });
         };
 

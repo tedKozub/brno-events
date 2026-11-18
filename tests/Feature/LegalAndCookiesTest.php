@@ -17,6 +17,10 @@ class LegalAndCookiesTest extends TestCase
         $response->assertSee('121/2000 Sb.', false); // Autorský zákon
         $response->assertSee('480/2004 Sb.', false); // Zákon o službách informační společnosti
         $response->assertSee('legal@brnoakce.cz', false);
+        $response->assertSee('Tadeáš Kozub', false);
+        $response->assertSee('24601381', false);
+        $response->assertSee('robots.txt', false);
+        $response->assertSee('Změny těchto podmínek', false);
     }
 
     public function test_privacy_page_renders_successfully_with_gdpr_and_cookie_rules(): void
@@ -29,6 +33,12 @@ class LegalAndCookiesTest extends TestCase
         $response->assertSee('374/2021 Sb.', false); // Novela zákona o elektronických komunikacích
         $response->assertSee('privacy@brnoakce.cz', false);
         $response->assertSee('Úřad pro ochranu osobních údajů', false);
+        $response->assertSee('Tadeáš Kozub', false);
+        $response->assertSee('24601381', false);
+        $response->assertSee('přenositelnost', false);
+        $response->assertSee('Příjemci a zpracovatelé údajů', false);
+        $response->assertSee('OpenStreetMap', false);
+        $response->assertSee('Unsplash', false);
     }
 
     public function test_homepage_includes_cookie_consent_component_and_footer_links(): void
@@ -43,6 +53,7 @@ class LegalAndCookiesTest extends TestCase
         $response->assertSee('/ochrana-soukromi', false);
         $response->assertSee('Nastavení cookies', false);
         $response->assertSee('Notice & Takedown', false);
+        $response->assertSee('Autorská práva k obsahu akcí náleží jejich pořadatelům', false);
     }
 
     public function test_sitemap_includes_legal_and_privacy_pages(): void

@@ -55,7 +55,7 @@
             </div>
 
             <div class="text-[11px] text-base-content/50">
-                <span>© {{ date('Y') }} {{ \App\Helpers\BrandHelper::brandName() }}. Všechna práva pořadatelů vyhrazena.</span>
+                <span>© {{ date('Y') }} {{ \App\Helpers\BrandHelper::brandName() }}. Autorská práva k obsahu akcí náleží jejich pořadatelům.</span>
             </div>
         </div>
     </div>

@@ -46,8 +46,9 @@
                 Podmínky užití & Autorská práva
             </h1>
             <p class="text-sm sm:text-base text-base-content/70 leading-relaxed">
-                Platné a účinné od 1. ledna 2026. Tyto podmínky upravují fungování nezávislého komunitního agregátoru studentských akcí {{ \App\Helpers\BrandHelper::brandName() }}, pravidla zpracování informací, respektování autorských práv a postup pro hlášení a okamžité odstranění obsahu.
+                Platné a účinné od 1. ledna 2026 · Poslední aktualizace: {{ date('j. n. Y') }}. Tyto podmínky upravují fungování nezávislého komunitního agregátoru studentských akcí {{ \App\Helpers\BrandHelper::brandName() }}, pravidla zpracování informací, respektování autorských práv a postup pro hlášení a okamžité odstranění obsahu.
             </p>
+
         </div>
 
         {{-- Sekce 1: Povaha služby --}}
@@ -58,8 +59,17 @@
             </h2>
             <div class="text-xs sm:text-sm text-base-content/80 space-y-3 leading-relaxed">
                 <p>
-                    Platforma <strong>{{ \App\Helpers\BrandHelper::brandName() }}</strong> (dále jen „služba“ nebo „provozovatel“) je nezávislý, nekomerční informační servis a agregátor určený pro studenty, akademické pracovníky a přátele brněnského vysokoškolského života (MUNI, VUT, MENDELU, UNOB, VETUNI a související brněnské spolky a kulturní organizace).
+                    Platforma <strong>{{ \App\Helpers\BrandHelper::brandName() }}</strong> (dále jen „služba“ nebo „platforma“) je nezávislý, nekomerční informační servis a agregátor určený pro studenty, akademické pracovníky a přátele brněnského vysokoškolského života (MUNI, VUT, MENDELU, UNOB, VETUNI a související brněnské spolky a kulturní organizace).
                 </p>
+                <div class="p-4 rounded-xl bg-base-200/60 border border-base-200 space-y-1">
+                    <div class="font-bold text-base-content text-sm">Provozovatel platformy</div>
+                    <p class="text-xs text-base-content/75">
+                        <strong>Tadeáš Kozub</strong>, fyzická osoba podnikající dle živnostenského zákona<br>
+                        IČO: <span class="font-mono">24601381</span><br>
+                        Sídlo: Šumice 428, 687 31 Šumice<br>
+                        Kontakt: <a href="mailto:info@brnoakce.cz" class="link link-primary">info@brnoakce.cz</a>
+                    </p>
+                </div>
                 <p>
                     Cílem služby je zpřehlednit a centralizovat pestrý studentský život v Brně, zvýšit povědomí o neziskových aktivitách spolků a umožnit studentům objevovat přednášky, kulturní akce, kvízy, workshopy i sportovní turnaje na jednom místě.
                 </p>
@@ -82,6 +92,9 @@
                 </ul>
                 <p>
                     Služba nevytváří vlastní události, nevystupuje jako pořadatel a u každé agregované akce <strong>vždy uvádí původního pořadatele a přímý odkaz na původní zdrojový web či událost</strong>.
+                </p>
+                <p>
+                    Platforma respektuje robotický standard (robots.txt) zdrojových webů. Pokud si pořadatel, univerzita či autor obsahu nepřeje být na platformě zobrazován, stačí nás kontaktovat prostřednictvím <a href="/podminky#takedown" class="link link-primary font-semibold" wire:navigate>Notice &amp; Takedown procedury</a> a obsah bude neprodleně odstraněn.
                 </p>
             </div>
         </section>
@@ -208,12 +221,25 @@
                 <ul class="list-disc list-inside space-y-1.5 pl-2">
                     <li>Potvrzuje, že má oprávnění akci jménem organizace publikovat a disponuje potřebnými právy k propagačním materiálům.</li>
                     <li>Zavazuje se nepublikovat klamavý, neetický, diskriminační či nezákonný obsah v rozporu s právními předpisy ČR.</li>
-                    <li>Uděluje platformě bezúplatnou licenci k zobrazení plakátu a anotace za účelem propagace akce.</li>
+                    <li>Uděluje platformě bezúplatnou, nevýhradní, územně neomezenou licenci k zobrazení plakátu a anotace za účelem propagace akce, a to po dobu zobrazení akce na platformě. Licence se automaticky ukončuje odstraněním akce z platformy.</li>
                 </ul>
             </div>
         </section>
 
-        {{-- Sekce 8: Závěr --}}
+        {{-- Sekce 8: Změny podmínek --}}
+        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-5 sm:p-8 space-y-4">
+            <h2 class="text-lg sm:text-xl font-bold text-base-content flex items-start gap-2.5 sm:gap-3">
+                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center shrink-0 mt-0.5">8</span>
+                <span>Změny těchto podmínek</span>
+            </h2>
+            <div class="text-xs sm:text-sm text-base-content/80 space-y-3 leading-relaxed">
+                <p>
+                    Provozovatel si vyhrazuje právo tyto podmínky aktualizovat či upravovat. Aktuální znění je vždy dostupné na této stránce s uvedením data poslední změny v záhlaví dokumentu. Pokračováním v užívání služby po zveřejnění změn vyjadřujete souhlas s jejich aktuálním zněním.
+                </p>
+            </div>
+        </section>
+
+        {{-- Závěr --}}
         <div class="pt-4 text-center text-xs text-base-content/60 space-y-1">
             <p>Máte otázky nebo nápady na vylepšení studentského rozcestníku?</p>
             <p>Napište nám na <a href="mailto:info@brnoakce.cz" class="link link-primary font-semibold">info@brnoakce.cz</a>.</p>

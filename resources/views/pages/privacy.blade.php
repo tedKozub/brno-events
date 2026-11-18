@@ -46,7 +46,7 @@
                 Zásady ochrany soukromí
             </h1>
             <p class="text-sm sm:text-base text-base-content/70 leading-relaxed">
-                Vaše soukromí bereme vážně. Tyto zásady popisují, jak nakládáme s údaji na platformě {{ \App\Helpers\BrandHelper::brandName() }} v souladu s Nařízením Evropského parlamentu a Rady (EU) 2016/679 (GDPR) a zákonem č. 110/2019 Sb. o zpracování osobních údajů.
+                Platné a účinné od 1. ledna 2026. Vaše soukromí bereme vážně. Tyto zásady popisují, jak nakládáme s údaji na platformě {{ \App\Helpers\BrandHelper::brandName() }} v souladu s Nařízením Evropského parlamentu a Rady (EU) 2016/679 (GDPR) a zákonem č. 110/2019 Sb. o zpracování osobních údajů.
             </p>
         </div>
 
@@ -60,6 +60,14 @@
                 <p>
                     Správcem osobních údajů je provozovatel nezávislé platformy <strong>{{ \App\Helpers\BrandHelper::brandName() }}</strong>.
                 </p>
+                <div class="p-4 rounded-xl bg-base-200/60 border border-base-200 space-y-1">
+                    <div class="font-bold text-base-content text-sm">Správce údajů</div>
+                    <p class="text-xs text-base-content/75">
+                        <strong>Tadeáš Kozub</strong>, fyzická osoba podnikající dle živnostenského zákona<br>
+                        IČO: <span class="font-mono">24601381</span><br>
+                        Sídlo: Šumice 428, 687 31 Šumice
+                    </p>
+                </div>
                 <p>
                     Pro jakékoliv dotazy týkající se zpracování osobních údajů či uplatnění práv subjektů údajů nás můžete kontaktovat na e-mailové adrese:
                     <a href="mailto:privacy@brnoakce.cz" class="font-bold text-primary link link-hover">privacy@brnoakce.cz</a>.
@@ -100,7 +108,7 @@
                         Při načtení webových stránek webový server automaticky zaznamenává technické údaje (anonymizovaná IP adresa, čas přístupu, identifikátor prohlížeče / User-Agent, stavový kód HTTP).
                     </p>
                     <p class="text-xs text-base-content/75">
-                        <strong>Účel a právní základ:</strong> Zajištění stability sítě, prevence DDoS útoků a odhalování bezpečnostních incidentů na základě oprávněného zájmu správce dle <strong>čl. 6 odst. 1 písm. f) GDPR</strong>. Logy jsou automaticky rotovány a promazávány.
+                        <strong>Účel a právní základ:</strong> Zajištění stability sítě, prevence DDoS útoků a odhalování bezpečnostních incidentů na základě oprávněného zájmu správce dle <strong>čl. 6 odst. 1 písm. f) GDPR</strong>. Logy jsou automaticky rotovány a promazávány nejpozději po <strong>30 dnech</strong>.
                     </p>
                 </div>
 
@@ -108,7 +116,7 @@
                 <div class="p-4 rounded-xl bg-base-200/60 border border-base-200 space-y-2">
                     <h3 class="font-bold text-base-content text-sm">B. Hlášení nesrovnalostí u akcí (dobrovolné)</h3>
                     <p class="text-xs text-base-content/75">
-                        Pokud uživatel využije funkci „Nahlásit chybu“, zpracováváme typ hlášené vady a případný text poznámky zadaný uživatelem za účelem prověření a opravy údajů u akce (oprávněný zájem dle čl. 6 odst. 1 písm. f) GDPR).
+                        Pokud uživatel využije funkci „Nahlásit chybu“, zpracováváme typ hlášené vady a případný text poznámky zadaný uživatelem za účelem prověření a opravy údajů u akce (oprávněný zájem dle čl. 6 odst. 1 písm. f) GDPR). Data jsou uchovávána po dobu nezbytnou pro prověření, maximálně <strong>90 dní</strong>.
                     </p>
                 </div>
 
@@ -119,7 +127,7 @@
                         Při zřízení pořadatelského účtu pro správu akcí spolku zpracováváme jméno zástupce, kontaktní e-mailovou adresu a bezpečně zahashované heslo.
                     </p>
                     <p class="text-xs text-base-content/75">
-                        <strong>Účel a právní základ:</strong> Správa profilu pořadatele, plnění podmínek užití služby dle <strong>čl. 6 odst. 1 písm. b) GDPR</strong> a komunikace týkající se vložených akcí.
+                        <strong>Účel a právní základ:</strong> Správa profilu pořadatele, plnění podmínek užití služby dle <strong>čl. 6 odst. 1 písm. b) GDPR</strong> a komunikace týkající se vložených akcí. Údaje jsou uchovávány po dobu trvání registrace a odstraněny do <strong>30 dní</strong> po smazání účtu.
                     </p>
                 </div>
             </div>
@@ -129,11 +137,11 @@
         <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-5 sm:p-8 space-y-4">
             <h2 class="text-lg sm:text-xl font-bold text-base-content flex items-start gap-2.5 sm:gap-3">
                 <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center shrink-0 mt-0.5">4</span>
-                <span>Cookies a lokální úložiště (Zákon č. 374/2021 Sb.)</span>
+                <span>Cookies a lokální úložiště</span>
             </h2>
             <div class="text-xs sm:text-sm text-base-content/80 space-y-3 leading-relaxed">
                 <p>
-                    V souladu s <strong>§ 89 odst. 3 zákona č. 127/2005 Sb.</strong> o elektronických komunikacích přísně rozlišujeme nezbytné technické cookies a nepovinné analytické nástroje:
+                    V souladu s <strong>§ 89 zákona č. 127/2005 Sb.</strong> o elektronických komunikacích, ve znění zákona č. 374/2021 Sb., přísně rozlišujeme nezbytné technické cookies a nepovinné analytické nástroje:
                 </p>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
@@ -178,7 +186,7 @@
         <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-5 sm:p-8 space-y-4">
             <h2 class="text-lg sm:text-xl font-bold text-base-content flex items-start gap-2.5 sm:gap-3">
                 <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center shrink-0 mt-0.5">5</span>
-                <span>Zabezpečení a předávání dat</span>
+                <span>Technické a organizační zabezpečení</span>
             </h2>
             <div class="text-xs sm:text-sm text-base-content/80 space-y-3 leading-relaxed">
                 <p>
@@ -188,15 +196,35 @@
                     <li>Veškerá komunikace je šifrována pomocí protokolu <strong>HTTPS (TLS)</strong> s podporou HSTS.</li>
                     <li>Aktivní Content Security Policy (CSP), ochrana proti Cross-Site Scripting (XSS) a ochrana rámců (X-Frame-Options).</li>
                     <li>Uživatelská hesla pořadatelů jsou jednosměrně hashována moderními algoritmy (Argon2id/Bcrypt) a nikdy nejsou uložena v čitelné podobě.</li>
-                    <li>Data nejsou prodávána, pronajímána ani předávána žádným marketingovým třetím stranám.</li>
                 </ul>
             </div>
         </section>
 
-        {{-- Sekce 6: Práva subjektů údajů --}}
+        {{-- Sekce 6: Příjemci a zpracovatelé --}}
         <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-5 sm:p-8 space-y-4">
             <h2 class="text-lg sm:text-xl font-bold text-base-content flex items-start gap-2.5 sm:gap-3">
                 <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center shrink-0 mt-0.5">6</span>
+                <span>Příjemci a zpracovatelé údajů</span>
+            </h2>
+            <div class="text-xs sm:text-sm text-base-content/80 space-y-3 leading-relaxed">
+                <p>
+                    Osobní údaje nejsou prodávány, pronajímány ani předávány za účelem marketingu. K technickému zajištění služby mohou být údaje zpracovávány těmito kategoriemi příjemců:
+                </p>
+                <ul class="list-disc list-inside space-y-1.5 pl-2">
+                    <li><strong>Poskytovatel hostingu:</strong> Server se nachází v rámci EU/EEA. Poskytovatel má přístup k systémovým logům v rozsahu nezbytném pro provoz infrastruktury.</li>
+                    <li><strong>Mapové služby (OpenStreetMap):</strong> Při zobrazení mapy prohlížeč načítá dlaždice ze serverů OpenStreetMap Foundation, čímž dochází k přenosu IP adresy návštěvníka.</li>
+                    <li><strong>Obrazová CDN (Unsplash):</strong> Při zobrazení zástupného obrázku akce se prohlížeč připojuje k serverům Unsplash Inc. (USA), které podléhají standardním smluvním doložkám EU.</li>
+                </ul>
+                <p>
+                    Veškeré předávání dat probíhá na základě oprávněného zájmu (čl. 6 odst. 1 písm. f) GDPR) a v rozsahu nezbytném pro fungování služby.
+                </p>
+            </div>
+        </section>
+
+        {{-- Sekce 7: Práva subjektů údajů --}}
+        <section class="card bg-base-100 border border-base-300 shadow-xs rounded-2xl p-5 sm:p-8 space-y-4">
+            <h2 class="text-lg sm:text-xl font-bold text-base-content flex items-start gap-2.5 sm:gap-3">
+                <span class="w-7 h-7 rounded-lg bg-base-200 text-primary font-black text-xs flex items-center justify-center shrink-0 mt-0.5">7</span>
                 <span>Vaše práva dle GDPR</span>
             </h2>
             <div class="text-xs sm:text-sm text-base-content/80 space-y-3 leading-relaxed">
@@ -209,6 +237,7 @@
                     <li>Požadovat <strong>výmaz</strong> (právo „být zapomenut“), pokud odpadl důvod pro zpracování,</li>
                     <li>Požadovat <strong>omezení zpracování</strong>,</li>
                     <li>Vznést <strong>námitku</strong> proti zpracování založenému na oprávněném zájmu,</li>
+                    <li>Požadovat <strong>přenositelnost</strong> vašich osobních údajů ve strukturovaném, běžně používaném a strojově čitelném formátu (čl. 20 GDPR),</li>
                     <li>Kdykoliv <strong>odvolat udělený souhlas</strong> s cookies v zápatí webu.</li>
                 </ul>
                 <p class="pt-2">
@@ -222,7 +251,7 @@
             </div>
         </section>
 
-        {{-- Sekce 7: Kontakt --}}
+        {{-- Kontakt --}}
         <div class="pt-4 text-center text-xs text-base-content/60 space-y-1">
             <p>Dotazy k ochraně osobních údajů směřujte na <a href="mailto:privacy@brnoakce.cz" class="link link-primary font-semibold">privacy@brnoakce.cz</a>.</p>
         </div>
