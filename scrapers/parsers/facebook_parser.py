@@ -394,6 +394,59 @@ async def parse_facebook_events_async(
     return events
 
 
+def extract_event_from_text(text: str, base_url: str = "", university: str = "OTHER") -> Optional[Dict[str, Any]]:
+    """Helper for parsing Facebook event description/text offline without launching Playwright."""
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    if not lines:
+        return None
+
+    title = clean_emoji(lines[0])
+    starts_at = parse_facebook_date(text)
+
+    location_name = "Brno"
+    t_lower = text.lower()
+    if "koma lounge" in t_lower or "koma" in t_lower:
+        location_name = "Koma Lounge & Bar, Kounicova 42, Brno"
+    elif "skautsk" in t_lower:
+        location_name = "Skautský institut v Brně, Moravské náměstí 12, Brno"
+    elif "trojk" in t_lower:
+        location_name = "Kavárna Trojka, Dominikánská 9, Brno"
+    elif "morgal" in t_lower:
+        location_name = "Café Morgal, Moravské náměstí 1a, Brno"
+    elif "kabinet muz" in t_lower or "kabinet múz" in t_lower:
+        location_name = "Kabinet MÚZ, Sukova 4, Brno"
+    elif "music lab" in t_lower:
+        location_name = "Music Lab, Opletalova 1, Brno"
+    elif "babylon" in t_lower:
+        location_name = "KC Babylon, Kounicova 20, Brno"
+    elif "fled" in t_lower:
+        location_name = "Fléda Club, Štefánikova 24, Brno"
+    elif "artbar" in t_lower:
+        location_name = "ArtBar Druhý Pád, Štefánikova 1, Brno"
+    elif "sono" in t_lower:
+        location_name = "Sono Music Club, Veveří 113, Brno"
+    elif "perpetuum" in t_lower:
+        location_name = "Perpetuum Club, Rooseveltova 9, Brno"
+
+    cat = detect_category(text)
+
+    return {
+        "title": title,
+        "starts_at": starts_at.strftime("%Y-%m-%d %H:%M:%S") if starts_at else None,
+        "ends_at": None,
+        "is_all_day": False,
+        "location_name": location_name,
+        "price_type": "free" if ("zdarma" in text.lower() or "volný" in text.lower()) else "paid",
+        "price_amount": None,
+        "category_slug": cat,
+        "short_description": text[:200],
+        "description": text,
+        "source_url": base_url,
+        "source_type": "scraper_facebook",
+        "university": university,
+    }
+
+
 def parse_facebook(
     source_url_or_slug: str,
     university: str = "OTHER",

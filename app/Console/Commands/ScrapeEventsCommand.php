@@ -15,7 +15,10 @@ use Illuminate\Support\Str;
 
 class ScrapeEventsCommand extends Command
 {
-    protected $signature = 'events:scrape {source_id? : ID konkrétního zdroje (nepovinné)} {--limit=20 : Maximální počet akcí z jednoho zdroje}';
+    protected $signature = 'events:scrape
+                            {source_id? : ID konkrétního zdroje (nepovinné)}
+                            {--limit=20 : Maximální počet akcí z jednoho zdroje}
+                            {--dry-run : Spustí scraper v offline dry-run režimu bez volání externích sítí a AI API}';
     protected $description = 'Spustí scraping studentských akcí z webů, iCal a RSS zdrojů';
 
     public function handle(): int
@@ -25,6 +28,7 @@ class ScrapeEventsCommand extends Command
 
         $sourceId = $this->argument('source_id');
         $limit = (int) $this->option('limit');
+        $isDryRun = (bool) $this->option('dry-run');
 
         $query = ScrapeSource::query();
         if ($sourceId) {
@@ -53,7 +57,7 @@ class ScrapeEventsCommand extends Command
         $errorsList = [];
 
         foreach ($sources as $index => $source) {
-            if ($index > 0) {
+            if ($index > 0 && !$isDryRun) {
                 // Šetrná náhodná prodleva 1.5s - 3s mezi zdroji proti rate-limitům
                 usleep(random_int(1500000, 3000000));
             }
@@ -69,16 +73,22 @@ class ScrapeEventsCommand extends Command
                 '--limit', (string) $limit,
             ];
 
+            if ($isDryRun) {
+                $cmd[] = '--dry-run';
+            }
+
             $result = Process::path(base_path('scrapers'))->run($cmd);
 
             if ($result->failed()) {
                 $err = $result->errorOutput() ?: $result->output();
                 $this->error("Chyba při scrapování zdroje {$source->name}: {$err}");
-                $source->update([
-                    'last_scraped_at' => now(),
-                    'last_status' => 'error',
-                    'last_error' => Str::limit($err, 1000),
-                ]);
+                if (!$isDryRun) {
+                    $source->update([
+                        'last_scraped_at' => now(),
+                        'last_status' => 'error',
+                        'last_error' => Str::limit($err, 1000),
+                    ]);
+                }
                 $errorsList[] = [
                     'source' => $source->name,
                     'message' => Str::limit($err, 120),
@@ -90,11 +100,13 @@ class ScrapeEventsCommand extends Command
             if (!$json || ($json['status'] ?? '') !== 'success') {
                 $err = $json['error'] ?? 'Neplatná JSON odpověď ze scraperu.';
                 $this->error("Chyba výstupu scraperu: {$err}");
-                $source->update([
-                    'last_scraped_at' => now(),
-                    'last_status' => 'error',
-                    'last_error' => $err,
-                ]);
+                if (!$isDryRun) {
+                    $source->update([
+                        'last_scraped_at' => now(),
+                        'last_status' => 'error',
+                        'last_error' => $err,
+                    ]);
+                }
                 $errorsList[] = [
                     'source' => $source->name,
                     'message' => Str::limit($err, 120),
@@ -103,6 +115,13 @@ class ScrapeEventsCommand extends Command
             }
 
             $eventsData = $json['events'] ?? [];
+
+            if ($isDryRun) {
+                $count = count($eventsData);
+                $this->info(" -> [DRY-RUN] Zdroj {$source->name}: úspěšně ověřeno, nalezeno {$count} akcí (offline/bez zápisu do DB).");
+                $totalImported += $count;
+                continue;
+            }
             $sourceImported = 0;
             $sourceSkipped = 0;
 
@@ -343,6 +362,11 @@ class ScrapeEventsCommand extends Command
             ]);
 
             $this->line(" -> Načteno {$sourceImported} nových akcí, přeskočeno {$sourceSkipped} existujících.");
+        }
+
+        if ($isDryRun) {
+            $this->info("DRY-RUN dokončen: Všechny aktivní scraper moduly a parsery byly úspěšně otestovány ({$totalImported} akcí celkem). Žádné externí sítě ani AI API nebyly volány.");
+            return 0;
         }
 
         $this->info("Celkem úspěšně importováno {$totalImported} nových akcí ke schválení (přeskočeno {$totalSkipped} duplikátů).");

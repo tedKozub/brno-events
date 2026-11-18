@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+  <channel>
+    <title>FIT VUT RSS Zprávy a akce</title>
+    <link>https://www.fit.vut.cz/fit/news-rss/</link>
+    <description>Aktuální zprávy a akce z FIT VUT</description>
+    <item>
+      <title>Ples Fakulty informačních technologií VUT 2026</title>
+      <link>https://www.fit.vut.cz/fit/event/123/</link>
+      <description><![CDATA[<p>Tradiční reprezentační ples studentů a zaměstnanců FIT VUT v KC Babylon. Hudba, tombola a předtančení.</p>]]></description>
+      <pubDate>Mon, 20 Nov 2026 19:00:00 +0100</pubDate>
+    </item>
+    <item>
+      <title>Přednáška: Bezpečnost moderních webových aplikací</title>
+      <link>https://www.fit.vut.cz/fit/event/124/</link>
+      <description><![CDATA[<p>Zveme vás na odbornou přednášku zástupců IT bezpečnosti v posluchárně E112 na Božetěchově.</p>]]></description>
+      <pubDate>Wed, 22 Nov 2026 14:00:00 +0100</pubDate>
+    </item>
+    <item>
+      <title>Podávání přihlášek ke studiu do magisterského programu</title>
+      <link>https://www.fit.vut.cz/fit/event/125/</link>
+      <description><![CDATA[<p>Upozorňujeme uchazeče na termín uzávěrka přihlášek a harmonogram akademického roku.</p>]]></description>
+      <pubDate>Fri, 24 Nov 2026 12:00:00 +0100</pubDate>
+    </item>
+  </channel>
+</rss>

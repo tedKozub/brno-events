@@ -1,0 +1,27 @@
+{
+  "instagram": [
+    {
+      "caption": "Znovu přichází Váš oblíbený PUB QUIZZ! Přijďte své fantastické znalosti otestovat 24.11.2026 v 19:00 do Brněnského Koma Lounge & Baru. Startovné je 80 Kč za hráče. Těšíme se na Vás!",
+      "expected_title": "PUB QUIZZ",
+      "expected_venue": "Koma Lounge & Bar",
+      "expected_date": "2026-11-24 19:00:00"
+    },
+    {
+      "caption": "Benefiční večer a workshop jógy!\nKdy: 26.11.2026 v 18:00\nKde: Skautský institut v Brně\nVstup 150 Kč.",
+      "expected_title": "Benefiční večer a workshop jógy",
+      "expected_venue": "Skautský institut v Brně",
+      "expected_date": "2026-11-26 18:00:00"
+    },
+    {
+      "caption": "SP-PDF BEERPONG LIGA 10. SEZONA\nKOMA LOUNGE & BAR\nSTREDY 19:30",
+      "should_ignore": true
+    }
+  ],
+  "facebook": [
+    {
+      "text": "Zveme všechny studenty na Game Night do Kavárny Trojka! 25.11.2026 od 19:00. Vstup zdarma, deskovky s sebou nebo k zapůjčení.",
+      "expected_venue": "Kavárna Trojka",
+      "expected_date": "2026-11-25 19:00:00"
+    }
+  ]
+}

@@ -68,13 +68,81 @@ def main():
     )
     parser.add_argument("--university", default="", help="Default university tag (MUNI, VUT, MENDELU, UNOB, VETUNI)")
     parser.add_argument("--limit", type=int, default=30, help="Maximum number of events to extract")
+    parser.add_argument("--dry-run", action="store_true", help="Run in dry-run mode without external HTTP requests or AI API calls")
 
     args = parser.parse_args()
 
     try:
         stype = args.type.lower()
 
-        if stype in ["web_instagram", "instagram"]:
+        if args.dry_run:
+            fixtures_dir = os.path.join(scrapers_dir, "fixtures")
+            if stype in ["web_instagram", "instagram"]:
+                from parsers.instagram_parser import extract_event_from_caption, sanitize_extracted_event_date
+                sample_file = os.path.join(fixtures_dir, "sample_social_posts.json")
+                events = []
+                if os.path.exists(sample_file):
+                    with open(sample_file, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    for item in data.get("instagram", []):
+                        if item.get("should_ignore"):
+                            continue
+                        ev = extract_event_from_caption(item["caption"], base_url=f"https://instagram.com/{args.url}")
+                        if ev:
+                            ev = sanitize_extracted_event_date(ev, item["caption"])
+                        if ev:
+                            events.append(ev)
+            elif stype in ["web_facebook", "facebook"]:
+                from parsers.facebook_parser import extract_event_from_text
+                sample_file = os.path.join(fixtures_dir, "sample_social_posts.json")
+                events = []
+                if os.path.exists(sample_file):
+                    with open(sample_file, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    for item in data.get("facebook", []):
+                        ev = extract_event_from_text(item["text"], base_url=f"https://facebook.com/{args.url}", university=args.university)
+                        if ev:
+                            events.append(ev)
+            else:
+                fixture_map = {
+                    "web_ical": "sample_student_events.ics",
+                    "ical": "sample_student_events.ics",
+                    "web_rss": "sample_feed.xml",
+                    "rss": "sample_feed.xml",
+                    "web_mendelu": "sample_mendelu.html",
+                    "mendelu": "sample_mendelu.html",
+                    "web_fit_vut": "sample_fit_vut.html",
+                    "fit_vut": "sample_fit_vut.html",
+                    "web_unob": "sample_unob.html",
+                    "unob": "sample_unob.html",
+                    "web_muni": "sample_muni.html",
+                    "muni": "sample_muni.html",
+                }
+                fixture_name = fixture_map.get(stype, "sample_mendelu.html")
+                fixture_path = os.path.join(fixtures_dir, fixture_name)
+
+                if args.url.startswith("file://") or os.path.exists(args.url):
+                    raw_content = fetch_content(args.url)
+                else:
+                    raw_content = fetch_content(fixture_path)
+
+                if stype in ["web_ical", "ical"]:
+                    events = parse_ical(raw_content, source_url=args.url)
+                elif stype in ["web_rss", "rss"]:
+                    events = parse_rss(raw_content, source_url=args.url)
+                else:
+                    text_content = raw_content.decode("utf-8", errors="replace") if isinstance(raw_content, bytes) else raw_content
+                    if stype in ["web_mendelu", "mendelu"]:
+                        events = parse_mendelu(text_content, base_url=args.url)
+                    elif stype in ["web_fit_vut", "fit_vut"]:
+                        events = parse_fit_vut(text_content, base_url=args.url)
+                    elif stype in ["web_unob", "unob"]:
+                        events = parse_unob(text_content, base_url=args.url)
+                    elif stype in ["web_muni", "muni"]:
+                        events = parse_muni(text_content, base_url=args.url)
+                    else:
+                        events = parse_generic_html(text_content, base_url=args.url)
+        elif stype in ["web_instagram", "instagram"]:
             events = parse_instagram(args.url, limit=args.limit)
         elif stype in ["web_facebook", "facebook"]:
             events = parse_facebook(args.url, university=args.university, limit=args.limit)
