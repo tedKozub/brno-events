@@ -129,8 +129,8 @@ class DatabaseSeeder extends Seeder
             'name' => 'Skautský institut v Brně',
             'address' => 'Moravské náměstí 12',
             'city' => 'Brno',
-            'latitude' => 49.1983,
-            'longitude' => 16.6075,
+            'latitude' => 49.199656,
+            'longitude' => 16.605770,
             'description' => 'Otevřený prostor pro přednášky, workshopy a komunitní setkání.',
         ]);
 

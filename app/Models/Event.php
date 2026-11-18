@@ -409,8 +409,8 @@ class Event extends Model
 
         if (str_contains($text, 'skautský institut') || str_contains($text, 'skautskem institutu') || str_contains($text, 'skautsky institut')) {
             return [
-                'lat' => 49.1983,
-                'lng' => 16.6075,
+                'lat' => 49.199656,
+                'lng' => 16.605770,
                 'title' => 'Skautský institut v Brně',
                 'address' => 'Moravské náměstí 12, Brno – střed',
                 'is_exact' => true,
