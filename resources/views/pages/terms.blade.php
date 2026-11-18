@@ -1,6 +1,6 @@
 <x-layouts.app
-    title="Podmínky užití, autorská práva a Notice & Takedown | BrnoAkce"
-    description="Podmínky užívání nezávislé platformy BrnoAkce, právní rámec agregace veřejných studentských akcí, autorská práva a postup pro odstranění obsahu (Notice & Takedown)."
+    :title="'Podmínky užití, autorská práva a Notice & Takedown | ' . \App\Helpers\BrandHelper::brandName()"
+    :description="'Podmínky užívání nezávislé platformy ' . \App\Helpers\BrandHelper::brandName() . ', právní rámec agregace veřejných studentských akcí, autorská práva a postup pro odstranění obsahu (Notice & Takedown).'"
 >
     {{-- HORNÍ HLAVIČKA S NAVIGACÍ --}}
     <header class="border-b border-base-300 bg-base-100/90 backdrop-blur-md sticky top-0 z-30 transition-colors shadow-xs">
@@ -14,7 +14,7 @@
                             </svg>
                         </div>
                         <div>
-                            <span class="font-black text-xl tracking-tight text-base-content block leading-tight">AKCE<span class="text-primary">BRNO</span></span>
+                            <span class="font-black text-xl tracking-tight text-base-content block leading-tight">{!! \App\Helpers\BrandHelper::logoHtml() !!}</span>
                             <span class="text-[10px] font-bold uppercase tracking-wider text-base-content/50 block">Studentský rozcestník</span>
                         </div>
                     </a>
@@ -51,7 +51,7 @@
                 Podmínky užití & Autorská práva
             </h1>
             <p class="text-sm sm:text-base text-base-content/70 leading-relaxed">
-                Platné a účinné od 1. ledna 2026. Tyto podmínky upravují fungování nezávislého komunitního agregátoru studentských akcí BrnoAkce, pravidla zpracování informací, respektování autorských práv a postup pro hlášení a okamžité odstranění obsahu.
+                Platné a účinné od 1. ledna 2026. Tyto podmínky upravují fungování nezávislého komunitního agregátoru studentských akcí {{ \App\Helpers\BrandHelper::brandName() }}, pravidla zpracování informací, respektování autorských práv a postup pro hlášení a okamžité odstranění obsahu.
             </p>
         </div>
 
@@ -63,7 +63,7 @@
             </h2>
             <div class="text-xs sm:text-sm text-base-content/80 space-y-3 leading-relaxed">
                 <p>
-                    Platforma <strong>BrnoAkce</strong> (dále jen „služba“ nebo „provozovatel“) je nezávislý, nekomerční informační servis a agregátor určený pro studenty, akademické pracovníky a přátele brněnského vysokoškolského života (MUNI, VUT, MENDELU, UNOB, VETUNI a související brněnské spolky a kulturní organizace).
+                    Platforma <strong>{{ \App\Helpers\BrandHelper::brandName() }}</strong> (dále jen „služba“ nebo „provozovatel“) je nezávislý, nekomerční informační servis a agregátor určený pro studenty, akademické pracovníky a přátele brněnského vysokoškolského života (MUNI, VUT, MENDELU, UNOB, VETUNI a související brněnské spolky a kulturní organizace).
                 </p>
                 <p>
                     Cílem služby je zpřehlednit a centralizovat pestrý studentský život v Brně, zvýšit povědomí o neziskových aktivitách spolků a umožnit studentům objevovat přednášky, kulturní akce, kvízy, workshopy i sportovní turnaje na jednom místě.
@@ -99,7 +99,7 @@
             </h2>
             <div class="text-xs sm:text-sm text-base-content/80 space-y-3 leading-relaxed">
                 <p>
-                    Činnost platformy BrnoAkce je koncipována v plném souladu s právním řádem České republiky a směrnicemi Evropské unie:
+                    Činnost platformy {{ \App\Helpers\BrandHelper::brandName() }} je koncipována v plném souladu s právním řádem České republiky a směrnicemi Evropské unie:
                 </p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
                     <div class="p-4 rounded-xl bg-base-200/60 border border-base-200 space-y-1.5">
@@ -162,7 +162,7 @@
                 <ul class="list-disc list-inside space-y-1 pl-2 font-medium">
                     <li>Okamžitě odstranit plakát, obrázek či text akce,</li>
                     <li>Upravit nepřesné či zastaralé informace (čas, místo, vstupné),</li>
-                    <li>Nebo celou událost z nástěnky BrnoAkce trvale vyřadit,</li>
+                    <li>Nebo celou událost z nástěnky {{ \App\Helpers\BrandHelper::brandName() }} trvale vyřadit,</li>
                 </ul>
                 <p>
                     kontaktujte nás bez jakýchkoliv formalit na níže uvedeném e-mailu. Váš požadavek bude zpracován obratem, nejpozději však do <strong>24 až 48 hodin</strong> od doručení.

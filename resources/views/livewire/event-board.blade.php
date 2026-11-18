@@ -10,11 +10,9 @@
                     </svg>
                 </div>
                 <div class="flex items-center gap-1.5 sm:gap-2">
-                    <span class="font-black text-base sm:text-xl tracking-tight text-base-content">
-                        AKCE<span class="text-primary">BRNO</span>
-                    </span>
+                    {!! \App\Helpers\BrandHelper::logoHtml() !!}
                     <span class="hidden xs:inline-block px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider text-primary bg-primary/10 border border-primary/20">
-                        Student
+                        {{ \App\Helpers\BrandHelper::badgeText() }}
                     </span>
                 </div>
             </a>

@@ -13,6 +13,42 @@ Route::get('/akce/{slug}', EventDetail::class)->name('event.detail');
 Route::get('/akce/{slug}/og-image.jpg', [OgImageController::class, 'show'])->name('event.og-image');
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 
+// Dynamický Web App Manifest (PWA) přizpůsobený pro BrnoAkce i studyBrno|liveBrno
+Route::get('/manifest.json', function () {
+    $isStudy = \App\Helpers\BrandHelper::isStudyBrno();
+    $short = \App\Helpers\BrandHelper::shortName();
+
+    return response()->json([
+        'name' => $isStudy ? 'studyBrno|liveBrno – Studentský a městský život v Brně' : 'BrnoAkce – Studentské akce v Brně',
+        'short_name' => $short,
+        'description' => $isStudy
+            ? 'Průvodce brněnským studentským a městským životem. Akce, festivaly, kluby, studovny a spolky v Brně.'
+            : 'Průvodce brněnským studentským životem. Párty, festivaly, přednášky, sport a spolkové akce v Brně.',
+        'start_url' => '/',
+        'scope' => '/',
+        'display' => 'standalone',
+        'orientation' => 'portrait',
+        'background_color' => '#0f172a',
+        'theme_color' => '#6366f1',
+        'lang' => 'cs',
+        'categories' => ['events', 'education', 'lifestyle', 'entertainment'],
+        'icons' => [
+            [
+                'src' => '/icons/icon-192x192.png',
+                'sizes' => '192x192',
+                'type' => 'image/png',
+                'purpose' => 'any maskable',
+            ],
+            [
+                'src' => '/icons/icon-512x512.png',
+                'sizes' => '512x512',
+                'type' => 'image/png',
+                'purpose' => 'any maskable',
+            ],
+        ],
+    ], 200, ['Content-Type' => 'application/manifest+json; charset=utf-8']);
+})->name('manifest');
+
 // Právní stránky, autorská práva, GDPR a Notice & Takedown
 Route::view('/podminky', 'pages.terms')->name('terms');
 Route::view('/ochrana-soukromi', 'pages.privacy')->name('privacy');

@@ -1,11 +1,16 @@
 @props([
-    'title' => 'Studentské Akce Brno | Průvodce brněnským studentským životem',
-    'description' => 'Centralizovaný portál a kalendář pro studentské párty, festivaly, workshopy, kvízy a spolkové akce v Brně (MUNI, VUT, MENDELU, UNOB, VETUNI).',
+    'title' => null,
+    'description' => null,
     'ogImage' => null,
     'ogType' => 'website',
     'ogUrl' => null,
     'schemaJson' => null,
 ])
+@php
+    $brandName = \App\Helpers\BrandHelper::brandName();
+    $effectiveTitle = $title ?? \App\Helpers\BrandHelper::metaTitle();
+    $effectiveDescription = $description ?? \App\Helpers\BrandHelper::metaDescription();
+@endphp
 <!DOCTYPE html>
 <html lang="cs" data-theme="events-light">
 <head>
@@ -57,14 +62,14 @@
         }
     </script>
 
-    <title>{{ $title }}</title>
-    <meta name="description" content="{{ $description }}">
+    <title>{{ $effectiveTitle }}</title>
+    <meta name="description" content="{{ $effectiveDescription }}">
     <link rel="canonical" href="{{ $ogUrl ?? url()->current() }}">
 
     <!-- OpenGraph (Facebook, WhatsApp, LinkedIn, iMessage) -->
-    <meta property="og:site_name" content="BrnoAkce">
-    <meta property="og:title" content="{{ $title }}">
-    <meta property="og:description" content="{{ $description }}">
+    <meta property="og:site_name" content="{{ $brandName }}">
+    <meta property="og:title" content="{{ $effectiveTitle }}">
+    <meta property="og:description" content="{{ $effectiveDescription }}">
     <meta property="og:type" content="{{ $ogType }}">
     <meta property="og:url" content="{{ $ogUrl ?? url()->current() }}">
     <meta property="og:image" content="{{ $ogImage ?? asset('images/og-brnoakce.jpg') }}">
@@ -74,8 +79,8 @@
 
     <!-- Twitter / X Cards -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ $title }}">
-    <meta name="twitter:description" content="{{ $description }}">
+    <meta name="twitter:title" content="{{ $effectiveTitle }}">
+    <meta name="twitter:description" content="{{ $effectiveDescription }}">
     <meta name="twitter:image" content="{{ $ogImage ?? asset('images/og-brnoakce.jpg') }}">
 
     <!-- Favicon & Mobile Icons -->
@@ -88,8 +93,8 @@
     <meta name="theme-color" content="#6366f1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="BrnoAkce">
-    <meta name="application-name" content="BrnoAkce">
+    <meta name="apple-mobile-web-app-title" content="{{ $brandName }}">
+    <meta name="application-name" content="{{ $brandName }}">
 
     <!-- Schema.org JSON-LD Structured Data -->
     @if(!empty($schemaJson))
@@ -101,9 +106,9 @@
         {
             "@context": "https://schema.org",
             "@type": "WebSite",
-            "name": "BrnoAkce",
-            "url": "{{ config('app.url', 'https://brnoakce.tadeaskozub.com') }}",
-            "description": "Průvodce brněnským studentským životem a centrální kalendář studentských akcí v Brně.",
+            "name": "{{ $brandName }}",
+            "url": "{{ url('/') }}",
+            "description": "{{ $effectiveDescription }}",
             "inLanguage": "cs"
         }
         </script>
@@ -134,9 +139,9 @@
         <div class="modal-box bg-base-100 border border-base-300 shadow-2xl p-5 sm:p-6 max-w-md">
             {{-- Header with App Icon --}}
             <div class="flex items-center gap-3.5 pb-4 border-b border-base-200">
-                <img src="/icons/icon-192x192.png" alt="BrnoAkce" class="w-12 h-12 rounded-2xl shadow-md border border-base-300 shrink-0">
+                <img src="/icons/icon-192x192.png" alt="{{ $brandName }}" class="w-12 h-12 rounded-2xl shadow-md border border-base-300 shrink-0">
                 <div>
-                    <h3 class="font-black text-base sm:text-lg text-base-content tracking-tight">Nainstalovat BrnoAkce</h3>
+                    <h3 class="font-black text-base sm:text-lg text-base-content tracking-tight">Nainstalovat {{ $brandName }}</h3>
                     <p class="text-xs text-base-content/70">Měj přehled studentských akcí v Brně vždy po ruce</p>
                 </div>
             </div>

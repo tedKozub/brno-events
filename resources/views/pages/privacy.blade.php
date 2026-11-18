@@ -1,6 +1,6 @@
 <x-layouts.app
-    title="Zásady ochrany osobních údajů (GDPR) a Cookies | BrnoAkce"
-    description="Informace o ochraně osobních údajů (GDPR), zásadách minimalizace dat, využívání cookies a právech návštěvníků a pořadatelů studentského portálu BrnoAkce."
+    :title="'Zásady ochrany osobních údajů (GDPR) a Cookies | ' . \App\Helpers\BrandHelper::brandName()"
+    :description="'Informace o ochraně osobních údajů (GDPR), zásadách minimalizace dat, využívání cookies a právech návštěvníků a pořadatelů studentského portálu ' . \App\Helpers\BrandHelper::brandName() . '.'"
 >
     {{-- HORNÍ HLAVIČKA S NAVIGACÍ --}}
     <header class="border-b border-base-300 bg-base-100/90 backdrop-blur-md sticky top-0 z-30 transition-colors shadow-xs">
@@ -14,7 +14,7 @@
                             </svg>
                         </div>
                         <div>
-                            <span class="font-black text-xl tracking-tight text-base-content block leading-tight">AKCE<span class="text-primary">BRNO</span></span>
+                            <span class="font-black text-xl tracking-tight text-base-content block leading-tight">{!! \App\Helpers\BrandHelper::logoHtml() !!}</span>
                             <span class="text-[10px] font-bold uppercase tracking-wider text-base-content/50 block">Studentský rozcestník</span>
                         </div>
                     </a>
@@ -51,7 +51,7 @@
                 Zásady ochrany soukromí
             </h1>
             <p class="text-sm sm:text-base text-base-content/70 leading-relaxed">
-                Vaše soukromí bereme vážně. Tyto zásady popisují, jak nakládáme s údaji na platformě BrnoAkce v souladu s Nařízením Evropského parlamentu a Rady (EU) 2016/679 (GDPR) a zákonem č. 110/2019 Sb. o zpracování osobních údajů.
+                Vaše soukromí bereme vážně. Tyto zásady popisují, jak nakládáme s údaji na platformě {{ \App\Helpers\BrandHelper::brandName() }} v souladu s Nařízením Evropského parlamentu a Rady (EU) 2016/679 (GDPR) a zákonem č. 110/2019 Sb. o zpracování osobních údajů.
             </p>
         </div>
 
@@ -63,7 +63,7 @@
             </h2>
             <div class="text-xs sm:text-sm text-base-content/80 space-y-2 leading-relaxed">
                 <p>
-                    Správcem osobních údajů je provozovatel nezávislé platformy <strong>BrnoAkce</strong>.
+                    Správcem osobních údajů je provozovatel nezávislé platformy <strong>{{ \App\Helpers\BrandHelper::brandName() }}</strong>.
                 </p>
                 <p>
                     Pro jakékoliv dotazy týkající se zpracování osobních údajů či uplatnění práv subjektů údajů nás můžete kontaktovat na e-mailové adrese:

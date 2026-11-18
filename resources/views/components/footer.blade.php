@@ -4,8 +4,8 @@
         <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
             <div class="space-y-1">
                 <div class="flex items-center justify-center sm:justify-start gap-2">
-                    <span class="font-black text-sm tracking-tight text-base-content">AKCE<span class="text-primary">BRNO</span></span>
-                    <span>— Nezávislý studentský agregátor v Brně</span>
+                    {!! \App\Helpers\BrandHelper::logoHtml('sm') !!}
+                    <span>— {{ \App\Helpers\BrandHelper::isStudyBrno() ? 'Průvodce studentským a městským životem v Brně' : 'Nezávislý studentský agregátor v Brně' }}</span>
                 </div>
                 <p class="text-[11px] text-base-content/50">
                     Otevřená nástěnka pro studentský život a spolky na MUNI, VUT, MENDELU, UNOB & VETUNI.
@@ -62,7 +62,7 @@
             </div>
 
             <div class="text-[11px] text-base-content/50">
-                <span>© {{ date('Y') }} BrnoAkce. Všechna práva pořadatelů vyhrazena.</span>
+                <span>© {{ date('Y') }} {{ \App\Helpers\BrandHelper::brandName() }}. Všechna práva pořadatelů vyhrazena.</span>
             </div>
         </div>
     </div>
