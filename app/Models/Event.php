@@ -151,17 +151,19 @@ class Event extends Model
         }
 
         if ($this->is_ongoing && $this->ends_at) {
-            return 'Probíhá • do ' . $this->ends_at->translatedFormat('d. m.');
+            return 'Probíhá • do ' . $this->ends_at->format('j. n.');
         }
 
         if ($this->is_multi_day && $this->ends_at) {
             if ($this->starts_at->month === $this->ends_at->month && $this->starts_at->year === $this->ends_at->year) {
-                return $this->starts_at->translatedFormat('d.') . ' – ' . $this->ends_at->translatedFormat('d. m.');
+                return $this->starts_at->format('j.') . ' – ' . $this->ends_at->format('j. n.');
             }
-            return $this->starts_at->translatedFormat('d. m.') . ' – ' . $this->ends_at->translatedFormat('d. m.');
+            return $this->starts_at->format('j. n.') . ' – ' . $this->ends_at->format('j. n.');
         }
 
-        return $this->starts_at->translatedFormat('D d. m. H:i');
+        $days = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
+        $dayName = $days[$this->starts_at->dayOfWeek] ?? '';
+        return trim($dayName . ' ' . $this->starts_at->format('j. n. H:i'));
     }
 
     public function getFormattedPriceAttribute(): string

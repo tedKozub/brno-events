@@ -212,9 +212,6 @@
                 {{-- Spodní info na obrázku --}}
                 <div class="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 text-white space-y-2">
                     <div class="inline-flex items-center gap-1.5 bg-base-100/95 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-bold text-base-content border border-base-300 shadow-sm whitespace-nowrap">
-                        <svg class="w-3.5 h-3.5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
                         @if($event->is_ongoing && $event->ends_at)
                             <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
                             <span class="text-amber-600 dark:text-amber-400 font-extrabold">Probíhá • do {{ $event->ends_at->translatedFormat('d. F Y') }}</span>
@@ -521,18 +518,40 @@
                                     </span>
                                 </div>
 
-                                {{-- Datum v levém dolním rohu --}}
+                                {{-- Datum v levém dolním rohu bez ikony hodin, lokalizované --}}
                                 <div class="absolute bottom-2.5 left-2.5 bg-base-100/95 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-bold text-base-content border border-base-300 shadow-sm flex items-center gap-1.5 whitespace-nowrap">
-                                    <svg class="w-3.5 h-3.5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
                                     @if($rel->is_ongoing && $rel->ends_at)
                                         <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
-                                        <span class="text-amber-600 dark:text-amber-400 font-extrabold">Probíhá • do {{ $rel->ends_at->translatedFormat('d. m.') }}</span>
+                                        <span class="text-amber-600 dark:text-amber-400 font-extrabold">Probíhá • do {{ $rel->ends_at->format('j. n.') }}</span>
                                     @elseif($rel->is_multi_day && $rel->ends_at)
                                         <span>{{ $rel->formatted_date_range }}</span>
                                     @else
-                                        <span>{{ $rel->starts_at->translatedFormat('D d. m. H:i') }}</span>
+                                        <time
+                                            datetime="{{ $rel->starts_at->toIso8601String() }}"
+                                            x-data="{
+                                                text: '{{ $rel->formatted_date_range }}',
+                                                init() {
+                                                    try {
+                                                        const d = new Date('{{ $rel->starts_at->toIso8601String() }}');
+                                                        const loc = navigator.language || 'cs-CZ';
+                                                        if (loc.startsWith('cs') || loc.startsWith('sk')) {
+                                                            const days = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
+                                                            this.text = `${days[d.getDay()]} ${d.getDate()}. ${d.getMonth() + 1}. ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                                                        } else {
+                                                            this.text = new Intl.DateTimeFormat(loc, {
+                                                                weekday: 'short',
+                                                                day: 'numeric',
+                                                                month: 'numeric',
+                                                                hour: '2-digit',
+                                                                minute: '2-digit',
+                                                                hour12: false
+                                                            }).format(d);
+                                                        }
+                                                    } catch(e) {}
+                                                }
+                                            }"
+                                            x-text="text"
+                                        >{{ $rel->formatted_date_range }}</time>
                                     @endif
                                 </div>
                             </a>
@@ -571,12 +590,9 @@
                                         {{ $rel->title }}
                                     </a>
 
-                                    <div class="flex items-center gap-1.5 text-xs text-base-content/70">
-                                        <svg class="w-3.5 h-3.5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        </svg>
-                                        <span class="truncate">{{ $rel->location_display }}</span>
+                                    {{-- Místo konání bez ikony --}}
+                                    <div class="text-xs text-base-content/70 truncate">
+                                        {{ $rel->location_display }}
                                     </div>
                                 </div>
 
