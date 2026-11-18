@@ -21,7 +21,7 @@
 >
     {{-- KOMPAKTNÍ NAVBAR – 100% KOHERENTNÍ S HLAVNÍ STRÁNKOU --}}
     <header class="border-b border-base-300 bg-base-100/90 backdrop-blur-md sticky top-0 z-30 transition-colors shadow-xs">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-2 sm:gap-3">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 flex items-center gap-2 sm:gap-3">
             {{-- Oficiální Brand Logo --}}
             <a href="/" wire:navigate class="flex items-center gap-1.5 sm:gap-2.5 group shrink-0">
                 {!! \App\Helpers\BrandHelper::logoHtml() !!}
@@ -38,14 +38,14 @@
                     <a
                         href="/"
                         wire:navigate
-                        class="px-3.5 sm:px-4 py-1.5 rounded-sm font-bold text-xs sm:text-sm inline-flex items-center transition-all bg-primary text-primary-content"
+                        class="px-3.5 sm:px-4 py-1.5 rounded-sm font-bold text-xs sm:text-sm inline-flex items-center transition-all border border-primary text-primary"
                     >
                         <span>Akce</span>
                     </a>
                     <a
                         href="/mista"
                         wire:navigate
-                        class="px-3 sm:px-3.5 py-1.5 rounded-sm font-bold text-xs sm:text-sm inline-flex items-center transition-all text-base-content/70 hover:text-base-content hover:bg-base-200"
+                        class="px-3 sm:px-3.5 py-1.5 rounded-sm font-bold text-xs sm:text-sm inline-flex items-center transition-all text-base-content/50 hover:text-base-content hover:bg-base-200"
                     >
                         <span class="hidden sm:inline">Studentská místa</span>
                         <span class="sm:hidden">Místa</span>
@@ -124,7 +124,7 @@
     <main class="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-6 flex-1 w-full">
 
         {{-- DROBEČKOVÁ NAVIGACE --}}
-        <div class="flex items-center justify-between gap-2 sm:gap-3 text-xs">
+        <div class="flex items-center gap-2 sm:gap-3 text-xs">
             <a
                 href="/"
                 wire:navigate.hover
