@@ -9,7 +9,7 @@
         "test:e2e:mobile": "playwright test --project='Mobile iPhone 14' --project='Mobile Pixel 7'"
     },
     "devDependencies": {
-        "@playwright/test": "^1.65.0",
+        "@playwright/test": "^1.65.1",
         "autoprefixer": "^10.4.20",
         "axios": "^1.7.4",
         "concurrently": "^9.0.1",
