@@ -227,7 +227,7 @@
             </div>
 
             {{-- TĚLO KARTY --}}
-            <div class="p-3.5 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
+            <div class="p-4 sm:p-6 lg:p-8 space-y-5 sm:space-y-6">
 
                 {{-- ORGANIZÁTOR PANEL (BEZ CIRCLE ICONS) --}}
                 @if($event->organization)
@@ -351,11 +351,10 @@
                         </div>
                     </div>
                 </div>
-                </div>
 
                 {{-- POPIS AKCE --}}
                 <div class="space-y-3">
-                    <h2 class="text-lg font-black text-base-content">O události</h2>
+                    <h2 class="text-base sm:text-lg font-black text-base-content">O události</h2>
                     <div class="text-sm sm:text-base text-base-content/85 leading-relaxed whitespace-pre-line">
                         {{ $event->description ?: ($event->short_description ?: 'Bližší informace k této akci naleznete na stránkách pořadatelského spolku.') }}
                     </div>
@@ -465,9 +464,9 @@
         {{-- PODOBNÉ AKCE (DOPORUČENÉ) – PŘESNĚ JAKO NA HLAVNÍ STRÁNCE --}}
         @if($relatedEvents->isNotEmpty())
             <div class="space-y-4 pt-4">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-black text-base-content">Mohlo by tě také zajímat</h2>
-                    <a href="/" wire:navigate class="text-xs font-bold text-primary hover:underline">Zobrazit všechny akce &rarr;</a>
+                <div class="flex items-center justify-between gap-2">
+                    <h2 class="text-base sm:text-lg font-black text-base-content truncate">Mohlo by tě zajímat</h2>
+                    <a href="/" wire:navigate class="text-xs font-bold text-primary hover:underline shrink-0">Všechny akce &rarr;</a>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
@@ -687,8 +686,9 @@
                         tap: true
                     }).setView([lat, lng], 15);
 
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '&copy; OpenStreetMap contributors',
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                        subdomains: 'abcd',
                         maxZoom: 19,
                     }).addTo(this.map);
 

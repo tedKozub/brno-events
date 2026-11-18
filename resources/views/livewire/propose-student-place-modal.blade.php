@@ -100,38 +100,22 @@
                                     @error('name') <span class="text-xs text-error mt-1 block">{{ $message }}</span> @enderror
                                 </div>
 
-                                {{-- Kategorie & Highlight --}}
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                                    <div>
-                                        <label class="block text-xs font-bold uppercase tracking-wider text-base-content/70 mb-1">
-                                            Kategorie
-                                        </label>
-                                        <select
-                                            id="propose-category"
-                                            wire:model="categoryId"
-                                            class="select select-bordered w-full rounded-xl text-sm font-semibold"
-                                        >
-                                            <option value="">Vyber kategorii...</option>
-                                            @foreach($categories as $category)
-                                                <option value="{{ $category->id }}">{{ $category->name }}</option>
-                                            @endforeach
-                                        </select>
-                                        @error('categoryId') <span class="text-xs text-error mt-1 block">{{ $message }}</span> @enderror
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-xs font-bold uppercase tracking-wider text-base-content/70 mb-1">
-                                            Hlavní přednost (highlight)
-                                        </label>
-                                        <input
-                                            type="text"
-                                            id="propose-highlight"
-                                            wire:model="highlight"
-                                            placeholder="např. Spousta zásuvek, Levné pivo"
-                                            class="input input-bordered w-full rounded-xl text-sm"
-                                        />
-                                        @error('highlight') <span class="text-xs text-error mt-1 block">{{ $message }}</span> @enderror
-                                    </div>
+                                {{-- Kategorie --}}
+                                <div>
+                                    <label class="block text-xs font-bold uppercase tracking-wider text-base-content/70 mb-1">
+                                        Kategorie
+                                    </label>
+                                    <select
+                                        id="propose-category"
+                                        wire:model="categoryId"
+                                        class="select select-bordered w-full rounded-xl text-sm font-semibold"
+                                    >
+                                        <option value="">Vyber kategorii...</option>
+                                        @foreach($categories as $category)
+                                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('categoryId') <span class="text-xs text-error mt-1 block">{{ $message }}</span> @enderror
                                 </div>
 
                                 {{-- Adresa v Brně --}}

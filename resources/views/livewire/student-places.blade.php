@@ -229,12 +229,9 @@
                             >
                                 <div class="card-body p-4 sm:p-5 space-y-3">
                                     {{-- Horní štítky (stručné a čisté) --}}
-                                    <div class="flex items-center justify-between gap-2">
+                                    <div>
                                         <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border {{ $badgeColor }}">
                                             {{ $categories[$place['category']]['short_name'] ?? $place['category'] }}
-                                        </span>
-                                        <span class="text-[10px] font-bold text-base-content/50 uppercase tracking-wider truncate">
-                                            {{ $place['highlight'] }}
                                         </span>
                                     </div>
 
@@ -257,12 +254,12 @@
                                     </p>
                                 </div>
 
-                                {{-- Spodní akční tlačítka: Ukázat na mapě + Navigace (barevné pozadí, barevný text, pohodlný padding, bez ikon) --}}
+                                {{-- Spodní akční tlačítka: Ukázat na mapě + Navigace (jednoduchá plná tlačítka, bez skleněného designu a bez ikon) --}}
                                 <div class="px-4 pb-4 pt-1 sm:px-5 sm:pb-5 border-t border-base-200 flex items-center gap-2">
                                     <button
                                         type="button"
                                         @click="$dispatch('place-selected', { id: {{ $place['id'] }}, lat: {{ $place['lat'] }}, lng: {{ $place['lng'] }} })"
-                                        class="btn btn-sm bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 hover:border-primary flex-1 font-bold text-xs h-9 min-h-[36px] px-3.5 rounded-xl transition-all shadow-2xs"
+                                        class="btn btn-sm btn-ghost border border-base-300 hover:bg-base-200 text-base-content flex-1 font-bold text-xs h-9 min-h-[36px] px-3.5 rounded-xl transition-colors"
                                         title="Vycentrovat na mapě"
                                     >
                                         <span>Na mapě</span>
@@ -272,7 +269,7 @@
                                         href="{{ $gMapsUrl }}"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        class="btn btn-sm bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/25 hover:border-sky-500 font-bold text-xs px-3 sm:px-3.5 h-9 min-h-[36px] rounded-xl transition-all shadow-2xs"
+                                        class="btn btn-sm bg-[#0284c7] hover:bg-[#0369a1] text-white border-none font-bold text-xs px-3.5 sm:px-4 h-9 min-h-[36px] rounded-xl transition-colors shadow-xs"
                                         title="Otevřít v Google Maps"
                                     >
                                         <span>Google</span>
@@ -282,7 +279,7 @@
                                         href="{{ $mapyCzUrl }}"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        class="btn btn-sm bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 hover:border-emerald-500 font-bold text-xs px-3 sm:px-3.5 h-9 min-h-[36px] rounded-xl transition-all shadow-2xs"
+                                        class="btn btn-sm bg-[#16a34a] hover:bg-[#15803d] text-white border-none font-bold text-xs px-3.5 sm:px-4 h-9 min-h-[36px] rounded-xl transition-colors shadow-xs"
                                         title="Otevřít v Mapy.cz"
                                     >
                                         <span>Mapy.cz</span>
@@ -356,9 +353,10 @@
                     markerZoomAnimation: true,
                 }).setView([49.1951, 16.6068], 13);
 
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                     maxZoom: 19,
-                    attribution: '&copy; OpenStreetMap'
+                    subdomains: 'abcd',
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                 }).addTo(this.map);
 
                 this.markersLayer = L.layerGroup().addTo(this.map);
@@ -439,9 +437,6 @@
                             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
                                 <span style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 6px; background-color: ${color}; color: #ffffff; shrink: 0;">
                                     ${iconSvg.replace('width: 16px; height: 16px;', 'width: 12px; height: 12px;')}
-                                </span>
-                                <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: ${color}; letter-spacing: 0.05em;">
-                                    ${place.highlight || 'Studentské místo'}
                                 </span>
                             </div>
                             <h3 style="font-weight: 900; font-size: 14px; line-height: 1.25; margin-bottom: 4px; color: #0f172a;">
