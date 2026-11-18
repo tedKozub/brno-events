@@ -139,11 +139,6 @@
             </a>
 
             <div class="flex items-center gap-2 shrink-0">
-                @if($event->category)
-                    <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-base-100 text-base-content border border-base-300 truncate max-w-[130px] sm:max-w-none">
-                        {{ $event->category->name }}
-                    </span>
-                @endif
                 @if($event->is_featured)
                     <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-accent text-accent-content shrink-0">
                         Tip
@@ -201,21 +196,6 @@
                             <span class="px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider backdrop-blur-md {{ $uBadge }} shadow-sm">
                                 {{ $event->organization->university }}
                             </span>
-                        @endif
-
-                        {{-- Tlačítko pro zobrazení plakátu akce --}}
-                        @if(!$event->isStockImage())
-                            <button
-                                type="button"
-                                onclick="document.getElementById('poster_modal').showModal()"
-                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-black backdrop-blur-md bg-primary text-primary-content hover:bg-primary/90 border border-primary/30 shadow-sm cursor-pointer transition-transform active:scale-95"
-                                title="Zobrazit celý původní plakát akce"
-                            >
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
-                                </svg>
-                                <span>Plakát akce</span>
-                            </button>
                         @endif
                     </div>
 
@@ -628,14 +608,13 @@
         onclick="if (!event.target.closest('#poster_image, #poster_source_link')) this.close()"
     >
         <div
-            class="relative w-full max-w-full sm:max-w-6xl max-h-[92dvh] flex flex-col items-center justify-center p-0 m-auto min-w-0 select-none"
+            class="relative w-full max-w-full sm:max-w-4xl max-h-[92dvh] flex flex-col items-center justify-center p-0 m-auto min-w-0 select-none"
             onclick="if (!event.target.closest('#poster_image, #poster_source_link')) document.getElementById('poster_modal').close()"
         >
             {{-- Horní lišta: Titulek akce & odkaz na původní zdroj (zavření klikem/tapem mimo plakát) --}}
-            <div class="flex items-center justify-between w-full pb-2.5 sm:pb-3 px-1 sm:px-2 text-white gap-2 sm:gap-3 shrink-0 min-w-0">
-                <div class="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
-                    <span class="text-xs sm:text-base font-black truncate drop-shadow text-white/95">{{ $event->title }}</span>
-                    <span class="badge badge-primary badge-xs sm:badge-sm text-[10px] sm:text-[11px] font-bold shrink-0">{{ $event->cover_image_type_display }}</span>
+            <div class="flex items-center justify-between w-full max-w-2xl sm:max-w-3xl pb-2 sm:pb-2.5 px-2 text-white gap-3 shrink-0 min-w-0">
+                <div class="min-w-0 flex-1">
+                    <span class="text-xs sm:text-sm font-bold truncate drop-shadow block text-white/95">{{ $event->title }}</span>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
                     @php
@@ -661,6 +640,14 @@
                             <span>Původní zdroj</span>
                         </a>
                     @endif
+                    <button
+                        type="button"
+                        onclick="document.getElementById('poster_modal').close()"
+                        class="btn btn-xs sm:btn-sm btn-ghost btn-circle text-white/80 hover:text-white hover:bg-white/15"
+                        title="Zavřít"
+                    >
+                        ✕
+                    </button>
                 </div>
             </div>
 

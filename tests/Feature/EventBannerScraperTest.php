@@ -241,7 +241,7 @@ class EventBannerScraperTest extends TestCase
         $response = $this->get('/akce/' . $event->slug);
 
         $response->assertStatus(200);
-        $response->assertSee('Plakát akce');
+        $response->assertDontSee('Plakát akce');
         $response->assertSee('id="poster_modal"', false);
         $response->assertSee('Původní zdroj');
         $response->assertDontSee('Stáhnout v plném rozlišení');
