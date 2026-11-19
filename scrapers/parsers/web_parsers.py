@@ -1,8 +1,10 @@
 import datetime
+import json
 import re
 from typing import List, Dict, Any, Optional
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
+import httpx
 
 from parsers.common import (
     CZECH_MONTHS,
@@ -315,125 +317,238 @@ def parse_unob(html: str, base_url: str = "https://unob.cz/univerzita/media-a-ve
     return events
 
 
+def _format_muni_iso_dt(dt_str: Optional[str], default_time: str = "10:00:00") -> Optional[str]:
+    """Helper to convert ISO 8601 strings to YYYY-MM-DD HH:MM:SS format."""
+    if not dt_str:
+        return None
+    dt_str = dt_str.strip()
+    if "T" in dt_str:
+        main_part = dt_str.split("T")[0]
+        time_part = dt_str.split("T")[1].split("+")[0].split("-")[0].replace("Z", "")
+        if len(time_part.split(":")) == 2:
+            time_part += ":00"
+        return f"{main_part} {time_part[:8]}"
+    else:
+        return f"{dt_str} {default_time}"
+
+
 def parse_muni(html: str, base_url: str = "https://www.muni.cz/kalendar") -> List[Dict[str, Any]]:
     """
-    Parses events from muni.cz/kalendar (.box-event)
-    Filters out non-event items (CŽV courses, administrative procedures, secondary school events, NLZP courses).
+    Parses events from muni.cz/kalendar (.box-event).
+    Extracts structured JSON-LD and detail data when online, with fallback to card HTML.
+    Filters out CŽV courses, administrative procedures, secondary school events, and non-Brno items.
     """
     soup = BeautifulSoup(html, "lxml")
     events = []
     current_year = datetime.datetime.now().year
 
-    for item in soup.select(".box-event"):
-        # Remove any decorative badge like "TOP AKCE" or ribbons
-        for badge in item.select(".box-event__badge, .badge, .ribbon"):
-            badge.decompose()
+    # Use a single HTTP client if fetching details online
+    client = None
+    if base_url.startswith("http"):
+        try:
+            client = httpx.Client(
+                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) BrnoEvents/1.0"},
+                timeout=6.0,
+                follow_redirects=True,
+            )
+        except Exception:
+            client = None
 
-        full_card_text = item.get_text(" ", strip=True)
-        if is_administrative_or_irrelevant(full_card_text):
-            continue
+    try:
+        for item in soup.select(".box-event"):
+            # Remove any decorative badge like "TOP AKCE" or ribbons
+            for badge in item.select(".box-event__badge, .badge, .ribbon"):
+                badge.decompose()
 
-        link_el = item.find("a")
-        url = urljoin(base_url, link_el.get("href", "")) if link_el else base_url
-        
-        title_el = item.select_one(".box-event__title")
-        if not title_el:
-            title_el = item.find(["h4", "h3", "h2"])
-        if not title_el:
-            continue
+            full_card_text = item.get_text(" ", strip=True)
+            if is_administrative_or_irrelevant(full_card_text):
+                continue
 
-        # Clone and decompose icons / sub-elements to avoid dirty title
-        t_copy = BeautifulSoup(str(title_el), "lxml")
-        for sub in t_copy.find_all(["span", "small", "i", "div"]):
-            sub.decompose()
-        title = t_copy.get_text(" ", strip=True)
+            link_el = item.find("a")
+            href = link_el.get("href", "") if link_el else ""
+            if "is.muni.cz/obchod" in href or "vzdelavani-po-cely-zivot" in href:
+                continue
 
-        # Strip prefixes
-        title = re.sub(r"^(top akce|akce:?)\s*", "", title, flags=re.IGNORECASE).strip()
-        # Enforce clean max length
-        if len(title) > 90:
-            title = title[:87].rsplit(" ", 1)[0] + "..." if " " in title[:87] else title[:87] + "..."
+            url = urljoin(base_url, href) if href else base_url
 
-        if len(title) < 4:
-            continue
+            title_el = item.select_one(".box-event__title")
+            if not title_el:
+                title_el = item.find(["h4", "h3", "h2"])
+            if not title_el:
+                continue
 
-        # Extract image if present
-        img_el = item.select_one(".box-event__img img, img")
-        cover_image = None
-        if img_el and img_el.get("src"):
-            cover_image = urljoin(base_url, img_el.get("src"))
+            # Clone and decompose icons / sub-elements to avoid dirty title
+            t_copy = BeautifulSoup(str(title_el), "lxml")
+            for sub in t_copy.find_all(["span", "small", "i", "div"]):
+                sub.decompose()
+            raw_title = t_copy.get_text(" ", strip=True)
+            title = clean_title(raw_title)
 
-        # Parse date and times
-        date_el = item.select_one(".box-event__date")
-        date_str = date_el.get_text(" ", strip=True) if date_el else ""
+            if len(title) < 4:
+                continue
 
-        times = re.findall(r"(\d{1,2}:\d{2})", date_str)
-        start_time = f"{int(times[0].split(':')[0]):02d}:{times[0].split(':')[1]}:00" if times else "17:00:00"
-        end_time = f"{int(times[1].split(':')[0]):02d}:{times[1].split(':')[1]}:00" if len(times) > 1 else None
+            # Extract image if present on card
+            img_el = item.select_one(".box-event__img img, img")
+            cover_image = None
+            if img_el and img_el.get("src"):
+                cover_image = urljoin(base_url, img_el.get("src"))
 
-        # Check for range: "11. – 25. 11."
-        m_range = re.search(r"^\s*(\d{1,2})\.\s*[–—-]\s*(\d{1,2})\.\s*(\d{1,2})\.", date_str)
-        if m_range:
-            start_day = int(m_range.group(1))
-            start_month = int(m_range.group(3))
-            end_day = int(m_range.group(2))
-            end_month = int(m_range.group(3))
-        else:
-            dates = re.findall(r"(\d{1,2})\.\s*(\d{1,2})\.", date_str)
-            if dates:
-                start_day = int(dates[0][0])
-                start_month = int(dates[0][1])
-                if len(dates) > 1:
-                    end_day = int(dates[1][0])
-                    end_month = int(dates[1][1])
+            # Card date and teaser fallback
+            date_el = item.select_one(".box-event__date")
+            date_str = date_el.get_text(" ", strip=True) if date_el else ""
+
+            content_el = item.select_one(".box-event__content")
+            desc = ""
+            if content_el:
+                c_copy = BeautifulSoup(str(content_el), "lxml")
+                for rm in c_copy.select(".box-event__title, .box-event__date, .box-event__tags, .meta, span, h4"):
+                    rm.decompose()
+                desc = c_copy.get_text(" ", strip=True)
+            desc = re.sub(r"\btop\s*akce:?\s*", "", desc, flags=re.IGNORECASE).strip()
+
+            starts_at = None
+            ends_at = None
+            loc_cand = None
+            is_all_day = False
+            tags_text = ""
+
+            # Attempt fetching rich detail page if available and online
+            if client and "muni.cz/kalendar/u/" in url:
+                try:
+                    d_resp = client.get(url)
+                    if d_resp.status_code == 200:
+                        d_soup = BeautifulSoup(d_resp.text, "lxml")
+                        # 1. Parse JSON-LD schema
+                        for sc in d_soup.find_all("script", type="application/ld+json"):
+                            try:
+                                d = json.loads(sc.string or "")
+                                if isinstance(d, dict) and d.get("@type") == "Event":
+                                    if d.get("startDate"):
+                                        is_all_day = "T" not in str(d.get("startDate"))
+                                        starts_at = _format_muni_iso_dt(str(d.get("startDate")), "10:00:00")
+                                    if d.get("endDate"):
+                                        ends_at = _format_muni_iso_dt(str(d.get("endDate")), "23:59:59")
+                                    loc = d.get("location")
+                                    loc_cand = loc.get("name") if isinstance(loc, dict) else str(loc or "")
+                                    if loc_cand:
+                                        loc_cand = re.sub(r"<[^>]+>", "", loc_cand).strip()
+                                    break
+                            except Exception:
+                                pass
+
+                        # 2. Rich meta description
+                        meta_desc = d_soup.find("meta", property="og:description") or d_soup.find("meta", attrs={"name": "description"})
+                        if meta_desc and meta_desc.get("content") and len(meta_desc.get("content").strip()) > len(desc):
+                            desc = meta_desc.get("content").strip()
+
+                        # 3. Rich meta image
+                        meta_img = d_soup.find("meta", property="og:image")
+                        if meta_img and meta_img.get("content") and not cover_image:
+                            cover_image = meta_img.get("content").strip()
+
+                        # 4. Tags
+                        tag_els = d_soup.select(".box-event-detail2__tags span, .tag")
+                        if tag_els:
+                            tags_text = " ".join(t.get_text(" ", strip=True) for t in tag_els)
+
+                        # 5. Venue element fallback
+                        if not loc_cand:
+                            v_el = d_soup.select_one(".box-event-detail2__venues, [class*=\"venues\"]")
+                            if v_el:
+                                loc_cand = v_el.get_text(" ", strip=True).replace("Zobrazit mapu", "").strip()
+                except Exception:
+                    pass
+
+            # Fallback date & time parsing from card if detail was unavailable
+            if not starts_at and date_str:
+                times = re.findall(r"(\d{1,2}:\d{2})", date_str)
+                if times:
+                    t_h = int(times[0].split(":")[0])
+                    t_m = times[0].split(":")[1]
+                    start_time = f"{t_h:02d}:{t_m}:00"
+                    if len(times) > 1:
+                        e_h = int(times[1].split(":")[0])
+                        e_m = times[1].split(":")[1]
+                        end_time = f"{e_h:02d}:{e_m}:00"
+                    else:
+                        end_time = None
                 else:
-                    end_day, end_month = None, None
-            else:
-                start_day, start_month = 15, 11
-                end_day, end_month = None, None
+                    start_time = "10:00:00"
+                    end_time = None
 
-        year = current_year
-        now = datetime.datetime.now()
-        if start_month < now.month - 1:
-            year += 1
+                m_range = re.search(r"^\s*(\d{1,2})\.\s*[–—-]\s*(\d{1,2})\.\s*(\d{1,2})\.", date_str)
+                if m_range:
+                    start_day = int(m_range.group(1))
+                    start_month = int(m_range.group(3))
+                    end_day = int(m_range.group(2))
+                    end_month = int(m_range.group(3))
+                else:
+                    dates = re.findall(r"(\d{1,2})\.\s*(\d{1,2})\.", date_str)
+                    if dates:
+                        start_day = int(dates[0][0])
+                        start_month = int(dates[0][1])
+                        if len(dates) > 1:
+                            end_day = int(dates[1][0])
+                            end_month = int(dates[1][1])
+                        else:
+                            end_day, end_month = None, None
+                    else:
+                        start_day, start_month = 15, 11
+                        end_day, end_month = None, None
 
-        starts_at = f"{year:04d}-{start_month:02d}-{start_day:02d} {start_time}"
-        ends_at = None
-        if end_day and end_month:
-            end_year = year
-            if end_month < start_month:
-                end_year += 1
-            e_time = end_time if end_time else "23:59:59"
-            ends_at = f"{end_year:04d}-{end_month:02d}-{end_day:02d} {e_time}"
-        elif end_time:
-            ends_at = f"{year:04d}-{start_month:02d}-{start_day:02d} {end_time}"
+                year = current_year
+                now = datetime.datetime.now()
+                if start_month < now.month - 1:
+                    year += 1
 
-        # Teaser description from content
-        content_el = item.select_one(".box-event__content")
-        desc = ""
-        if content_el:
-            c_copy = BeautifulSoup(str(content_el), "lxml")
-            for rm in c_copy.select(".box-event__title, .box-event__date, .box-event__tags, .meta, span, h4"):
-                rm.decompose()
-            desc = c_copy.get_text(" ", strip=True)
+                starts_at = f"{year:04d}-{start_month:02d}-{start_day:02d} {start_time}"
+                if end_day and end_month:
+                    end_year = year
+                    if end_month < start_month:
+                        end_year += 1
+                    e_time = end_time if end_time else "23:59:59"
+                    ends_at = f"{end_year:04d}-{end_month:02d}-{end_day:02d} {e_time}"
+                elif end_time:
+                    ends_at = f"{year:04d}-{start_month:02d}-{start_day:02d} {end_time}"
 
-        desc = re.sub(r"\btop\s*akce:?\s*", "", desc, flags=re.IGNORECASE).strip()
+            if not starts_at:
+                continue
 
-        if not desc:
-            desc = f"Událost Masarykovy univerzity: {title} ({date_str})."
+            # Skip irrelevant or foreign locations (e.g. fairs in Germany)
+            if loc_cand and is_administrative_or_irrelevant(loc_cand):
+                continue
+            if loc_cand and any(w in loc_cand.lower() for w in ["německo", "germany", "austria", "rakousko", "slovakia", "polsko"]):
+                continue
 
-        events.append({
-            "title": title,
-            "short_description": desc[:200],
-            "description": desc,
-            "starts_at": starts_at,
-            "ends_at": ends_at,
-            "is_all_day": False,
-            "cover_image": cover_image,
-            "location_name": "Masarykova univerzita, Brno",
-            "source_url": url,
-            "source_type": "scraper_web",
-        })
+            if not desc:
+                desc = f"Událost Masarykovy univerzity: {title} ({date_str})."
+
+            # Determine venue & address
+            loc_input = loc_cand or full_card_text
+            venue_display, _ = extract_venue_and_address(loc_input, default_venue="Masarykova univerzita, Brno")
+
+            # Determine category & price
+            cat_slug = detect_event_category(f"{title} {tags_text} {desc}")
+            price_type, price_amount = extract_price_info(desc)
+
+            events.append({
+                "title": title,
+                "short_description": desc[:200],
+                "description": desc,
+                "starts_at": starts_at,
+                "ends_at": ends_at,
+                "is_all_day": is_all_day,
+                "cover_image": cover_image,
+                "location_name": venue_display,
+                "category_slug": cat_slug,
+                "price_type": price_type,
+                "price_amount": price_amount,
+                "source_url": url,
+                "source_type": "scraper_web",
+            })
+    finally:
+        if client:
+            client.close()
 
     return events
 

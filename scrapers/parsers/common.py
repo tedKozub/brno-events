@@ -168,15 +168,39 @@ KNOWN_VENUES: List[Dict[str, Any]] = [
         'city': 'Brno',
     },
     {
-        'keywords': ['kotlářská', 'kotlarska', 'přf muni', 'prf muni'],
+        'keywords': ['kotlářská', 'kotlarska', 'přf muni', 'prf muni', 'přírodovědecká fakulta', 'prirodovedecka fakulta', 'sci.muni'],
         'name': 'Přírodovědecká fakulta MUNI',
         'address': 'Kotlářská 2, Brno',
         'city': 'Brno',
     },
     {
-        'keywords': ['kamenice', 'kampus bohunice', 'bohunice'],
+        'keywords': ['kamenice', 'kampus bohunice', 'bohunice', 'simu', 'simulační centrum', 'simulacni centrum', 'fn brno', 'jihlavská', 'jihlavska'],
         'name': 'Univerzitní kampus Bohunice',
         'address': 'Kamenice 5, Brno',
+        'city': 'Brno',
+    },
+    {
+        'keywords': ['arna nováka', 'arna novaka', 'filozofická fakulta', 'filozoficka fakulta', 'ff mu', 'ff muni'],
+        'name': 'Filozofická fakulta MUNI',
+        'address': 'Arna Nováka 1/1, Brno',
+        'city': 'Brno',
+    },
+    {
+        'keywords': ['veveří 70', 'veveri 70', 'právnická fakulta', 'pravnicka fakulta', 'prf mu', 'law muni'],
+        'name': 'Právnická fakulta MUNI',
+        'address': 'Veveří 70, Brno',
+        'city': 'Brno',
+    },
+    {
+        'keywords': ['lipová 41', 'lipova 41', 'ekonomicko-správní', 'ekonomicko-spravni', 'esf mu', 'esf muni'],
+        'name': 'Ekonomicko-správní fakulta MUNI',
+        'address': 'Lipová 41a, Brno',
+        'city': 'Brno',
+    },
+    {
+        'keywords': ['žerotínovo nám', 'zerotinovo nam', 'rektorát muni', 'rektorat muni', 'masarykova univerzita'],
+        'name': 'Rektorát Masarykovy univerzity',
+        'address': 'Žerotínovo náměstí 617/9, Brno',
         'city': 'Brno',
     },
     {
@@ -383,11 +407,26 @@ def extract_venue_and_address(text: str, default_venue: str = "Brno") -> Tuple[s
             return candidate, None
 
     # 3. Search for street and number in Brno: e.g. "Kounicova 42, Brno" or "Sukova 4"
-    addr_match = re.search(r"\b([A-ZÁ-Ž][a-zčďéěíňóřšťúůýž]+(?:\s+[a-zčďéěíňóřšťúůýž]+)?\s+\d+(?:[a-zA-Z]|\/\d+)?)(?:,\s*([A-ZÁ-Ž][a-zčďéěíňóřšťúůýž]+))?\b", cleaned)
-    if addr_match:
-        street = addr_match.group(1).strip()
+    non_street_words = {
+        "academy", "prezenčně", "prezencne", "online", "listopadu", "prosince", "ledna",
+        "února", "unora", "března", "brezna", "dubna", "května", "kvetna", "června", "cervna",
+        "července", "cervence", "srpna", "září", "zari", "října", "rijna", "ročník", "rocnik",
+        "pátek", "patek", "sobota", "neděle", "nedele", "pondělí", "pondeli", "úterý", "utery",
+        "středa", "streda", "čtvrtek", "ctvrtek", "cena", "vstup", "vstupné", "vstupne",
+        "od", "do", "ve", "v", "top", "listopad", "prosinec", "leden", "únor", "březen"
+    }
+    for addr_match in re.finditer(r"\b([A-ZÁ-Ž][a-zčďéěíňóřšťúůýž]+(?:\s+[a-zčďéěíňóřšťúůýž]+)?\s+\d+(?:[a-zA-Z]|\/\d+)?)(?:,\s*([A-ZÁ-Ž][a-zčďéěíňóřšťúůýž]+))?\b", cleaned):
+        street_cand = addr_match.group(1).strip()
+        parts = street_cand.lower().split()
+        if any(p in non_street_words for p in parts):
+            continue
+        m_num = re.search(r"\d+", street_cand)
+        if m_num:
+            num = int(m_num.group(0))
+            if 1900 <= num <= 2100:  # year
+                continue
         city = addr_match.group(2).strip() if addr_match.group(2) else "Brno"
-        return f"{street}, {city}", f"{street}, {city}"
+        return f"{street_cand}, {city}", f"{street_cand}, {city}"
 
     return default_venue, None
 
@@ -405,8 +444,8 @@ def extract_price_info(text: str, ticket_url: Optional[str] = None) -> Tuple[str
     if any(k in lower for k in ["vstup zdarma", "zdarma", "volný vstup", "vstup volný", "free entry"]):
         return "free", None
 
-    # Paid keyword or pattern with numbers: e.g. "Vstup: 250,-", "80 Kč", "150 CZK"
-    vstup_match = re.search(r"(?:vstup|vstupné|startovné|ticket)(?:[^:\n]*:)?\s*(?:[^\d\n]*\s*)?(\d+)\s*(?:Kč|czk|,-)", lower)
+    # Paid keyword or pattern with numbers: e.g. "Vstup: 250,-", "80 Kč", "150 CZK", "Startovné je 80 Kč"
+    vstup_match = re.search(r"(?:vstup|vstupné|vstupne|startovné|startovne|ticket)(?:[^:\n]*:)?\s*(?:[^\d\n]*\s*)?(\d+)\s*(?:kč|czk|,-)", lower, re.IGNORECASE)
     if vstup_match:
         return "paid", int(vstup_match.group(1))
 
@@ -455,7 +494,16 @@ def is_administrative_or_irrelevant(text: str) -> bool:
         "dodatečné přijímací",
         "kurz celoživotního vzdělávání",
         "celoživotní vzdělávání",
+        "kurz cžv",
+        "kurzy cžv",
+        "cžv",
+        "vzdělávání po celý život",
         "pro středoškoláky",
+        "pro studenty středních škol",
+        "pro studenty sš",
+        "pro žáky zš",
+        "pro žáky sš",
         "dny praxe",
+        "düsseldorf",
     ]
     return any(p in lower for p in blocked_phrases)

@@ -171,6 +171,46 @@ class DatabaseSeeder extends Seeder
             'description' => 'Zahradnická fakulta Mendelovy univerzity v Lednici.',
         ]);
 
+        Venue::firstOrCreate(['slug' => 'ff-muni-arna-novaka'], [
+            'name' => 'Filozofická fakulta MUNI',
+            'address' => 'Arna Nováka 1/1',
+            'city' => 'Brno',
+            'latitude' => 49.2001,
+            'longitude' => 16.5986,
+            'website_url' => 'https://phil.muni.cz',
+            'description' => 'Areál Filozofické fakulty Masarykovy univerzity na ulici Arna Nováka.',
+        ]);
+
+        Venue::firstOrCreate(['slug' => 'law-muni-veveri'], [
+            'name' => 'Právnická fakulta MUNI',
+            'address' => 'Veveří 70',
+            'city' => 'Brno',
+            'latitude' => 49.2057,
+            'longitude' => 16.5941,
+            'website_url' => 'https://law.muni.cz',
+            'description' => 'Budova Právnické fakulty Masarykovy univerzity na Veveří.',
+        ]);
+
+        Venue::firstOrCreate(['slug' => 'econ-muni-lipova'], [
+            'name' => 'Ekonomicko-správní fakulta MUNI',
+            'address' => 'Lipová 41a',
+            'city' => 'Brno',
+            'latitude' => 49.1942,
+            'longitude' => 16.5746,
+            'website_url' => 'https://econ.muni.cz',
+            'description' => 'Areál Ekonomicko-správní fakulty Masarykovy univerzity v Pisárkách.',
+        ]);
+
+        Venue::firstOrCreate(['slug' => 'rektorat-muni'], [
+            'name' => 'Rektorát Masarykovy univerzity',
+            'address' => 'Žerotínovo náměstí 617/9',
+            'city' => 'Brno',
+            'latitude' => 49.1985,
+            'longitude' => 16.6053,
+            'website_url' => 'https://muni.cz',
+            'description' => 'Sídlo rektorátu Masarykovy univerzity.',
+        ]);
+
         // 2. Categories
         $catParty = Category::create([
             'name' => 'Párty & Kluby',

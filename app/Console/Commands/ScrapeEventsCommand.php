@@ -174,13 +174,6 @@ class ScrapeEventsCommand extends Command
                     $startsAt = now()->addDays(2)->setTime(18, 0);
                 }
 
-                // Ignorovat staré proběhlé akce (starší než 2 dny), aby nezahlcovaly moderaci
-                if ($startsAt->lt(now()->subDays(2))) {
-                    $sourceSkipped++;
-                    $totalSkipped++;
-                    continue;
-                }
-
                 $endsAt = null;
                 if (!empty($item['ends_at'])) {
                     try {
@@ -188,6 +181,14 @@ class ScrapeEventsCommand extends Command
                     } catch (\Throwable $e) {
                         $endsAt = null;
                     }
+                }
+
+                // Ignorovat staré proběhlé akce (skončily před více než 2 dny), aby nezahlcovaly moderaci
+                $effectiveEnd = $endsAt ?? $startsAt;
+                if ($effectiveEnd->lt(now()->subDays(2))) {
+                    $sourceSkipped++;
+                    $totalSkipped++;
+                    continue;
                 }
 
                 // Deduplikace podle unikátního source_url nebo titulku/slugu a data
@@ -208,7 +209,30 @@ class ScrapeEventsCommand extends Command
                     });
                 })->first();
 
+                $university = $item['university'] ?? $source->university ?? 'OTHER';
+
                 if ($existing) {
+                    // Pokud stávající akce nemá přiřazené místo (venue), nebo se zpřesnil čas/konec, automaticky ji obohatíme
+                    $locName = $item['location_name'] ?? '';
+                    $venueId = $this->matchVenue($locName, $university);
+                    $updates = [];
+                    if (empty($existing->venue_id) && $venueId) {
+                        $updates['venue_id'] = $venueId;
+                        $updates['location_name'] = $locName;
+                    }
+                    if ($startsAt && $existing->starts_at != $startsAt) {
+                        $updates['starts_at'] = $startsAt;
+                    }
+                    if ($endsAt && $existing->ends_at != $endsAt) {
+                        $updates['ends_at'] = $endsAt;
+                    }
+                    if (!empty($item['cover_image']) && empty($existing->cover_image)) {
+                        $updates['cover_image'] = $item['cover_image'];
+                    }
+                    if (!empty($updates)) {
+                        $existing->update($updates);
+                    }
+
                     $sourceSkipped++;
                     $totalSkipped++;
                     continue;
@@ -216,7 +240,6 @@ class ScrapeEventsCommand extends Command
 
                 // Určení organizace: akce mimo univerzitní weby (Instagram, Facebook, spolky) musí náležet spolkům!
                 $orgId = $source->organization_id;
-                $university = $item['university'] ?? $source->university ?? 'OTHER';
 
                 if (!$orgId) {
                     $isSocialOrExternal = in_array($source->type ?? '', ['web_instagram', 'web_facebook', 'instagram', 'facebook', 'web_ical'])
@@ -462,11 +485,23 @@ class ScrapeEventsCommand extends Command
         if (str_contains($locLower, 'botanická 68') || str_contains($locLower, 'fi muni')) {
             return Venue::where('slug', 'fi-muni-botanicka')->value('id');
         }
-        if (str_contains($locLower, 'kotlářsk') || str_contains($locLower, 'přf muni')) {
+        if (str_contains($locLower, 'kotlářsk') || str_contains($locLower, 'přf muni') || str_contains($locLower, 'přírodovědecká fakulta') || str_contains($locLower, 'prirodovedecka fakulta')) {
             return Venue::where('slug', 'prf-muni-kotlarska')->value('id');
         }
-        if (str_contains($locLower, 'kamenice') || str_contains($locLower, 'kampus bohunice')) {
+        if (str_contains($locLower, 'kamenice') || str_contains($locLower, 'kampus bohunice') || str_contains($locLower, 'simu') || str_contains($locLower, 'simulační centrum') || str_contains($locLower, 'fn bohunice') || str_contains($locLower, 'jihlavská')) {
             return Venue::where('slug', 'kampus-bohunice')->value('id');
+        }
+        if (str_contains($locLower, 'arna novák') || str_contains($locLower, 'arna novaka') || str_contains($locLower, 'ff mu') || str_contains($locLower, 'ff muni') || str_contains($locLower, 'filozofick')) {
+            return Venue::where('slug', 'ff-muni-arna-novaka')->value('id');
+        }
+        if (str_contains($locLower, 'veveří 70') || str_contains($locLower, 'veveri 70') || str_contains($locLower, 'právnick') || str_contains($locLower, 'pravnick') || str_contains($locLower, 'law muni')) {
+            return Venue::where('slug', 'law-muni-veveri')->value('id');
+        }
+        if (str_contains($locLower, 'lipov') || str_contains($locLower, 'ekonomicko-správní') || str_contains($locLower, 'ekonomicko-spravni') || str_contains($locLower, 'esf')) {
+            return Venue::where('slug', 'econ-muni-lipova')->value('id');
+        }
+        if (str_contains($locLower, 'žerotínov') || str_contains($locLower, 'zerotinov') || str_contains($locLower, 'rektorát') || str_contains($locLower, 'rektorat') || str_contains($locLower, 'masarykova univerzita')) {
+            return Venue::where('slug', 'rektorat-muni')->value('id');
         }
         if (str_contains($locLower, 'lednice') || str_contains($locLower, 'valtická')) {
             return Venue::where('slug', 'zf-mendelu-lednice')->value('id');
