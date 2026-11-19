@@ -168,6 +168,60 @@ KNOWN_VENUES: List[Dict[str, Any]] = [
         'city': 'Brno',
     },
     {
+        'keywords': ['fekt vut', 'fekt', 'technická 12', 'technicka 12', 'aula profesora braunera'],
+        'name': 'FEKT VUT',
+        'address': 'Technická 12, Brno',
+        'city': 'Brno',
+    },
+    {
+        'keywords': ['fsi vut', 'fsi', 'technická 2896/2', 'technicka 2896/2', 'technická 2'],
+        'name': 'FSI VUT',
+        'address': 'Technická 2896/2, Brno',
+        'city': 'Brno',
+    },
+    {
+        'keywords': ['fa vut', 'fakulta architektury vut', 'poříčí 5', 'poříčí 273/5'],
+        'name': 'Fakulta architektury VUT',
+        'address': 'Poříčí 273/5, Brno',
+        'city': 'Brno',
+    },
+    {
+        'keywords': ['fast vut', 'fakulta stavební vut', 'veveří 95', 'veveří 331/95'],
+        'name': 'Fakulta stavební VUT',
+        'address': 'Veveří 331/95, Brno',
+        'city': 'Brno',
+    },
+    {
+        'keywords': ['fp vut', 'fakulta podnikatelská vut', 'kolejní 4', 'kolejní 2906/4'],
+        'name': 'Fakulta podnikatelská VUT',
+        'address': 'Kolejní 2906/4, Brno',
+        'city': 'Brno',
+    },
+    {
+        'keywords': ['fch vut', 'fakulta chemická vut', 'purkyňova 118', 'purkyňova 464/118'],
+        'name': 'Fakulta chemická VUT',
+        'address': 'Purkyňova 464/118, Brno',
+        'city': 'Brno',
+    },
+    {
+        'keywords': ['favu vut', 'favu', 'údolní 53', 'údolní 244/53'],
+        'name': 'FaVU VUT',
+        'address': 'Údolní 244/53, Brno',
+        'city': 'Brno',
+    },
+    {
+        'keywords': ['pod palackého vrchem', 'koleje ppv', 'ppv vut'],
+        'name': 'Koleje Pod Palackého vrchem VUT',
+        'address': 'Kolejní 2, Brno',
+        'city': 'Brno',
+    },
+    {
+        'keywords': ['u kachničky', 'klub u kachničky'],
+        'name': 'Studentský klub U Kachničky',
+        'address': 'Božetěchova 1/2, Brno',
+        'city': 'Brno',
+    },
+    {
         'keywords': ['poříčí', 'porici', 'pedagogická fakulta', 'pedagogicka fakulta', 'pdf muni'],
         'name': 'Pedagogická fakulta MUNI',
         'address': 'Poříčí 7/9, Brno',
@@ -402,11 +456,11 @@ def extract_venue_and_address(text: str, default_venue: str = "Brno") -> Tuple[s
                 display = f"{v['name']}, {v['address']}" if v['address'] else v['name']
                 return display, v.get('address')
 
-    # 2. Search for explicit "Kde / Místo / 📍" markers
-    venue_match = re.search(r"(?:Kde|Místo|Místo konání|Lokalita|📍)\s*:?\s*([^\n\r]+)", cleaned, re.IGNORECASE)
+    # 2. Search for explicit "Kde / Místo / 📍" markers on raw text first so emojis aren't lost
+    venue_match = re.search(r"(?:Kde|Místo|Místo konání|Lokalita|[📍📌🗺️])\s*:?\s*([^\n\r]+)", text, re.IGNORECASE)
     if venue_match:
         candidate = clean_emoji(venue_match.group(1).strip())
-        candidate = re.sub(r"^(?:ve?|at|in|do)\s+", "", candidate, flags=re.IGNORECASE).strip()
+        candidate = re.sub(r"^(?:ve?|at|in|do|na)\s+", "", candidate, flags=re.IGNORECASE).strip()
         candidate = re.sub(r"\s*//+\s*$", "", candidate).strip()
         if candidate and len(candidate) > 2:
             # Check candidate against known venues again
@@ -425,12 +479,19 @@ def extract_venue_and_address(text: str, default_venue: str = "Brno") -> Tuple[s
         "července", "cervence", "srpna", "září", "zari", "října", "rijna", "ročník", "rocnik",
         "pátek", "patek", "sobota", "neděle", "nedele", "pondělí", "pondeli", "úterý", "utery",
         "středa", "streda", "čtvrtek", "ctvrtek", "cena", "vstup", "vstupné", "vstupne",
-        "od", "do", "ve", "v", "top", "listopad", "prosinec", "leden", "únor", "březen"
+        "od", "do", "ve", "v", "top", "listopad", "prosinec", "leden", "únor", "březen",
+        "na", "k", "ke", "o", "u", "za", "přes", "pod", "pro", "se", "si", "přijďte", "prijdte",
+        "přijď", "prijd", "více", "vice", "čtěte", "ctete", "vložil", "vlozil", "změna", "zmena",
+        "hodin", "hod", "let", "patro", "kolo", "místnost", "mistnost"
     }
     for addr_match in re.finditer(r"\b([A-ZÁ-Ž][a-zčďéěíňóřšťúůýž]+(?:\s+[a-zčďéěíňóřšťúůýž]+)?\s+\d+(?:[a-zA-Z]|\/\d+)?)(?:,\s*([A-ZÁ-Ž][a-zčďéěíňóřšťúůýž]+))?\b", cleaned):
         street_cand = addr_match.group(1).strip()
         parts = street_cand.lower().split()
         if any(p in non_street_words for p in parts):
+            continue
+        end_pos = addr_match.end()
+        post_match = cleaned[end_pos:end_pos+20].lower()
+        if re.match(r"^\s*\.?\s*(?:ročník|rocnik|patro|kolo|hodin|hod\b|let\b)", post_match):
             continue
         m_num = re.search(r"\d+", street_cand)
         if m_num:
@@ -462,13 +523,19 @@ def extract_price_info(text: str, ticket_url: Optional[str] = None) -> Tuple[str
     lower = text.lower()
 
     # Free keywords
-    if any(k in lower for k in ["vstup zdarma", "zdarma", "volný vstup", "vstup volný", "free entry"]):
+    if any(k in lower for k in ["vstup zdarma", "zdarma", "volný vstup", "vstup volný", "free entry", "bezplatn", "bez poplatku"]):
         return "free", None
 
-    # Paid keyword or pattern with numbers: e.g. "Vstup: 250,-", "80 Kč", "150 CZK", "Startovné je 80 Kč"
-    vstup_match = re.search(r"(?:vstup|vstupné|vstupne|startovné|startovne|ticket)(?:[^:\n]*:)?\s*(?:[^\d\n]*\s*)?(\d+)\s*(?:kč|czk|,-)", lower, re.IGNORECASE)
-    if vstup_match:
-        return "paid", int(vstup_match.group(1))
+    # Paid keyword or pattern with numbers: e.g. "Vstup: 250,-", "80 Kč", "150 CZK", "Startovné je 80 Kč", "Poplatek za kurz je 1990 Kč"
+    price_match = re.search(r"(?:cena|poplatek|kurzovné|kurzovne|vstup|vstupné|vstupne|startovné|startovne|ticket|tickets)(?:[^:\n]*:)?\s*(?:[^\d\n]*\s*)?(\d+)\s*(?:kč|czk|,-)", lower, re.IGNORECASE)
+    if price_match:
+        return "paid", int(price_match.group(1))
+
+    num_czk = re.search(r"\b(\d+)\s*(?:kč|czk)\b", lower)
+    if num_czk:
+        amt = int(num_czk.group(1))
+        if amt > 0 and amt != 2026 and amt != 2027:
+            return "paid", amt
 
     if ticket_url:
         return "paid", None

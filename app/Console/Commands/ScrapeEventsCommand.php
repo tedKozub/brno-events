@@ -212,14 +212,21 @@ class ScrapeEventsCommand extends Command
                 $university = $item['university'] ?? $source->university ?? 'OTHER';
 
                 if ($existing) {
-                    // Pokud stávající akce nemá přiřazené místo (venue), nebo se zpřesnil čas/konec, automaticky ji obohatíme
+                    // Pokud stávající akce nemá přiřazené místo (venue), nebo se zpřesnil čas/konec/popis, automaticky ji obohatíme
                     $locName = $item['location_name'] ?? '';
                     $venueId = $this->matchVenue($locName, $university);
                     $updates = [];
-                    if (empty($existing->venue_id) && $venueId) {
+
+                    if ($locName && $existing->location_name !== $locName) {
+                        $updates['location_name'] = $locName;
+                        if ($venueId) {
+                            $updates['venue_id'] = $venueId;
+                        }
+                    } elseif (empty($existing->venue_id) && $venueId) {
                         $updates['venue_id'] = $venueId;
                         $updates['location_name'] = $locName;
                     }
+
                     if ($startsAt && $existing->starts_at != $startsAt) {
                         $updates['starts_at'] = $startsAt;
                     }
@@ -229,6 +236,19 @@ class ScrapeEventsCommand extends Command
                     if (!empty($item['cover_image']) && empty($existing->cover_image)) {
                         $updates['cover_image'] = $item['cover_image'];
                     }
+
+                    // Pokud stávající popis byl jen krátký placeholder nebo máme nový plnohodnotný popis
+                    if (!empty($item['description']) && (
+                        empty($existing->description) ||
+                        str_starts_with($existing->description, 'Událost Fakulty') ||
+                        strlen($item['description']) > strlen($existing->description) + 50
+                    )) {
+                        $updates['description'] = $item['description'];
+                        if (!empty($item['short_description'])) {
+                            $updates['short_description'] = $item['short_description'];
+                        }
+                    }
+
                     if (!empty($updates)) {
                         $existing->update($updates);
                     }
@@ -485,6 +505,12 @@ class ScrapeEventsCommand extends Command
         }
         if (str_contains($locLower, 'vetuni') || str_contains($locLower, 'palackého tř')) {
             return Venue::where('slug', 'kampus-vetuni-palackeho')->value('id');
+        }
+        if (str_contains($locLower, 'fekt') || str_contains($locLower, 'technická 12') || str_contains($locLower, 'technicka 12') || str_contains($locLower, 'aula profesora braunera')) {
+            return Venue::where('slug', 'fekt-vut-technicka')->value('id');
+        }
+        if (str_contains($locLower, 'fsi') || str_contains($locLower, 'technická 2') || str_contains($locLower, 'technicka 2')) {
+            return Venue::where('slug', 'fsi-vut-technicka')->value('id');
         }
         if (str_contains($locLower, 'božetěchov') || str_contains($locLower, 'fit vut')) {
             return Venue::where('slug', 'fit-vut-bozetechova')->value('id');

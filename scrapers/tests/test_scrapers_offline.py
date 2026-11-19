@@ -29,6 +29,12 @@ from parsers.instagram_parser import (
     sanitize_extracted_event_date,
 )
 from parsers.facebook_parser import extract_event_from_text
+from parsers.common import (
+    extract_venue_and_address,
+    extract_time_range_from_text,
+    extract_explicit_time_from_text,
+    extract_price_info,
+)
 
 
 class TestScrapersOffline(unittest.TestCase):
@@ -105,6 +111,41 @@ class TestScrapersOffline(unittest.TestCase):
         self.assertEqual(len(events), 1)
         self.assertIn("Hackathon", events[0]["title"])
         self.assertIn("Božetěchova", events[0]["location_name"])
+
+    def test_fit_vut_venue_and_time_extraction(self):
+        # 1. Quantum Day at FEKT VUT: must extract FEKT VUT Technická 12 and never match 'Přijďte na 4'
+        qd_text = (
+            "Kvantové technologie ve vědě, průmyslu i obraně. Přijďte na 4. ročník odborného setkání Quantum Day 2026.\n"
+            "📅 25. listopadu 2026, 8:30–16:00\n"
+            "📍 FEKT VUT, Technická 12, Brno. Aula profesora Braunera"
+        )
+        venue, addr = extract_venue_and_address(qd_text, default_venue="FIT VUT, Božetěchova 1/2, Brno – Královo Pole")
+        self.assertEqual(venue, "FEKT VUT, Technická 12, Brno")
+        self.assertEqual(addr, "Technická 12, Brno")
+        self.assertNotIn("Přijďte", venue)
+
+        # 2. Time range extraction
+        s_time, e_time = extract_time_range_from_text(qd_text)
+        self.assertEqual(s_time, (8, 30))
+        self.assertEqual(e_time, (16, 0))
+
+        # 3. Explicit time with 'od 15 hodin'
+        zit_text = "📅 19. listopadu 2026 od 15 hodin\n📌 areál FIT VUT"
+        t_parsed = extract_explicit_time_from_text(zit_text)
+        self.assertEqual(t_parsed, (15, 0))
+
+        # 4. DOD time range: 'od 9:00 do 14:00'
+        dod_text = "Pátek 27. listopadu od 9:00 do 14:00"
+        s_dod, e_dod = extract_time_range_from_text(dod_text)
+        self.assertEqual(s_dod, (9, 0))
+        self.assertEqual(e_dod, (14, 0))
+
+        # 5. Price extraction
+        price_type, amount = extract_price_info("Účast je bezplatná, nutná registrace.")
+        self.assertEqual(price_type, "free")
+        price_paid, amount_paid = extract_price_info("Poplatek za kurz je 1990 Kč.")
+        self.assertEqual(price_paid, "paid")
+        self.assertEqual(amount_paid, 1990)
 
     def test_parse_unob_offline(self):
         path = os.path.join(self.fixtures_dir, "sample_unob.html")

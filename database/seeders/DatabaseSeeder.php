@@ -221,6 +221,26 @@ class DatabaseSeeder extends Seeder
             'description' => 'Historické sídlo brněnského magistrátu s reprezentativními sály a nádvořím.',
         ]);
 
+        Venue::firstOrCreate(['slug' => 'fekt-vut-technicka'], [
+            'name' => 'FEKT VUT',
+            'address' => 'Technická 12',
+            'city' => 'Brno',
+            'latitude' => 49.2263,
+            'longitude' => 16.5742,
+            'website_url' => 'https://www.fekt.vut.cz',
+            'description' => 'Areál Fakulty elektrotechniky a komunikačních technologií VUT v Brně Pod Palackého vrchem.',
+        ]);
+
+        Venue::firstOrCreate(['slug' => 'fsi-vut-technicka'], [
+            'name' => 'FSI VUT',
+            'address' => 'Technická 2896/2',
+            'city' => 'Brno',
+            'latitude' => 49.2241,
+            'longitude' => 16.5786,
+            'website_url' => 'https://www.fsi.vut.cz',
+            'description' => 'Areál Fakulty strojního inženýrství VUT v Brně.',
+        ]);
+
         // 2. Categories
         $catParty = Category::create([
             'name' => 'Párty & Kluby',

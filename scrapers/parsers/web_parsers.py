@@ -186,88 +186,210 @@ def parse_mendelu(html: str, base_url: str = "https://mendelu.cz/akce/") -> List
 def parse_fit_vut(html: str, base_url: str = "https://www.fit.vut.cz/fit/calendar/") -> List[Dict[str, Any]]:
     """
     Parses events from fit.vut.cz/fit/calendar/
+    Extracts high-resolution images, rich descriptions, exact times, rooms, and venues.
+    Fetches online details when available and supports offline parsing without network.
     """
     soup = BeautifulSoup(html, "lxml")
     events = []
     current_year = datetime.datetime.now().year
     now = datetime.datetime.now()
 
-    for item in soup.select("li.c-events__item, .c-events__item"):
-        if is_administrative_or_irrelevant(item.get_text(" ", strip=True)):
-            continue
+    # Reuse an HTTP client for detail requests if online
+    client = None
+    if base_url.startswith("http"):
+        try:
+            client = httpx.Client(
+                headers={
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) BrnoEvents/1.0",
+                    "Accept-Language": "cs,en;q=0.9",
+                },
+                timeout=6.0,
+                follow_redirects=True,
+            )
+        except Exception:
+            client = None
 
-        link_el = item.find("a")
-        if not link_el:
-            continue
+    try:
+        items = list(soup.select("li.c-events__item, .c-events__item"))
 
-        url = urljoin(base_url, link_el.get("href", ""))
-        title_el = item.find(["h2", "h3"], class_=lambda c: c and "title" in c)
-        if not title_el:
-            title_el = item.find(["h2", "h3", "h4"])
-        if not title_el:
-            continue
-        title = title_el.get_text(strip=True)
+        # If online and in Q4 (months 10-12), check next year link (e.g. /fit/calendar/2027/)
+        if client and now.month >= 10:
+            next_year = current_year + 1
+            for page_link in soup.select("a.pagination__link, .pagination a"):
+                href = page_link.get("href", "")
+                if str(next_year) in href:
+                    try:
+                        next_url = urljoin(base_url, href)
+                        resp_next = client.get(next_url)
+                        if resp_next.status_code == 200:
+                            soup_next = BeautifulSoup(resp_next.text, "lxml")
+                            for ni in soup_next.select("li.c-events__item, .c-events__item"):
+                                items.append(ni)
+                    except Exception:
+                        pass
+                    break
 
-        # Cover image extraction
-        img_el = item.select_one(".b-term__img img, img")
-        cover_image = None
-        if img_el and img_el.get("src"):
-            cover_image = urljoin(base_url, img_el.get("src"))
+        seen_urls = set()
 
-        # Date parsing: check <time datetime="..."> first
-        starts_at = None
-        ends_at = None
-        time_el = item.find("time")
-        if time_el and time_el.get("datetime"):
-            dt_raw = time_el.get("datetime")
+        for item in items:
+            link_el = item.find("a")
+            if not link_el:
+                continue
+
+            url = urljoin(base_url, link_el.get("href", ""))
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+
+            title_el = item.find(["h2", "h3"], class_=lambda c: c and "title" in c)
+            if not title_el:
+                title_el = item.find(["h2", "h3", "h4"])
+            if not title_el:
+                continue
+            raw_title = title_el.get_text(strip=True)
+            title = clean_title(raw_title)
+
+            if is_administrative_or_irrelevant(title):
+                continue
+
+            # Cover image from thumbnail
+            img_el = item.select_one(".b-term__img img, img")
+            cover_image = None
+            if img_el and img_el.get("src"):
+                cover_image = urljoin(base_url, img_el.get("src"))
+
+            # Initial date/time from item
+            starts_at = None
+            ends_at = None
+            has_explicit_time = False
+
+            time_el = item.find("time")
+            if time_el and time_el.get("datetime"):
+                dt_raw = time_el.get("datetime").strip()
+                try:
+                    dt_parsed = datetime.datetime.fromisoformat(dt_raw)
+                    if "T" in dt_raw or ":" in dt_raw:
+                        starts_at = dt_parsed.strftime("%Y-%m-%d %H:%M:%S")
+                        has_explicit_time = True
+                    else:
+                        starts_at = dt_parsed.strftime("%Y-%m-%d")
+                except Exception:
+                    pass
+
+            if not starts_at:
+                day_el = item.find(class_=lambda c: c and "day" in c)
+                month_el = item.find(class_=lambda c: c and "month" in c)
+                year_el = item.find(class_=lambda c: c and "year" in c)
+
+                day_matches = re.findall(r"\d+", day_el.get_text()) if day_el else []
+                day = int(day_matches[0]) if day_matches else None
+                end_day = int(day_matches[1]) if len(day_matches) > 1 else None
+
+                month_str = month_el.get_text(strip=True).lower() if month_el else ""
+                month = CZECH_MONTHS.get(month_str[:3], now.month)
+                year = int(re.sub(r"\D", "", year_el.get_text())) if year_el and re.sub(r"\D", "", year_el.get_text()) else current_year
+
+                if day and month:
+                    starts_at = f"{year:04d}-{month:02d}-{day:02d}"
+                    if end_day and 1 <= end_day <= 31:
+                        ends_at = f"{year:04d}-{month:02d}-{end_day:02d} 18:00:00"
+                else:
+                    starts_at = f"{current_year:04d}-11-20"
+
+            # Skip past events older than 7 days
             try:
-                dt_parsed = datetime.datetime.fromisoformat(dt_raw)
-                starts_at = dt_parsed.strftime("%Y-%m-%d %H:%M:%S")
+                event_dt = datetime.datetime.strptime(starts_at[:10], "%Y-%m-%d")
+                if event_dt < (now - datetime.timedelta(days=7)):
+                    continue
             except Exception:
                 pass
 
-        if not starts_at:
-            day_el = item.find(class_=lambda c: c and "day" in c)
-            month_el = item.find(class_=lambda c: c and "month" in c)
-            year_el = item.find(class_=lambda c: c and "year" in c)
+            # Detail extraction
+            desc = f"Událost Fakulty informačních technologií VUT v Brně: {title}."
+            short_desc = desc[:200]
+            location_name = "FIT VUT, Božetěchova 1/2, Brno – Královo Pole"
+            price_type = "free"  # Default for university academic/public events
+            price_amount = None
 
-            day_matches = re.findall(r"\d+", day_el.get_text()) if day_el else []
-            day = int(day_matches[0]) if day_matches else None
-            end_day = int(day_matches[1]) if len(day_matches) > 1 else None
+            # Fetch rich detail if online and matching detail URL pattern
+            if client and re.search(r"fit\.vut\.cz/fit/calendar/\d+", url):
+                try:
+                    r_det = client.get(url)
+                    if r_det.status_code == 200:
+                        d_soup = BeautifulSoup(r_det.text, "lxml")
+                        og_img = d_soup.select_one('meta[property="og:image"], meta[name="twitter:image"]')
+                        if og_img and og_img.get("content"):
+                            cover_image = og_img.get("content").strip()
 
-            month_str = month_el.get_text(strip=True).lower() if month_el else ""
-            month = CZECH_MONTHS.get(month_str[:3], now.month)
-            year = int(re.sub(r"\D", "", year_el.get_text())) if year_el and re.sub(r"\D", "", year_el.get_text()) else current_year
+                        body_el = d_soup.select_one(".b-detail__content, .b-detail__body")
+                        if body_el:
+                            for annot in body_el.select(".b-detail__annot, .c-news"):
+                                annot.decompose()
+                            body_text = body_el.get_text("\n", strip=True)
 
-            if day and month:
-                starts_at = f"{year:04d}-{month:02d}-{day:02d} 14:00:00"
-                if end_day and 1 <= end_day <= 31:
-                    ends_at = f"{year:04d}-{month:02d}-{end_day:02d} 18:00:00"
-            else:
-                starts_at = f"{current_year:04d}-11-20 14:00:00"
+                            if is_administrative_or_irrelevant(body_text):
+                                continue
 
-        # Skip past events older than 7 days
-        try:
-            event_dt = datetime.datetime.strptime(starts_at[:10], "%Y-%m-%d")
-            if event_dt < (now - datetime.timedelta(days=7)):
+                            paragraphs = [p.get_text(" ", strip=True) for p in body_el.find_all(["p", "li"]) if p.get_text(" ", strip=True)]
+                            clean_paras = [
+                                p for p in paragraphs
+                                if not re.match(r"^[📅📍📌🕘💰🔗]|^(?:Kdy|Kde|Místo|Rozsah|Lektor|Cena|Vložil|Poslední změna)\s*:", p, re.I)
+                            ]
+                            if clean_paras:
+                                full_body = "\n\n".join(clean_paras)
+                                if len(full_body) > 30:
+                                    desc = full_body
+                                    short_desc = clean_paras[0][:200]
+
+                            s_time, e_time = extract_time_range_from_text(body_text)
+                            if not s_time:
+                                s_time = extract_explicit_time_from_text(body_text)
+                            if s_time:
+                                sh, sm = s_time
+                                starts_at = f"{starts_at[:10]} {sh:02d}:{sm:02d}:00"
+                                has_explicit_time = True
+                                if e_time:
+                                    eh, em = e_time
+                                    ends_at = f"{starts_at[:10]} {eh:02d}:{em:02d}:00"
+
+                            v_name, v_addr = extract_venue_and_address(body_text, default_venue=location_name)
+                            if v_name:
+                                location_name = v_name
+
+                            p_type, p_val = extract_price_info(body_text)
+                            if p_type:
+                                price_type = p_type
+                                price_amount = p_val
+                except Exception:
+                    pass
+
+            if len(starts_at) == 10:
+                starts_at = f"{starts_at} 14:00:00"
+
+            # Check if outside Brno
+            if is_outside_brno(location_name, title + " " + desc):
                 continue
-        except Exception:
-            pass
 
-        desc = f"Událost Fakulty informačních technologií VUT v Brně: {title}."
-
-        events.append({
-            "title": title,
-            "short_description": desc[:200],
-            "description": desc,
-            "starts_at": starts_at,
-            "ends_at": ends_at,
-            "is_all_day": False,
-            "cover_image": cover_image,
-            "location_name": "FIT VUT, Božetěchova 1/2, Brno – Královo Pole",
-            "source_url": url,
-            "source_type": "scraper_web",
-        })
+            events.append({
+                "title": title,
+                "short_description": short_desc,
+                "description": desc,
+                "starts_at": starts_at,
+                "ends_at": ends_at,
+                "is_all_day": not has_explicit_time,
+                "cover_image": cover_image,
+                "location_name": location_name,
+                "price_type": price_type,
+                "price_amount": price_amount,
+                "source_url": url,
+                "source_type": "scraper_web",
+            })
+    finally:
+        if client:
+            try:
+                client.close()
+            except Exception:
+                pass
 
     return events
 

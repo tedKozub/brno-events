@@ -258,4 +258,36 @@ PY;
         $this->assertStringNotContainsString('Rektorát', $genericEvent->map_coordinates['title']);
         $this->assertStringNotContainsString('Žerotínovo náměstí', $genericEvent->map_coordinates['address']);
     }
+
+    public function test_fit_vut_events_venue_and_time_accuracy(): void
+    {
+        $fektVenue = Venue::firstOrCreate(
+            ['slug' => 'fekt-vut-technicka'],
+            [
+                'name' => 'FEKT VUT',
+                'address' => 'Technická 12',
+                'city' => 'Brno',
+                'latitude' => 49.2263,
+                'longitude' => 16.5742,
+            ]
+        );
+
+        $quantumDay = Event::create([
+            'title' => 'Quantum Day 2026',
+            'slug' => 'quantum-day-2026-test',
+            'starts_at' => Carbon::parse('2026-11-25 08:30:00'),
+            'ends_at' => Carbon::parse('2026-11-25 16:00:00'),
+            'status' => 'published',
+            'venue_id' => $fektVenue->id,
+            'location_name' => 'FEKT VUT, Technická 12, Brno',
+        ]);
+
+        $this->assertEquals('FEKT VUT, Technická 12', $quantumDay->location_display);
+        $this->assertEquals(49.2263, $quantumDay->map_coordinates['lat']);
+        $this->assertEquals(16.5742, $quantumDay->map_coordinates['lng']);
+        $this->assertStringNotContainsString('Božetěchova', $quantumDay->location_display);
+        $this->assertStringNotContainsString('Přijďte na 4', $quantumDay->location_display);
+        $this->assertEquals('08:30', $quantumDay->starts_at->format('H:i'));
+        $this->assertEquals('16:00', $quantumDay->ends_at->format('H:i'));
+    }
 }
