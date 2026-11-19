@@ -215,16 +215,22 @@ class ScrapeEventsCommand extends Command
                     // Pokud stávající akce nemá přiřazené místo (venue), nebo se zpřesnil čas/konec/popis, automaticky ji obohatíme
                     $locName = $item['location_name'] ?? '';
                     $venueId = $this->matchVenue($locName, $university);
+
+                    // Pokud se akce koná mimo Brno (např. Lednice, Telč, jiná města), smažeme ji
+                    if ($this->isOutsideBrno($locName, $title . ' ' . ($item['description'] ?? ''), $venueId)) {
+                        $existing->delete();
+                        $sourceSkipped++;
+                        $totalSkipped++;
+                        continue;
+                    }
+
                     $updates = [];
 
                     if ($locName && $existing->location_name !== $locName) {
                         $updates['location_name'] = $locName;
-                        if ($venueId) {
-                            $updates['venue_id'] = $venueId;
-                        }
-                    } elseif (empty($existing->venue_id) && $venueId) {
+                    }
+                    if ($venueId != $existing->venue_id) {
                         $updates['venue_id'] = $venueId;
-                        $updates['location_name'] = $locName;
                     }
 
                     if ($startsAt && $existing->starts_at != $startsAt) {
@@ -542,7 +548,7 @@ class ScrapeEventsCommand extends Command
         if (str_contains($locLower, 'lednice') || str_contains($locLower, 'valtická')) {
             return Venue::where('slug', 'zf-mendelu-lednice')->value('id');
         }
-        if (str_contains($locLower, 'zemědělsk') || str_contains($locLower, 'zemedelsk') || str_contains($locLower, 'areál mendelu') || str_contains($locLower, 'areal mendelu') || str_contains($locLower, 'kampus mendelu')) {
+        if (str_contains($locLower, 'zemědělsk') || str_contains($locLower, 'zemedelsk') || str_contains($locLower, 'areál mendelu') || str_contains($locLower, 'areal mendelu') || str_contains($locLower, 'kampus mendelu') || str_contains($locLower, 'q48') || str_contains($locLower, 'design lab') || preg_match('/\bbudova [a-z]\b/u', $locLower)) {
             return Venue::where('slug', 'areal-mendelu-zemedelska')->value('id');
         }
         if (str_contains($locLower, 'joštov') || str_contains($locLower, 'fss')) {

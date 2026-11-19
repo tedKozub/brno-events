@@ -29,6 +29,8 @@ def parse_mendelu(html: str, base_url: str = "https://mendelu.cz/akce/") -> List
     soup = BeautifulSoup(html, "lxml")
     events = []
     current_year = datetime.datetime.now().year
+    now = datetime.datetime.now()
+    seen_urls = set()
 
     for item in soup.select("li.event-card__item, .event-card"):
         card = item if item.name == "a" else item.find("a", class_="event-card")
@@ -40,6 +42,10 @@ def parse_mendelu(html: str, base_url: str = "https://mendelu.cz/akce/") -> List
             continue
 
         url = urljoin(base_url, card.get("href", ""))
+        if url in seen_urls:
+            continue
+        seen_urls.add(url)
+
         heading_el = card.find(["h3", "h2"], class_=lambda c: c and "heading" in c)
         if not heading_el:
             heading_el = card.find(["h3", "h2", "strong"])
@@ -144,9 +150,19 @@ def parse_mendelu(html: str, base_url: str = "https://mendelu.cz/akce/") -> List
             e_month = end_month if end_month else month
             ends_at = f"{e_year:04d}-{e_month:02d}-{end_day:02d} 18:00:00"
 
-        # Location
+        # Skip past events older than 7 days
+        try:
+            event_dt = datetime.datetime.strptime(starts_at[:10], "%Y-%m-%d")
+            if event_dt < (now - datetime.timedelta(days=7)):
+                continue
+        except Exception:
+            pass
+
+        # Location: preserve specific room and attach Brno campus address if not explicitly present
         if not loc_str:
             loc_str = "Areál MENDELU, Zemědělská 1, Brno"
+        elif "brno" not in loc_str.lower() and not re.search(r"\b\d{1,4}\s*brno", loc_str.lower()):
+            loc_str = f"{loc_str}, Areál MENDELU, Zemědělská 1, Brno"
 
         desc = f"Akce Mendelovy univerzity v Brně: {title}."
         if info_items:
@@ -422,12 +438,21 @@ def parse_unob(html: str, base_url: str = "https://unob.cz/univerzita/media-a-ve
 
         year = int(year_str) if year_str else current_year
 
-        # Prefer Brno events or all university presentations
+        now = datetime.datetime.now()
+        event_dt = datetime.datetime(year, month, day)
+        if event_dt < (now - datetime.timedelta(days=7)):
+            continue
+
+        # UNOB has faculties in Hradec Králové (VLF) and Vyškov (ÚOPZHN), and holds military shows across CZ.
+        # LiveBrno strictly includes Brno events only!
+        if is_outside_brno("", title) or not ("brno" in title.lower() or "fvt" in title.lower() or "fvl" in title.lower() or "kasárn" in title.lower() or "kounicova" in title.lower()):
+            continue
+
+        loc = "Areál Univerzity obrany (Kasárna Černá Pole / Šumavská), Brno"
         starts_at = f"{year:04d}-{month:02d}-{day:02d} 09:00:00"
         url = base_url + f"#{abs(hash(title + starts_at))}"
 
         desc = f"Událost Univerzity obrany: {title}."
-        loc = "Areál Univerzity obrany (Kasárna Černá Pole / Šumavská), Brno" if "Brno" in title or "FVT" in title or "FVL" in title else "Univerzita obrany"
 
         events.append({
             "title": title,

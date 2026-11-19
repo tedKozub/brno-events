@@ -290,11 +290,49 @@ class Event extends Model
             ];
         }
 
-        $text = mb_strtolower($this->title . ' ' . $this->location_name . ' ' . ($this->description ?? ''));
-        $uni = $this->organization?->university ?? 'OTHER';
+        // Prioritně čteme ze samotného pole location_name (nikdy nenecháme obecný text z popisu přebít zadané místo!)
+        $locText = mb_strtolower(trim($this->location_name ?? ''));
+        $fullText = mb_strtolower(trim($this->title . ' ' . $this->location_name . ' ' . ($this->description ?? '')));
+        $text = $fullText;
 
-        // 1. Specifické fakulty a areály
-        if (str_contains($text, 'božetěchov') || str_contains($text, 'fit vut') || str_contains($text, 'bozetechov')) {
+        $matchLocation = function(array $keywords) use ($locText, $fullText) {
+            foreach ($keywords as $kw) {
+                if ($locText !== '' && str_contains($locText, $kw)) {
+                    return true;
+                }
+            }
+            if ($locText === '' || in_array($locText, ['brno', 'brno centrum', 'brno - střed', 'univerzita'])) {
+                foreach ($keywords as $kw) {
+                    if (str_contains($fullText, $kw)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        };
+
+        // 1. VUT fakulty a areály
+        if ($matchLocation(['fekt', 'technická 12', 'technicka 12', 'aula profesora braunera'])) {
+            return [
+                'lat' => 49.2263,
+                'lng' => 16.5742,
+                'title' => 'FEKT VUT (Technická 12)',
+                'address' => 'Technická 12, Brno – Královo Pole',
+                'is_exact' => true,
+            ];
+        }
+
+        if ($matchLocation(['fsi', 'technická 2', 'technicka 2', 'technická 2896'])) {
+            return [
+                'lat' => 49.2241,
+                'lng' => 16.5786,
+                'title' => 'FSI VUT (Technická 2)',
+                'address' => 'Technická 2896/2, Brno – Královo Pole',
+                'is_exact' => true,
+            ];
+        }
+
+        if ($matchLocation(['božetěchov', 'bozetechov', 'kachničk']) || (str_contains($locText, 'fit vut') && !str_contains($locText, 'fekt') && !str_contains($locText, 'fsi'))) {
             return [
                 'lat' => 49.2268,
                 'lng' => 16.5969,
@@ -304,7 +342,8 @@ class Event extends Model
             ];
         }
 
-        if ($uni === 'MENDELU' || str_contains($text, 'mendelu') || str_contains($text, 'zemědělsk')) {
+        // 2. MENDELU areál a učebny (Zemědělská 1)
+        if ($matchLocation(['mendelu', 'zemědělsk', 'zemedelsk', 'q48', 'budova m', 'budova q', 'budova e', 'budova f', 'design lab'])) {
             return [
                 'lat' => 49.2104,
                 'lng' => 16.6166,
@@ -314,8 +353,8 @@ class Event extends Model
             ];
         }
 
-        // Univerzitní kampus Bohunice (MUNI - Přírodovědecká, Lékařská fakulta, FSpS, CEITEC)
-        if (str_contains($text, 'kamenice') || str_contains($text, 'kampus bohunice') || str_contains($text, 'bohunick') || str_contains($text, 'kampus muni') || str_contains($text, 'univerzitní kampus') || str_contains($text, 'b11/') || str_contains($text, 'botanický seminář') || str_contains($text, 'ústav botaniky')) {
+        // 3. Univerzitní kampus Bohunice (MUNI - Kamenice 5)
+        if ($matchLocation(['kamenice', 'kampus bohunice', 'bohunick', 'kampus muni', 'b11/', 'simu', 'simulační centrum', 'fn bohunice'])) {
             return [
                 'lat' => 49.1772,
                 'lng' => 16.5684,
@@ -325,8 +364,8 @@ class Event extends Model
             ];
         }
 
-        // Fakulta informatiky MUNI (FI MUNI - Botanická 68a)
-        if (str_contains($text, 'botanická 68') || str_contains($text, 'botanické 68') || str_contains($text, 'fakulta informatiky') || str_contains($text, 'fi muni')) {
+        // 4. MUNI jednotlivé fakulty
+        if ($matchLocation(['botanická 68', 'botanické 68', 'fi muni', 'fakulta informatiky'])) {
             return [
                 'lat' => 49.2099,
                 'lng' => 16.6041,
@@ -336,8 +375,7 @@ class Event extends Model
             ];
         }
 
-        // Přírodovědecká fakulta MUNI (Areál Kotlářská a Botanická zahrada PřF)
-        if (str_contains($text, 'kotlářsk') || str_contains($text, 'přírodovědecká fakulta') || str_contains($text, 'přf muni') || str_contains($text, 'botanická zahrada')) {
+        if ($matchLocation(['kotlářsk', 'kotlarske', 'přírodovědecká fakulta', 'prirodovedecka fakulta', 'přf muni', 'prf muni'])) {
             return [
                 'lat' => 49.2052,
                 'lng' => 16.5982,
@@ -347,7 +385,7 @@ class Event extends Model
             ];
         }
 
-        if (str_contains($text, 'lipov') || str_contains($text, 'econ.muni') || str_contains($text, 'ekonomicko-správní')) {
+        if ($matchLocation(['lipov', 'lipove', 'econ.muni', 'esf muni', 'ekonomicko-správní'])) {
             return [
                 'lat' => 49.1939,
                 'lng' => 16.5786,
@@ -357,7 +395,7 @@ class Event extends Model
             ];
         }
 
-        if (str_contains($text, 'joštov') || str_contains($text, 'fss')) {
+        if ($matchLocation(['joštov', 'jostove', 'fss muni', 'fakulta sociálních studií'])) {
             return [
                 'lat' => 49.1973,
                 'lng' => 16.6047,
@@ -367,7 +405,7 @@ class Event extends Model
             ];
         }
 
-        if (str_contains($text, 'veveří') || str_contains($text, 'právnick')) {
+        if ($matchLocation(['veveří 70', 'veveri 70', 'právnická fakulta', 'pravnicka fakulta', 'law muni'])) {
             return [
                 'lat' => 49.2045,
                 'lng' => 16.5966,
@@ -377,129 +415,17 @@ class Event extends Model
             ];
         }
 
-        if (str_contains($text, 'arne novák') || str_contains($text, 'filozofick')) {
+        if ($matchLocation(['arna novák', 'arne novák', 'arna novaka', 'arne novaka', 'ff mu', 'ff muni', 'filozofická fakulta'])) {
             return [
                 'lat' => 49.2003,
                 'lng' => 16.5996,
                 'title' => 'Filozofická fakulta MUNI',
-                'address' => 'Arne Nováka 1, Brno – střed',
+                'address' => 'Arna Nováka 1, Brno – střed',
                 'is_exact' => true,
             ];
         }
 
-
-        // 1.5 Známé brněnské kluby, kavárny, sály a parky
-        if (str_contains($text, 'babylon')) {
-            return [
-                'lat' => 49.2018,
-                'lng' => 16.6006,
-                'title' => 'KC Babylon',
-                'address' => 'Kounicova 20, Brno – střed',
-                'is_exact' => true,
-            ];
-        }
-
-        if (str_contains($text, 'koma lounge') || str_contains($text, 'koma')) {
-            return [
-                'lat' => 49.2040,
-                'lng' => 16.5985,
-                'title' => 'Koma Lounge & Bar',
-                'address' => 'Kounicova 42, Brno – střed',
-                'is_exact' => true,
-            ];
-        }
-
-        if (str_contains($text, 'skautský institut') || str_contains($text, 'skautskem institutu') || str_contains($text, 'skautsky institut')) {
-            return [
-                'lat' => 49.199656,
-                'lng' => 16.605770,
-                'title' => 'Skautský institut v Brně',
-                'address' => 'Moravské náměstí 12, Brno – střed',
-                'is_exact' => true,
-            ];
-        }
-
-        if (str_contains($text, 'maison')) {
-            return [
-                'lat' => 49.1962,
-                'lng' => 16.6089,
-                'title' => 'Maison Club & Lounge',
-                'address' => 'Běhounská 9, Brno – střed',
-                'is_exact' => true,
-            ];
-        }
-
-        if (str_contains($text, 'trojk') || str_contains($text, 'kavárna trojka') || str_contains($text, 'kavarna trojka')) {
-            return [
-                'lat' => 49.1938,
-                'lng' => 16.6063,
-                'title' => 'Kavárna Trojka',
-                'address' => 'Dominikánská 9, Brno – střed',
-                'is_exact' => true,
-            ];
-        }
-
-        if (str_contains($text, 'morgal')) {
-            return [
-                'lat' => 49.1979,
-                'lng' => 16.6079,
-                'title' => 'Café Morgal',
-                'address' => 'Moravské náměstí 1a, Brno – střed',
-                'is_exact' => true,
-            ];
-        }
-
-        if (str_contains($text, 'kabinet múz') || str_contains($text, 'kabinet muz')) {
-            return [
-                'lat' => 49.1965,
-                'lng' => 16.6111,
-                'title' => 'Kabinet MÚZ',
-                'address' => 'Sukova 4, Brno – střed',
-                'is_exact' => true,
-            ];
-        }
-
-        if (str_contains($text, 'music lab') || str_contains($text, 'musiclab')) {
-            return [
-                'lat' => 49.1981,
-                'lng' => 16.6060,
-                'title' => 'Music Lab',
-                'address' => 'Opletalova 1, Brno – střed',
-                'is_exact' => true,
-            ];
-        }
-
-        if (str_contains($text, 'šelepk') || str_contains($text, 'selepk')) {
-            return [
-                'lat' => 49.2139,
-                'lng' => 16.5919,
-                'title' => 'Klub Šelepka',
-                'address' => 'Šelepova 1, Brno – Královo Pole',
-                'is_exact' => true,
-            ];
-        }
-
-        if (str_contains($text, 'otevřená zahrada') || str_contains($text, 'otevrena zahrada')) {
-            return [
-                'lat' => 49.1956,
-                'lng' => 16.5986,
-                'title' => 'Otevřená zahrada',
-                'address' => 'Údolní 33, Brno – střed',
-                'is_exact' => true,
-            ];
-        }
-
-        if (str_contains($text, 'impact hub')) {
-            return [
-                'lat' => 49.1906,
-                'lng' => 16.6198,
-                'title' => 'Impact Hub Brno',
-                'address' => 'Cyrilská 7, Brno – Trnitá',
-                'is_exact' => true,
-            ];
-        }
-
-        if (str_contains($text, 'poříčí') || str_contains($text, 'pdf muni') || str_contains($text, 'pedagogick')) {
+        if ($matchLocation(['poříčí', 'porici', 'pdf muni', 'pedagogická fakulta', 'pedagogicka fakulta'])) {
             return [
                 'lat' => 49.1872,
                 'lng' => 16.5960,
@@ -509,7 +435,30 @@ class Event extends Model
             ];
         }
 
-        if (str_contains($text, 'fléda') || str_contains($text, 'fleda')) {
+        // 5. Univerzita obrany (Kasárna Černá Pole / Šumavská)
+        if ($matchLocation(['kasárna', 'kasarna', 'černá pole', 'cerna pole', 'šumavská', 'sumavska', 'univerzita obrany', 'unob'])) {
+            return [
+                'lat' => 49.2132,
+                'lng' => 16.6171,
+                'title' => 'Univerzita obrany (Kasárna Černá Pole / Šumavská)',
+                'address' => 'Tř. Generála Píky 229/7, Brno',
+                'is_exact' => true,
+            ];
+        }
+
+        // 6. VETUNI (Palackého třída)
+        if ($matchLocation(['vetuni', 'palackého tř', 'palackeho tr'])) {
+            return [
+                'lat' => 49.2183,
+                'lng' => 16.5975,
+                'title' => 'Kampus VETUNI Palackého',
+                'address' => 'Palackého tř. 1946/1, Brno',
+                'is_exact' => true,
+            ];
+        }
+
+        // 7. Známé kluby, kavárny a sály
+        if ($matchLocation(['fléda', 'fleda'])) {
             return [
                 'lat' => 49.2096,
                 'lng' => 16.6033,
@@ -519,7 +468,7 @@ class Event extends Model
             ];
         }
 
-        if (str_contains($text, 'artbar') || str_contains($text, 'druhý pád')) {
+        if ($matchLocation(['artbar', 'druhý pád', 'druhy pad'])) {
             return [
                 'lat' => 49.2062,
                 'lng' => 16.6042,
@@ -529,17 +478,97 @@ class Event extends Model
             ];
         }
 
-        if (str_contains($text, 'lužánk') || str_contains($text, 'luzank')) {
+        if ($matchLocation(['koma lounge', 'koma bar', 'koma'])) {
             return [
-                'lat' => 49.2065,
-                'lng' => 16.6110,
-                'title' => 'Park Lužánky',
-                'address' => 'Pionýrská 280/1, Brno – Černá Pole',
+                'lat' => 49.2040,
+                'lng' => 16.5985,
+                'title' => 'Koma Lounge & Bar',
+                'address' => 'Kounicova 42, Brno – střed',
                 'is_exact' => true,
             ];
         }
 
-        if (str_contains($text, 'sono')) {
+        if ($matchLocation(['maison'])) {
+            return [
+                'lat' => 49.1962,
+                'lng' => 16.6089,
+                'title' => 'Maison Club & Lounge',
+                'address' => 'Běhounská 9, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if ($matchLocation(['babylon'])) {
+            return [
+                'lat' => 49.2018,
+                'lng' => 16.6006,
+                'title' => 'KC Babylon',
+                'address' => 'Kounicova 20, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if ($matchLocation(['skautský institut', 'skautskem institutu', 'skautsky institut'])) {
+            return [
+                'lat' => 49.199656,
+                'lng' => 16.605770,
+                'title' => 'Skautský institut v Brně',
+                'address' => 'Moravské náměstí 12, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if ($matchLocation(['morgal'])) {
+            return [
+                'lat' => 49.1979,
+                'lng' => 16.6079,
+                'title' => 'Café Morgal',
+                'address' => 'Moravské náměstí 1a, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if ($matchLocation(['kabinet múz', 'kabinet muz'])) {
+            return [
+                'lat' => 49.1965,
+                'lng' => 16.6111,
+                'title' => 'Kabinet MÚZ',
+                'address' => 'Sukova 4, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if ($matchLocation(['music lab', 'musiclab'])) {
+            return [
+                'lat' => 49.1981,
+                'lng' => 16.6060,
+                'title' => 'Music Lab',
+                'address' => 'Opletalova 1, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if ($matchLocation(['trojk', 'kavárna trojka', 'kavarna trojka'])) {
+            return [
+                'lat' => 49.1938,
+                'lng' => 16.6063,
+                'title' => 'Kavárna Trojka',
+                'address' => 'Dominikánská 9, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if ($matchLocation(['šelepk', 'selepk'])) {
+            return [
+                'lat' => 49.2139,
+                'lng' => 16.5919,
+                'title' => 'Klub Šelepka',
+                'address' => 'Šelepova 1, Brno – Královo Pole',
+                'is_exact' => true,
+            ];
+        }
+
+        if ($matchLocation(['sono'])) {
             return [
                 'lat' => 49.2096,
                 'lng' => 16.5898,
@@ -549,12 +578,52 @@ class Event extends Model
             ];
         }
 
-        if (str_contains($text, 'perpetuum')) {
+        if ($matchLocation(['perpetuum'])) {
             return [
                 'lat' => 49.1963,
                 'lng' => 16.6118,
                 'title' => 'Perpetuum Club',
                 'address' => 'Rooseveltova 9, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if ($matchLocation(['otevřená zahrada', 'otevrena zahrada'])) {
+            return [
+                'lat' => 49.1956,
+                'lng' => 16.5986,
+                'title' => 'Otevřená zahrada',
+                'address' => 'Údolní 33, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
+        if ($matchLocation(['impact hub'])) {
+            return [
+                'lat' => 49.1906,
+                'lng' => 16.6198,
+                'title' => 'Impact Hub Brno',
+                'address' => 'Cyrilská 7, Brno – Trnitá',
+                'is_exact' => true,
+            ];
+        }
+
+        if ($matchLocation(['lužánk', 'luzank'])) {
+            return [
+                'lat' => 49.2065,
+                'lng' => 16.6110,
+                'title' => 'Park Lužánky',
+                'address' => 'Pionýrská 280/1, Brno – Černá Pole',
+                'is_exact' => true,
+            ];
+        }
+
+        if ($matchLocation(['nová radnice', 'nova radnice', 'sněmovní sál', 'snemovni sal'])) {
+            return [
+                'lat' => 49.1937,
+                'lng' => 16.6066,
+                'title' => 'Nová radnice',
+                'address' => 'Dominikánské náměstí 1, Brno – střed',
                 'is_exact' => true,
             ];
         }

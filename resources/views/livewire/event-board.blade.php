@@ -254,11 +254,7 @@
             <section class="card bg-base-100 shadow-sm border border-base-300 overflow-hidden">
                 <div class="card-body p-3.5 sm:p-5 space-y-3">
                     <div class="flex items-center justify-between">
-                        <h2 class="text-sm sm:text-base font-bold flex items-center gap-2 text-base-content">
-                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
+                        <h2 class="text-sm sm:text-base font-bold text-base-content">
                             Místa akcí a kluby v Brně
                         </h2>
                         <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-base-200 text-base-content/80 border border-base-300">
