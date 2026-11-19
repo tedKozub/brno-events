@@ -14,6 +14,8 @@ if project_root not in sys.path:
 
 import httpx
 
+import shutil
+
 from parsers.ical_parser import parse_ical
 from parsers.rss_parser import parse_rss
 from parsers.instagram_parser import parse_instagram
@@ -69,6 +71,17 @@ def main():
     parser.add_argument("--university", default="", help="Default university tag (MUNI, VUT, MENDELU, UNOB, VETUNI)")
     parser.add_argument("--limit", type=int, default=30, help="Maximum number of events to extract")
     parser.add_argument("--dry-run", action="store_true", help="Run in dry-run mode without external HTTP requests or AI API calls")
+    parser.add_argument(
+        "--engine",
+        choices=["auto", "llm", "deterministic"],
+        default="deterministic",
+        help="Extraction engine: deterministic (regex/DOM) or llm (Antigravity batch extractor with fallback)",
+    )
+    parser.add_argument(
+        "--force-all",
+        action="store_true",
+        help="Force re-extraction of all cards ignoring SHA-256 hash cache",
+    )
 
     args = parser.parse_args()
 
@@ -159,16 +172,34 @@ def main():
                 else:
                     text_content = raw_content
 
-                if stype in ["web_mendelu", "mendelu"]:
-                    events = parse_mendelu(text_content, base_url=args.url)
-                elif stype in ["web_fit_vut", "fit_vut"]:
-                    events = parse_fit_vut(text_content, base_url=args.url)
-                elif stype in ["web_unob", "unob"]:
-                    events = parse_unob(text_content, base_url=args.url)
-                elif stype in ["web_muni", "muni"]:
-                    events = parse_muni(text_content, base_url=args.url)
-                else:
-                    events = parse_generic_html(text_content, base_url=args.url)
+                events = []
+                use_llm = (args.engine in ["llm", "auto"]) and not args.dry_run and shutil.which("agy") is not None
+
+                if use_llm and stype not in ["web_ical", "ical", "web_rss", "rss"]:
+                    try:
+                        from card_slicer import slice_raw_content
+                        from ai_batch_extractor import extract_events_with_ai_pipeline
+
+                        cards = slice_raw_content(text_content, stype, source_url=args.url)
+                        if cards:
+                            ai_res = extract_events_with_ai_pipeline(cards, university=args.university, force_all=args.force_all)
+                            ai_events = ai_res.get("extracted_events", [])
+                            if ai_events:
+                                events = ai_events
+                    except Exception as ai_err:
+                        sys.stderr.write(f"Warning: LLM pipeline error ({ai_err}), falling back to deterministic parser.\n")
+
+                if not events:
+                    if stype in ["web_mendelu", "mendelu"]:
+                        events = parse_mendelu(text_content, base_url=args.url)
+                    elif stype in ["web_fit_vut", "fit_vut"]:
+                        events = parse_fit_vut(text_content, base_url=args.url)
+                    elif stype in ["web_unob", "unob"]:
+                        events = parse_unob(text_content, base_url=args.url)
+                    elif stype in ["web_muni", "muni"]:
+                        events = parse_muni(text_content, base_url=args.url)
+                    else:
+                        events = parse_generic_html(text_content, base_url=args.url)
 
         # Apply university tag if provided
         if args.university:

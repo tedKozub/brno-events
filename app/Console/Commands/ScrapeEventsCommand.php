@@ -18,10 +18,13 @@ class ScrapeEventsCommand extends Command
     protected $signature = 'events:scrape
                             {source_id? : ID konkrétního zdroje (nepovinné)}
                             {--limit=20 : Maximální počet akcí z jednoho zdroje}
+                            {--engine=auto : Extrakční engine (auto, llm, deterministic)}
+                            {--force-all : Vynutí novou AI extrakci bez ohledu na SHA-256 hash cache}
+                            {--skip-harvest : Přeskočí ukládání surového obsahu do storage/app/scraping_raw}
                             {--dry-run : Spustí scraper v offline dry-run režimu bez volání externích sítí a AI API}';
-    protected $description = 'Spustí scraping studentských akcí z webů, iCal a RSS zdrojů';
+    protected $description = 'Spustí scraping studentských akcí z webů, iCal a RSS zdrojů s volitelným AI extrakčním enginem';
 
-    public function handle(): int
+    public function handle(\App\Services\Scraping\RawHarvester $harvester): int
     {
         // Automaticky synchronizovat zdroje z config/scrape_sources.yaml před během
         \App\Services\ScrapeSourceManager::syncFromConfig();
@@ -29,6 +32,9 @@ class ScrapeEventsCommand extends Command
         $sourceId = $this->argument('source_id');
         $limit = (int) $this->option('limit');
         $isDryRun = (bool) $this->option('dry-run');
+        $engine = $this->option('engine') ?: 'auto';
+        $forceAll = (bool) $this->option('force-all');
+        $skipHarvest = (bool) $this->option('skip-harvest');
 
         $query = ScrapeSource::query();
         if ($sourceId) {
@@ -62,6 +68,17 @@ class ScrapeEventsCommand extends Command
                 usleep(random_int(1500000, 3000000));
             }
 
+            // 1. Surový sběr a archivace obsahu do storage/app/scraping_raw/
+            if (!$isDryRun && !$skipHarvest) {
+                try {
+                    $harvestRes = $harvester->harvestSource($source);
+                    $kb = round($harvestRes['bytes'] / 1024, 1);
+                    $this->line(" [RAW] Archivován snapshot ({$kb} KB) -> {$harvestRes['file_path']}");
+                } catch (\Throwable $e) {
+                    $this->warn(" [RAW] Varování: Nepodařilo se archivovat surový snapshot pro {$source->name}: " . $e->getMessage());
+                }
+            }
+
             $this->info("Scrapuji zdroj: [{$source->id}] {$source->name} ({$source->url})...");
 
             $cmd = [
@@ -71,7 +88,12 @@ class ScrapeEventsCommand extends Command
                 '--type', $source->type,
                 '--university', $source->university ?? 'OTHER',
                 '--limit', (string) $limit,
+                '--engine', $engine,
             ];
+
+            if ($forceAll) {
+                $cmd[] = '--force-all';
+            }
 
             if ($isDryRun) {
                 $cmd[] = '--dry-run';
@@ -214,10 +236,17 @@ class ScrapeEventsCommand extends Command
                 if ($existing) {
                     // Pokud stávající akce nemá přiřazené místo (venue), nebo se zpřesnil čas/konec/popis, automaticky ji obohatíme
                     $locName = $item['location_name'] ?? '';
-                    $venueId = $this->matchVenue($locName, $university);
+                    $venueId = null;
+                    if (!empty($item['venue_slug_hint'])) {
+                        $venueId = Venue::where('slug', $item['venue_slug_hint'])->value('id');
+                    }
+                    if (!$venueId) {
+                        $venueId = $this->matchVenue($locName, $university);
+                    }
 
                     // Pokud se akce koná mimo Brno (např. Lednice, Telč, jiná města), smažeme ji
-                    if ($this->isOutsideBrno($locName, $title . ' ' . ($item['description'] ?? ''), $venueId)) {
+                    if ((isset($item['is_in_brno']) && $item['is_in_brno'] === false)
+                        || $this->isOutsideBrno($locName, $title . ' ' . ($item['description'] ?? ''), $venueId)) {
                         $existing->delete();
                         $sourceSkipped++;
                         $totalSkipped++;
@@ -325,12 +354,19 @@ class ScrapeEventsCommand extends Command
                     }
                 }
 
-                // Detekce místa (Venue) podle klíčových slov
+                // Detekce místa (Venue) podle klíčových slov a hintu z AI
                 $locName = $item['location_name'] ?? '';
-                $venueId = $this->matchVenue($locName, $university);
+                $venueId = null;
+                if (!empty($item['venue_slug_hint'])) {
+                    $venueId = Venue::where('slug', $item['venue_slug_hint'])->value('id');
+                }
+                if (!$venueId) {
+                    $venueId = $this->matchVenue($locName, $university);
+                }
 
                 // BrnoAkce je výhradně pro akce v Brně. Akce z Lednice, jiných měst nebo se zahraniční lokací striktně přeskakujeme.
-                if ($this->isOutsideBrno($locName, $title . ' ' . $cleanDesc, $venueId)) {
+                if ((isset($item['is_in_brno']) && $item['is_in_brno'] === false)
+                    || $this->isOutsideBrno($locName, $title . ' ' . $cleanDesc, $venueId)) {
                     $sourceSkipped++;
                     $totalSkipped++;
                     continue;
@@ -424,6 +460,13 @@ class ScrapeEventsCommand extends Command
         if ($isDryRun) {
             $this->info("DRY-RUN dokončen: Všechny aktivní scraper moduly a parsery byly úspěšně otestovány ({$totalImported} akcí celkem). Žádné externí sítě ani AI API nebyly volány.");
             return 0;
+        }
+
+        if (!$skipHarvest) {
+            $pruned = $harvester->pruneOldSnapshots(14);
+            if ($pruned > 0) {
+                $this->line(" [RAW] Promazáno {$pruned} starých snapshot adresářů.");
+            }
         }
 
         $this->info("Celkem úspěšně importováno {$totalImported} nových akcí ke schválení (přeskočeno {$totalSkipped} duplikátů).");
