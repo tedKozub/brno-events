@@ -138,6 +138,18 @@ class TestScrapersOffline(unittest.TestCase):
         self.assertIn("Trojka", ev["location_name"])
         self.assertEqual(ev["price_type"], "free")
 
+        # Test regression: Pyzamova party 2.12. at Maison Club
+        pyzamova_text = """Je tu Pyžamová párty a s ní naše každoroční akce Vše za 25,-!
+Maison Club & Lounge
+2. 12. od 21:00
+Vstup: Základní 250,- / v dresscodu 200,-"""
+        ev2 = extract_event_from_text(pyzamova_text, base_url="https://facebook.com/events/1496076759082027/", university="MUNI")
+        self.assertIsNotNone(ev2)
+        self.assertIn("2026-12-02 21:00:00", ev2["starts_at"])
+        self.assertIn("Maison", ev2["location_name"])
+        self.assertEqual("paid", ev2["price_type"])
+        self.assertEqual(250, ev2["price_amount"])
+
     def test_main_cli_dry_run_all_types(self):
         """Executes main.py with --dry-run for each parser type via subprocess."""
         python_bin = sys.executable

@@ -11,38 +11,19 @@ import httpx
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 
-CZECH_MONTHS = {
-    'led': 1, 'ledna': 1, 'leden': 1,
-    'úno': 2, 'února': 2, 'únor': 2,
-    'bře': 3, 'března': 3, 'březen': 3,
-    'dub': 4, 'dubna': 4, 'duben': 4,
-    'kvě': 5, 'května': 5, 'květen': 5,
-    'čer': 6, 'června': 6, 'červen': 6,
-    'čvc': 7, 'července': 7, 'červenec': 7,
-    'srp': 8, 'srpna': 8, 'srpen': 8,
-    'zář': 9, 'září': 9,
-    'říj': 10, 'října': 10, 'říjen': 10,
-    'lis': 11, 'listopadu': 11, 'listopad': 11,
-    'pro': 12, 'prosince': 12, 'prosinec': 12,
-}
-
-
-def clean_emoji(text: str) -> str:
-    """Removes emojis from text per BrnoAkce guidelines."""
-    emoji_pattern = re.compile(
-        "["
-        "\U0001F600-\U0001F64F"  # emoticons
-        "\U0001F300-\U0001F5FF"  # symbols & pictographs
-        "\U0001F680-\U0001F6FF"  # transport & map symbols
-        "\U0001F1E0-\U0001F1FF"  # flags (iOS)
-        "\U00002702-\U000027B0"
-        "\U000024C2-\U0001F251"
-        "\U0001F900-\U0001F9FF"  # supplemental symbols
-        "\U0001FA70-\U0001FAFF"  # symbols and pictographs extended
-        "]+",
-        flags=re.UNICODE,
-    )
-    return emoji_pattern.sub("", text).strip()
+from parsers.common import (
+    CZECH_MONTHS,
+    clean_emoji,
+    clean_title,
+    normalize_text,
+    extract_time_range_from_text,
+    extract_explicit_time_from_text,
+    extract_explicit_date_from_text,
+    extract_venue_and_address,
+    extract_price_info,
+    detect_event_category,
+    is_administrative_or_irrelevant,
+)
 
 
 def get_openai_api_key() -> Optional[str]:
@@ -104,17 +85,16 @@ def download_cover_image(img_url: str, event_id: str) -> Optional[str]:
 
 def parse_facebook_date(text: str) -> Optional[datetime]:
     """Parses date and time from Czech Facebook event text strings."""
-    # Pattern 1: DD. [month_word] YYYY (v HH:MM)
-    m1 = re.search(r'(\d{1,2})\.\s*([a-záčďéěíňóřšťúůýž]+)\s+(\d{4})(?:\s+v\s+(\d{1,2}):(\d{2}))?', text, re.IGNORECASE)
-    if m1:
-        day = int(m1.group(1))
-        month_word = m1.group(2).lower()
-        month = CZECH_MONTHS.get(month_word)
-        year = int(m1.group(3))
-        hour = int(m1.group(4)) if m1.group(4) else 18
-        minute = int(m1.group(5)) if m1.group(5) else 0
-        if month and 1 <= day <= 31:
-            return datetime(year, month, day, hour, minute)
+    if not text:
+        return None
+
+    # Try explicit date extraction
+    dt = extract_explicit_date_from_text(text)
+    if dt:
+        time_res = extract_explicit_time_from_text(text)
+        h = time_res[0] if time_res else 18
+        m = time_res[1] if time_res else 0
+        return dt.replace(hour=h, minute=m, second=0)
 
     # Pattern 2: [month_word] DD YYYY (common in og:description: 'listopad 11 2026')
     m2 = re.search(r'([a-záčďéěíňóřšťúůýž]+)\s+(\d{1,2})\s+(\d{4})', text, re.IGNORECASE)
@@ -124,24 +104,17 @@ def parse_facebook_date(text: str) -> Optional[datetime]:
         day = int(m2.group(2))
         year = int(m2.group(3))
         if month and 1 <= day <= 31:
-            return datetime(year, month, day, 18, 0)
-
-    # Pattern 3: DD. MM. [YYYY] (v HH:MM)
-    m3 = re.search(r'(\d{1,2})\.\s*(\d{1,2})\.(?:\s*(\d{4}))?(?:\s*v\s+(\d{1,2}):(\d{2}))?', text)
-    if m3:
-        day = int(m3.group(1))
-        month = int(m3.group(2))
-        year = int(m3.group(3)) if m3.group(3) else datetime.now().year
-        hour = int(m3.group(4)) if m3.group(4) else 18
-        minute = int(m3.group(5)) if m3.group(5) else 0
-        if 1 <= month <= 12 and 1 <= day <= 31:
-            return datetime(year, month, day, hour, minute)
+            time_res = extract_explicit_time_from_text(text)
+            h = time_res[0] if time_res else 18
+            m = time_res[1] if time_res else 0
+            return datetime(year, month, day, h, m)
 
     return None
 
 
 def detect_category(text: str) -> str:
     """Classifies event category from Czech keywords."""
+    return detect_event_category(text)
     lower = text.lower()
     if any(k in lower for k in ['party', 'párty', 'mecheche', 'dnb', 'tep', 'rave', 'dj', 'warmup', 'ples', 'večírek']):
         return 'party-kluby'
@@ -240,27 +213,12 @@ async def scrape_single_facebook_event(
         if not starts_at and og_desc_text:
             starts_at = parse_facebook_date(og_desc_text)
 
-        # Location name & address
-        location_name = "Brno"
-        address = None
-        known_venues = [
-            "Café Morgal", "Fléda Club", "Fléda", "ArtBar", "KC Babylon",
-            "Koma Lounge", "Sono Centrum", "Perpetuum", "EXIT Club", "Favál",
-            "Pedagogická fakulta", "FIT VUT", "MUNI", "MENDELU"
-        ]
-
-        for line in lines[25:50]:
-            for kv in known_venues:
-                if kv.lower() in line.lower():
-                    location_name = kv
-                    break
-            if location_name != "Brno":
-                break
-
-        for line in lines[25:55]:
-            if any(term in line.lower() for term in ['ulice', 'třída', 'náměstí', 'poříčí', 'kounicova', 'štefánikova', 'božetěchova', 'česko', 'czech republic']):
-                address = clean_emoji(line)
-                break
+        # Location name & address using centralized extractor
+        location_name, address = extract_venue_and_address("\n".join(lines[20:55]), default_venue="Brno")
+        if location_name == "Brno" and og_desc_text:
+            alt_loc, alt_addr = extract_venue_and_address(og_desc_text, default_venue="Brno")
+            if alt_loc != "Brno":
+                location_name, address = alt_loc, alt_addr
 
         # Extract clean description
         desc_lines = []
@@ -400,44 +358,34 @@ def extract_event_from_text(text: str, base_url: str = "", university: str = "OT
     if not lines:
         return None
 
-    title = clean_emoji(lines[0])
-    starts_at = parse_facebook_date(text)
+    title = clean_title(lines[0])
+    dt = extract_explicit_date_from_text(text)
+    time_start, time_end = extract_time_range_from_text(text)
 
-    location_name = "Brno"
-    t_lower = text.lower()
-    if "koma lounge" in t_lower or "koma" in t_lower:
-        location_name = "Koma Lounge & Bar, Kounicova 42, Brno"
-    elif "skautsk" in t_lower:
-        location_name = "Skautský institut v Brně, Moravské náměstí 12, Brno"
-    elif "trojk" in t_lower:
-        location_name = "Kavárna Trojka, Dominikánská 9, Brno"
-    elif "morgal" in t_lower:
-        location_name = "Café Morgal, Moravské náměstí 1a, Brno"
-    elif "kabinet muz" in t_lower or "kabinet múz" in t_lower:
-        location_name = "Kabinet MÚZ, Sukova 4, Brno"
-    elif "music lab" in t_lower:
-        location_name = "Music Lab, Opletalova 1, Brno"
-    elif "babylon" in t_lower:
-        location_name = "KC Babylon, Kounicova 20, Brno"
-    elif "fled" in t_lower:
-        location_name = "Fléda Club, Štefánikova 24, Brno"
-    elif "artbar" in t_lower:
-        location_name = "ArtBar Druhý Pád, Štefánikova 1, Brno"
-    elif "sono" in t_lower:
-        location_name = "Sono Music Club, Veveří 113, Brno"
-    elif "perpetuum" in t_lower:
-        location_name = "Perpetuum Club, Rooseveltova 9, Brno"
+    hour = time_start[0] if time_start else 18
+    minute = time_start[1] if time_start else 0
 
-    cat = detect_category(text)
+    starts_at_str = None
+    if dt:
+        starts_at_str = dt.replace(hour=hour, minute=minute, second=0).strftime("%Y-%m-%d %H:%M:%S")
+
+    ends_at_str = None
+    if dt and time_end:
+        ends_at_str = dt.replace(hour=time_end[0], minute=time_end[1], second=0).strftime("%Y-%m-%d %H:%M:%S")
+
+    location_name, address = extract_venue_and_address(text, default_venue="Brno")
+    price_type, price_amount = extract_price_info(text)
+    cat = detect_event_category(text)
 
     return {
         "title": title,
-        "starts_at": starts_at.strftime("%Y-%m-%d %H:%M:%S") if starts_at else None,
-        "ends_at": None,
+        "starts_at": starts_at_str,
+        "ends_at": ends_at_str,
         "is_all_day": False,
         "location_name": location_name,
-        "price_type": "free" if ("zdarma" in text.lower() or "volný" in text.lower()) else "paid",
-        "price_amount": None,
+        "venue_address": address,
+        "price_type": price_type,
+        "price_amount": price_amount,
         "category_slug": cat,
         "short_description": text[:200],
         "description": text,

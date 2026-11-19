@@ -10,20 +10,19 @@ from typing import Any, Dict, List, Optional, Tuple
 import httpx
 from playwright.async_api import async_playwright
 
-CZECH_MONTHS = {
-    'led': 1, 'ledna': 1, 'leden': 1,
-    'úno': 2, 'února': 2, 'únor': 2,
-    'bře': 3, 'března': 3, 'březen': 3,
-    'dub': 4, 'dubna': 4, 'duben': 4,
-    'kvě': 5, 'května': 5, 'květen': 5,
-    'čer': 6, 'června': 6, 'červen': 6,
-    'čvc': 7, 'července': 7, 'červenec': 7,
-    'srp': 8, 'srpna': 8, 'srpen': 8,
-    'zář': 9, 'září': 9,
-    'říj': 10, 'října': 10, 'říjen': 10,
-    'lis': 11, 'listopadu': 11, 'listopad': 11,
-    'pro': 12, 'prosince': 12, 'prosinec': 12,
-}
+from parsers.common import (
+    CZECH_MONTHS,
+    clean_emoji,
+    clean_title,
+    normalize_text,
+    extract_explicit_time_from_text,
+    extract_explicit_date_from_text,
+    extract_time_range_from_text,
+    extract_venue_and_address,
+    extract_price_info,
+    detect_event_category,
+    is_administrative_or_irrelevant,
+)
 
 CZECH_DAY_MAP = {
     'pondělí': 0, 'pondělky': 0, 'pondeli': 0, 'pondelky': 0, 'pondělní': 0, 'pondelni': 0,
@@ -181,24 +180,6 @@ def sanitize_extracted_event_date(event: Dict[str, Any], raw_text: str, now: Opt
         return event
 
     return None
-
-
-def clean_emoji(text: str) -> str:
-    """Removes emojis from text per BrnoAkce guidelines."""
-    emoji_pattern = re.compile(
-        "["
-        "\U0001F600-\U0001F64F"  # emoticons
-        "\U0001F300-\U0001F5FF"  # symbols & pictographs
-        "\U0001F680-\U0001F6FF"  # transport & map symbols
-        "\U0001F1E0-\U0001F1FF"  # flags (iOS)
-        "\U00002702-\U000027B0"
-        "\U000024C2-\U0001F251"
-        "\U0001F900-\U0001F9FF"  # supplemental symbols
-        "\U0001FA70-\U0001FAFF"  # symbols and pictographs extended
-        "]+",
-        flags=re.UNICODE,
-    )
-    return emoji_pattern.sub("", text).strip()
 
 
 def get_gemini_api_key() -> Optional[str]:
@@ -430,64 +411,11 @@ def extract_event_from_caption(caption: str, base_url: str) -> Optional[Dict[str
     minute = extracted_time[1] if extracted_time else 0
     starts_at = explicit_date.replace(hour=hour, minute=minute, second=0).strftime("%Y-%m-%d %H:%M:%S")
 
-    venue = "Brno"
-    venue_match = re.search(r"(?:Kde|Místo|📍)\s*:?\s*([^\n]+)", cleaned, re.IGNORECASE)
-    cleaned_lower = cleaned.lower()
-    if "maison" in cleaned_lower:
-        venue = "Maison Club & Lounge, Běhounská 9, Brno"
-    elif venue_match:
-        venue = clean_emoji(venue_match.group(1).strip())
-        venue = re.sub(r"^(?:ve?|at|in|do)\s+", "", venue, flags=re.IGNORECASE).strip()
-        if "maison" in venue.lower():
-            venue = "Maison Club & Lounge, Běhounská 9, Brno"
-    elif "koma lounge" in cleaned_lower:
-        venue = "Koma Lounge & Bar, Kounicova 42, Brno"
-    elif "skautský institut" in cleaned_lower or "skautskem institutu" in cleaned_lower:
-        venue = "Skautský institut v Brně, Moravské náměstí 12, Brno"
-    elif "babylon" in cleaned_lower:
-        venue = "KC Babylon, Kounicova 20, Brno"
-    elif "morgal" in cleaned_lower:
-        venue = "Café Morgal, Moravské náměstí 1a, Brno"
-    elif "kabinet múz" in cleaned_lower or "kabinet muz" in cleaned_lower:
-        venue = "Kabinet MÚZ, Sukova 4, Brno"
-    elif "music lab" in cleaned_lower:
-        venue = "Music Lab, Opletalova 1, Brno"
-    elif "trojk" in cleaned_lower:
-        venue = "Kavárna Trojka, Dominikánská 9, Brno"
-    elif "fleda" in cleaned_lower or "fléda" in cleaned_lower:
-        venue = "Fléda Club, Štefánikova 24, Brno"
-    elif "artbar" in cleaned_lower or "druhý pád" in cleaned_lower or "druhy pad" in cleaned_lower:
-        venue = "ArtBar Druhý Pád, Štefánikova 1, Brno"
-    elif "perpetuum" in cleaned_lower:
-        venue = "Perpetuum Club, Rooseveltova 9, Brno"
-    elif "šelepk" in cleaned_lower or "selepk" in cleaned_lower:
-        venue = "Klub Šelepka, Šelepova 1, Brno"
-    elif "impact hub" in cleaned_lower:
-        venue = "Impact Hub Brno, Cyrilská 7, Brno"
-    elif "otevřená zahrada" in cleaned_lower or "otevrena zahrada" in cleaned_lower:
-        venue = "Otevřená zahrada, Údolní 33, Brno"
-    else:
-        # Hledání adresy ve tvaru Ulice Číslo, Brno
-        addr_match = re.search(r"\b([A-ZÁ-Ž][a-zčďéěíňóřšťúůýž]+(?:\s+[a-zčďéěíňóřšťúůýž]+)?\s+\d+(?:[a-zA-Z]|\/\d+)?)(?:,\s*Brno)?\b", cleaned)
-        if addr_match:
-            venue = f"{addr_match.group(1).strip()}, Brno"
+    # Venue & address using shared extractor
+    venue, _ = extract_venue_and_address(cleaned, default_venue="Brno")
 
-    price_type = "free"
-    price_amount = None
-    vstup_match = re.search(r"(?:vstup|vstupné|startovné)(?:[^:\n]*:)?\s*(?:[^\d\n]*\s*)?(\d+)\s*(?:Kč|czk|,-)", cleaned, re.IGNORECASE)
-    if vstup_match:
-        price_type = "paid"
-        price_amount = int(vstup_match.group(1))
-    else:
-        price_match = re.search(r"(\d+)\s*(?:Kč|czk)", cleaned, re.IGNORECASE)
-        if price_match:
-            price_type = "paid"
-            price_amount = int(price_match.group(1))
-        elif any(k in cleaned.lower() for k in ["vstupné", "startovné", "vstup"]):
-            if "zdarma" in cleaned.lower() or "free" in cleaned.lower():
-                price_type = "free"
-            else:
-                price_type = "paid"
+    # Price using shared extractor
+    price_type, price_amount = extract_price_info(cleaned)
 
     cat_slug = "kultura-umeni"
     lower_c = cleaned.lower()
