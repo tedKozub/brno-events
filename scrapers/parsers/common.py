@@ -130,6 +130,18 @@ KNOWN_VENUES: List[Dict[str, Any]] = [
         'address': 'Moravské náměstí 3, Brno',
         'city': 'Brno',
     },
+    {
+        'keywords': ['nová radnice', 'nova radnice', 'sněmovní sál nové radnice', 'snemovni sal nove radnice'],
+        'name': 'Nová radnice',
+        'address': 'Dominikánské náměstí 1, Brno',
+        'city': 'Brno',
+    },
+    {
+        'keywords': ['stará radnice', 'stara radnice', 'radnická', 'radnicka'],
+        'name': 'Stará radnice',
+        'address': 'Radnická 8, Brno',
+        'city': 'Brno',
+    },
     # University specific locations and detached campuses
     {
         'keywords': ['lednice', 'valtická', 'zf mendelu'],
@@ -198,7 +210,7 @@ KNOWN_VENUES: List[Dict[str, Any]] = [
         'city': 'Brno',
     },
     {
-        'keywords': ['žerotínovo nám', 'zerotinovo nam', 'rektorát muni', 'rektorat muni', 'masarykova univerzita'],
+        'keywords': ['žerotínovo nám', 'zerotinovo nam', 'rektorát muni', 'rektorat muni', 'rektorát mu', 'rektorat mu', 'žerotínovo náměstí'],
         'name': 'Rektorát Masarykovy univerzity',
         'address': 'Žerotínovo náměstí 617/9, Brno',
         'city': 'Brno',
@@ -427,6 +439,15 @@ def extract_venue_and_address(text: str, default_venue: str = "Brno") -> Tuple[s
                 continue
         city = addr_match.group(2).strip() if addr_match.group(2) else "Brno"
         return f"{street_cand}, {city}", f"{street_cand}, {city}"
+
+    # 4. If the input text is a clean short location candidate (e.g. from JSON-LD or event metadata),
+    # preserve the exact venue name instead of overwriting with a generic campus/rectorate!
+    clean_stripped = cleaned.strip()
+    if 3 < len(clean_stripped) < 120 and "\n" not in clean_stripped:
+        lower_s = clean_stripped.lower()
+        generic_names = {"masarykova univerzita", "masarykova univerzita, brno", "muni", "mendelu", "vut", "unob", "vetuni", "brno"}
+        if lower_s not in generic_names and not lower_s.startswith("událost"):
+            return clean_stripped, None
 
     return default_venue, None
 

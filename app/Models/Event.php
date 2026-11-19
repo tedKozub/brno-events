@@ -116,7 +116,7 @@ class Event extends Model
             return $this->venue->name . ($this->venue->address ? ', ' . $this->venue->address : '');
         }
 
-        return $this->location_name ?: 'Brno';
+        return $this->location_name ?: 'Brno centrum';
     }
 
     public function getIsMultiDayAttribute(): bool
@@ -600,6 +600,16 @@ class Event extends Model
             ];
         }
 
+        if (str_contains($text, 'nová radnice') || str_contains($text, 'nova radnice') || str_contains($text, 'sněmovní sál') || str_contains($text, 'snemovni sal')) {
+            return [
+                'lat' => 49.1937,
+                'lng' => 16.6066,
+                'title' => 'Nová radnice',
+                'address' => 'Dominikánské náměstí 1, Brno – střed',
+                'is_exact' => true,
+            ];
+        }
+
         if (str_contains($text, 'dominikánsk') || str_contains($text, 'dominikansk')) {
             return [
                 'lat' => 49.1937,
@@ -690,52 +700,9 @@ class Event extends Model
             ];
         }
 
-        // 2. Univerzitní centrály / rektoráty (pouze pokud není uvedeno specifické místo)
-        $hasCustomLoc = !empty($this->location_name) && mb_strtolower(trim($this->location_name)) !== 'brno';
+        // 2. Fallback pro specifické custom location_name (pokud není přiřazeno známé venue)
+        $hasCustomLoc = !empty($this->location_name) && !in_array(mb_strtolower(trim($this->location_name)), ['brno', 'brno centrum', 'brno - střed']);
 
-        if (!$hasCustomLoc) {
-            if ($uni === 'MUNI') {
-                return [
-                    'lat' => 49.1977,
-                    'lng' => 16.6043,
-                    'title' => 'Masarykova univerzita (Komenského nám.)',
-                    'address' => 'Komenského nám. 2, Brno – střed',
-                    'is_exact' => false,
-                ];
-            }
-
-            if ($uni === 'VUT') {
-                return [
-                    'lat' => 49.2023,
-                    'lng' => 16.6062,
-                    'title' => 'VUT v Brně (Antonínská)',
-                    'address' => 'Antonínská 1, Brno – střed',
-                    'is_exact' => false,
-                ];
-            }
-
-            if ($uni === 'UNOB') {
-                return [
-                    'lat' => 49.2114,
-                    'lng' => 16.5947,
-                    'title' => 'Univerzita obrany (Kasárna Černá Pole)',
-                    'address' => 'Kounicova 65, Brno – střed',
-                    'is_exact' => false,
-                ];
-            }
-
-            if ($uni === 'VETUNI') {
-                return [
-                    'lat' => 49.2173,
-                    'lng' => 16.5963,
-                    'title' => 'Veterinární univerzita Brno (Areál)',
-                    'address' => 'Palackého tř. 1946/1, Brno – Královo Pole',
-                    'is_exact' => false,
-                ];
-            }
-        }
-
-        // 3. Fallback: Pokud je k dispozici konkrétní location_name, použijeme jej místo generického "Brno centrum"
         if ($hasCustomLoc) {
             $loc = trim($this->location_name);
             return [
@@ -747,12 +714,12 @@ class Event extends Model
             ];
         }
 
-        // 4. Default pro město Brno
+        // 3. Výchozí fallback pro město ("Brno centrum" – Náměstí Svobody)
         return [
             'lat' => 49.1951,
             'lng' => 16.6068,
-            'title' => 'Brno',
-            'address' => 'Brno',
+            'title' => 'Brno centrum',
+            'address' => 'Brno centrum',
             'is_exact' => false,
         ];
     }

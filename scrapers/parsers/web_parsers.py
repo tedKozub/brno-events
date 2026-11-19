@@ -530,9 +530,9 @@ def parse_muni(html: str, base_url: str = "https://www.muni.cz/kalendar") -> Lis
             if not desc:
                 desc = f"Událost Masarykovy univerzity: {title} ({date_str})."
 
-            # Determine venue & address
-            loc_input = loc_cand or full_card_text
-            venue_display, _ = extract_venue_and_address(loc_input, default_venue="Masarykova univerzita, Brno")
+            # Determine venue & address (use extracted loc_cand, otherwise Brno centrum fallback)
+            loc_input = loc_cand if loc_cand else full_card_text
+            venue_display, _ = extract_venue_and_address(loc_input, default_venue="Brno centrum")
 
             # Determine category & price
             cat_slug = detect_event_category(f"{title} {tags_text} {desc}")

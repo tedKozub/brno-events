@@ -211,6 +211,16 @@ class DatabaseSeeder extends Seeder
             'description' => 'Sídlo rektorátu Masarykovy univerzity.',
         ]);
 
+        Venue::firstOrCreate(['slug' => 'nova-radnice'], [
+            'name' => 'Nová radnice',
+            'address' => 'Dominikánské náměstí 1',
+            'city' => 'Brno',
+            'latitude' => 49.1937,
+            'longitude' => 16.6066,
+            'website_url' => 'https://www.brno.cz',
+            'description' => 'Historické sídlo brněnského magistrátu s reprezentativními sály a nádvořím.',
+        ]);
+
         // 2. Categories
         $catParty = Category::create([
             'name' => 'Párty & Kluby',

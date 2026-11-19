@@ -216,4 +216,46 @@ PY;
             'location_name' => 'ZF MENDELU, Valtická 337, Lednice',
         ]);
     }
+
+    public function test_nova_radnice_is_matched_and_never_falls_back_to_muni_rectorate(): void
+    {
+        $venue = Venue::firstOrCreate(
+            ['slug' => 'nova-radnice'],
+            [
+                'name' => 'Nová radnice',
+                'address' => 'Dominikánské náměstí 1',
+                'city' => 'Brno',
+                'latitude' => 49.1937,
+                'longitude' => 16.6066,
+            ]
+        );
+        $this->assertNotNull($venue);
+        $this->assertEquals('Nová radnice', $venue->name);
+        $this->assertEquals('Dominikánské náměstí 1', $venue->address);
+
+        $event = Event::create([
+            'title' => 'IX. regionální konference paliativní péče v Brně 2026',
+            'slug' => 'ix-regionalni-konference-paliativni-pece-v-brne-2026-test',
+            'starts_at' => Carbon::parse('2026-11-19 08:00:00'),
+            'ends_at' => Carbon::parse('2026-11-19 16:30:00'),
+            'status' => 'published',
+            'venue_id' => $venue->id,
+            'location_name' => 'Nová radnice, Brno',
+        ]);
+
+        $this->assertEquals('Nová radnice, Dominikánské náměstí 1', $event->location_display);
+        $this->assertStringNotContainsString('Žerotínovo náměstí', $event->location_display);
+        $this->assertStringNotContainsString('Rektorát', $event->location_display);
+        $this->assertEquals(49.1937, $event->map_coordinates['lat']);
+        $this->assertEquals(16.6066, $event->map_coordinates['lng']);
+
+        // Akce bez známého místa musí mít fallback "Brno centrum", nikoliv Rektorát
+        $genericEvent = new Event([
+            'title' => 'Neznámá akce univerzity',
+            'location_name' => null,
+        ]);
+        $this->assertEquals('Brno centrum', $genericEvent->location_display);
+        $this->assertStringNotContainsString('Rektorát', $genericEvent->map_coordinates['title']);
+        $this->assertStringNotContainsString('Žerotínovo náměstí', $genericEvent->map_coordinates['address']);
+    }
 }

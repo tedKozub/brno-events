@@ -504,16 +504,19 @@ class ScrapeEventsCommand extends Command
         if (str_contains($locLower, 'veveří 70') || str_contains($locLower, 'veveri 70') || str_contains($locLower, 'právnick') || str_contains($locLower, 'pravnick') || str_contains($locLower, 'law muni')) {
             return Venue::where('slug', 'law-muni-veveri')->value('id');
         }
+        if (str_contains($locLower, 'nová radnice') || str_contains($locLower, 'nova radnice') || str_contains($locLower, 'sněmovní sál') || str_contains($locLower, 'snemovni sal')) {
+            return Venue::where('slug', 'nova-radnice')->value('id');
+        }
         if (str_contains($locLower, 'lipov') || str_contains($locLower, 'ekonomicko-správní') || str_contains($locLower, 'ekonomicko-spravni') || str_contains($locLower, 'esf')) {
             return Venue::where('slug', 'econ-muni-lipova')->value('id');
         }
-        if (str_contains($locLower, 'žerotínov') || str_contains($locLower, 'zerotinov') || str_contains($locLower, 'rektorát') || str_contains($locLower, 'rektorat') || str_contains($locLower, 'masarykova univerzita')) {
+        if (str_contains($locLower, 'žerotínov') || str_contains($locLower, 'zerotinov') || str_contains($locLower, 'rektorát') || str_contains($locLower, 'rektorat')) {
             return Venue::where('slug', 'rektorat-muni')->value('id');
         }
         if (str_contains($locLower, 'lednice') || str_contains($locLower, 'valtická')) {
             return Venue::where('slug', 'zf-mendelu-lednice')->value('id');
         }
-        if (str_contains($locLower, 'zemědělsk') || (str_contains($locLower, 'mendelu') && !str_contains($locLower, 'lednice'))) {
+        if (str_contains($locLower, 'zemědělsk') || str_contains($locLower, 'zemedelsk') || str_contains($locLower, 'areál mendelu') || str_contains($locLower, 'areal mendelu') || str_contains($locLower, 'kampus mendelu')) {
             return Venue::where('slug', 'areal-mendelu-zemedelska')->value('id');
         }
         if (str_contains($locLower, 'joštov') || str_contains($locLower, 'fss')) {
