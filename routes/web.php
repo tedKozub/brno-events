@@ -62,6 +62,11 @@ Route::get('/theme', function () {
     return redirect('/?theme-editor=1');
 });
 
+// Interaktivní vzorník a ukázky volně dostupných mapových podkladů
+Route::view('/map-preview', 'pages.map-preview')->name('map.preview');
+Route::view('/mapy', 'pages.map-preview');
+Route::view('/map-styles', 'pages.map-preview');
+
 // Přepínač interního / osobního testovacího režimu pro vývojáře a adminy (vyloučení zařízení z analytiky)
 Route::get('/analytics/toggle-device', function () {
     $current = request()->cookie('brnoakce_internal') === '1';
