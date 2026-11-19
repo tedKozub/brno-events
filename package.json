@@ -4,6 +4,7 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
+        "check:syntax": "node scripts/check-blade-syntax.js",
         "test:e2e": "playwright test",
         "test:e2e:desktop": "playwright test --project='Desktop Chrome'",
         "test:e2e:mobile": "playwright test --project='Mobile iPhone 14' --project='Mobile Pixel 7'"
