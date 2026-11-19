@@ -8,6 +8,7 @@ use App\Models\Organization;
 use App\Models\ScrapeSource;
 use App\Models\Venue;
 use App\Services\DiscordNotifier;
+use App\Services\VenueResolverService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Process;
@@ -24,7 +25,7 @@ class ScrapeEventsCommand extends Command
                             {--dry-run : Spustí scraper v offline dry-run režimu bez volání externích sítí a AI API}';
     protected $description = 'Spustí scraping studentských akcí z webů, iCal a RSS zdrojů s volitelným AI extrakčním enginem';
 
-    public function handle(\App\Services\Scraping\RawHarvester $harvester): int
+    public function handle(\App\Services\Scraping\RawHarvester $harvester, VenueResolverService $venueResolver): int
     {
         // Automaticky synchronizovat zdroje z config/scrape_sources.yaml před během
         \App\Services\ScrapeSourceManager::syncFromConfig();
@@ -236,17 +237,21 @@ class ScrapeEventsCommand extends Command
                 if ($existing) {
                     // Pokud stávající akce nemá přiřazené místo (venue), nebo se zpřesnil čas/konec/popis, automaticky ji obohatíme
                     $locName = $item['location_name'] ?? '';
-                    $venueId = null;
+                    $extractedLoc = $venueResolver->extractRoomAndLocation($locName);
+                    $roomDetail = $extractedLoc['room'];
+
+                    $venue = null;
                     if (!empty($item['venue_slug_hint'])) {
-                        $venueId = Venue::where('slug', $item['venue_slug_hint'])->value('id');
+                        $venue = Venue::where('slug', $item['venue_slug_hint'])->first();
                     }
-                    if (!$venueId) {
-                        $venueId = $this->matchVenue($locName, $university);
+                    if (!$venue) {
+                        $venue = $venueResolver->resolve($locName, $university, $title . ' ' . ($item['description'] ?? ''));
                     }
+                    $venueId = $venue?->id;
 
                     // Pokud se akce koná mimo Brno (např. Lednice, Telč, jiná města), smažeme ji
                     if ((isset($item['is_in_brno']) && $item['is_in_brno'] === false)
-                        || $this->isOutsideBrno($locName, $title . ' ' . ($item['description'] ?? ''), $venueId)) {
+                        || $this->isOutsideBrno($locName, $title . ' ' . ($item['description'] ?? ''), $venueId, $venueResolver)) {
                         $existing->delete();
                         $sourceSkipped++;
                         $totalSkipped++;
@@ -258,7 +263,10 @@ class ScrapeEventsCommand extends Command
                     if ($locName && $existing->location_name !== $locName) {
                         $updates['location_name'] = $locName;
                     }
-                    if ($venueId != $existing->venue_id) {
+                    if ($roomDetail && $existing->room_detail !== $roomDetail) {
+                        $updates['room_detail'] = $roomDetail;
+                    }
+                    if ($venueId && $venueId != $existing->venue_id) {
                         $updates['venue_id'] = $venueId;
                     }
 
@@ -354,19 +362,23 @@ class ScrapeEventsCommand extends Command
                     }
                 }
 
-                // Detekce místa (Venue) podle klíčových slov a hintu z AI
+                // Detekce místa (Venue) podle klíčových slov, aliasů a geocodingu
                 $locName = $item['location_name'] ?? '';
-                $venueId = null;
+                $extractedLoc = $venueResolver->extractRoomAndLocation($locName);
+                $roomDetail = $extractedLoc['room'];
+
+                $venue = null;
                 if (!empty($item['venue_slug_hint'])) {
-                    $venueId = Venue::where('slug', $item['venue_slug_hint'])->value('id');
+                    $venue = Venue::where('slug', $item['venue_slug_hint'])->first();
                 }
-                if (!$venueId) {
-                    $venueId = $this->matchVenue($locName, $university);
+                if (!$venue) {
+                    $venue = $venueResolver->resolve($locName, $university, $title . ' ' . $cleanDesc);
                 }
+                $venueId = $venue?->id;
 
                 // BrnoAkce je výhradně pro akce v Brně. Akce z Lednice, jiných měst nebo se zahraniční lokací striktně přeskakujeme.
                 if ((isset($item['is_in_brno']) && $item['is_in_brno'] === false)
-                    || $this->isOutsideBrno($locName, $title . ' ' . $cleanDesc, $venueId)) {
+                    || $this->isOutsideBrno($locName, $title . ' ' . $cleanDesc, $venueId, $venueResolver)) {
                     $sourceSkipped++;
                     $totalSkipped++;
                     continue;
@@ -415,6 +427,7 @@ class ScrapeEventsCommand extends Command
                     'ends_at' => $endsAt,
                     'is_all_day' => !empty($item['is_all_day']),
                     'location_name' => $locName,
+                    'room_detail' => $roomDetail,
                     'price_type' => $item['price_type'] ?? 'free',
                     'price_amount' => $item['price_amount'] ?? null,
                     'ticket_url' => $item['ticket_url'] ?? null,
@@ -481,129 +494,6 @@ class ScrapeEventsCommand extends Command
         return 0;
     }
 
-    private function matchVenue(?string $location, string $university): ?int
-    {
-        if (empty($location)) {
-            return null;
-        }
-
-        $locLower = mb_strtolower($location);
-
-        if (str_contains($locLower, 'fléda') || str_contains($locLower, 'fleda')) {
-            return Venue::where('slug', 'fleda-club')->value('id');
-        }
-        if (str_contains($locLower, 'artbar') || str_contains($locLower, 'druhý pád')) {
-            return Venue::where('slug', 'artbar-druhy-pad')->value('id');
-        }
-        if (str_contains($locLower, 'vinařská') || str_contains($locLower, 'vinarska')) {
-            return Venue::where('slug', 'koleje-vinarska')->value('id');
-        }
-        if (str_contains($locLower, 'palackého vrchem') || str_contains($locLower, 'ppv')) {
-            return Venue::where('slug', 'koleje-ppv')->value('id');
-        }
-        if (str_contains($locLower, 'scala')) {
-            return Venue::where('slug', 'univerzitni-kino-scala')->value('id');
-        }
-        if (str_contains($locLower, 'babylon')) {
-            return Venue::where('slug', 'kc-babylon')->value('id');
-        }
-        if (str_contains($locLower, 'koma lounge') || str_contains($locLower, 'koma')) {
-            return Venue::where('slug', 'koma-lounge-bar')->value('id');
-        }
-        if (str_contains($locLower, 'morgal')) {
-            return Venue::where('slug', 'cafe-morgal')->value('id');
-        }
-        if (str_contains($locLower, 'skautský institut') || str_contains($locLower, 'skautsky institut')) {
-            return Venue::where('slug', 'skautsky-institut-brno')->value('id');
-        }
-        if (str_contains($locLower, 'kabinet múz') || str_contains($locLower, 'kabinet muz')) {
-            return Venue::where('slug', 'kabinet-muz')->value('id');
-        }
-        if (str_contains($locLower, 'music lab')) {
-            return Venue::where('slug', 'music-lab')->value('id');
-        }
-        if (str_contains($locLower, 'trojka') || str_contains($locLower, 'kunštát')) {
-            return Venue::where('slug', 'kavarna-trojka')->value('id');
-        }
-        if (str_contains($locLower, 'šelepka') || str_contains($locLower, 'selepka')) {
-            return Venue::where('slug', 'klub-selepka')->value('id');
-        }
-        if (str_contains($locLower, 'sono')) {
-            return Venue::where('slug', 'sono-music-club')->value('id');
-        }
-        if (str_contains($locLower, 'perpetuum')) {
-            return Venue::where('slug', 'perpetuum-club')->value('id');
-        }
-        if (str_contains($locLower, 'maison')) {
-            return Venue::where('slug', 'maison-club-lounge')->value('id');
-        }
-        if (str_contains($locLower, 'otevřená zahrada') || str_contains($locLower, 'otevrena zahrada')) {
-            return Venue::where('slug', 'otevrena-zahrada')->value('id');
-        }
-        if (str_contains($locLower, 'impact hub')) {
-            return Venue::where('slug', 'impact-hub-brno')->value('id');
-        }
-        if (str_contains($locLower, 'poříčí') || str_contains($locLower, 'pdf muni')) {
-            return Venue::where('slug', 'pdf-muni-porici')->value('id');
-        }
-        if (str_contains($locLower, 'lužánk') || str_contains($locLower, 'luzank')) {
-            return Venue::where('slug', 'park-luzanky')->value('id');
-        }
-        if (str_contains($locLower, 'kasárna') || str_contains($locLower, 'černá pole') || str_contains($locLower, 'šumavská')) {
-            return Venue::where('slug', 'kasarna-cerna-pole-unob')->value('id');
-        }
-        if (str_contains($locLower, 'vetuni') || str_contains($locLower, 'palackého tř')) {
-            return Venue::where('slug', 'kampus-vetuni-palackeho')->value('id');
-        }
-        if (str_contains($locLower, 'fekt') || str_contains($locLower, 'technická 12') || str_contains($locLower, 'technicka 12') || str_contains($locLower, 'aula profesora braunera')) {
-            return Venue::where('slug', 'fekt-vut-technicka')->value('id');
-        }
-        if (str_contains($locLower, 'fsi') || str_contains($locLower, 'technická 2') || str_contains($locLower, 'technicka 2')) {
-            return Venue::where('slug', 'fsi-vut-technicka')->value('id');
-        }
-        if (str_contains($locLower, 'božetěchov') || str_contains($locLower, 'fit vut')) {
-            return Venue::where('slug', 'fit-vut-bozetechova')->value('id');
-        }
-        if (str_contains($locLower, 'botanická 68') || str_contains($locLower, 'fi muni')) {
-            return Venue::where('slug', 'fi-muni-botanicka')->value('id');
-        }
-        if (str_contains($locLower, 'kotlářsk') || str_contains($locLower, 'přf muni') || str_contains($locLower, 'přírodovědecká fakulta') || str_contains($locLower, 'prirodovedecka fakulta')) {
-            return Venue::where('slug', 'prf-muni-kotlarska')->value('id');
-        }
-        if (str_contains($locLower, 'kamenice') || str_contains($locLower, 'kampus bohunice') || str_contains($locLower, 'simu') || str_contains($locLower, 'simulační centrum') || str_contains($locLower, 'fn bohunice') || str_contains($locLower, 'jihlavská')) {
-            return Venue::where('slug', 'kampus-bohunice')->value('id');
-        }
-        if (str_contains($locLower, 'arna novák') || str_contains($locLower, 'arna novaka') || str_contains($locLower, 'ff mu') || str_contains($locLower, 'ff muni') || str_contains($locLower, 'filozofick')) {
-            return Venue::where('slug', 'ff-muni-arna-novaka')->value('id');
-        }
-        if (str_contains($locLower, 'veveří 70') || str_contains($locLower, 'veveri 70') || str_contains($locLower, 'právnick') || str_contains($locLower, 'pravnick') || str_contains($locLower, 'law muni')) {
-            return Venue::where('slug', 'law-muni-veveri')->value('id');
-        }
-        if (str_contains($locLower, 'nová radnice') || str_contains($locLower, 'nova radnice') || str_contains($locLower, 'sněmovní sál') || str_contains($locLower, 'snemovni sal')) {
-            return Venue::where('slug', 'nova-radnice')->value('id');
-        }
-        if (str_contains($locLower, 'lipov') || str_contains($locLower, 'ekonomicko-správní') || str_contains($locLower, 'ekonomicko-spravni') || str_contains($locLower, 'esf')) {
-            return Venue::where('slug', 'econ-muni-lipova')->value('id');
-        }
-        if (str_contains($locLower, 'žerotínov') || str_contains($locLower, 'zerotinov') || str_contains($locLower, 'rektorát') || str_contains($locLower, 'rektorat')) {
-            return Venue::where('slug', 'rektorat-muni')->value('id');
-        }
-        if (str_contains($locLower, 'lednice') || str_contains($locLower, 'valtická')) {
-            return Venue::where('slug', 'zf-mendelu-lednice')->value('id');
-        }
-        if (str_contains($locLower, 'zemědělsk') || str_contains($locLower, 'zemedelsk') || str_contains($locLower, 'areál mendelu') || str_contains($locLower, 'areal mendelu') || str_contains($locLower, 'kampus mendelu') || str_contains($locLower, 'q48') || str_contains($locLower, 'design lab') || preg_match('/\bbudova [a-z]\b/u', $locLower)) {
-            return Venue::where('slug', 'areal-mendelu-zemedelska')->value('id');
-        }
-        if (str_contains($locLower, 'joštov') || str_contains($locLower, 'fss')) {
-            return Venue::where('slug', 'fss-muni-jostova')->value('id');
-        }
-
-        // Přímá shoda podle názvu nebo adresy
-        $cleanLoc = trim($location);
-        return Venue::where('name', 'like', "%{$cleanLoc}%")
-            ->orWhere('address', 'like', "%{$cleanLoc}%")
-            ->value('id');
-    }
 
     private function detectCategory(string $text): ?int
     {
@@ -680,7 +570,7 @@ class ScrapeEventsCommand extends Command
      * Zjistí, zda se akce koná mimo Brno (např. Lednice, Valtice, Telč, Praha, atd.).
      * Projekt BrnoAkce / studyBrno přijímá pouze události konané v Brně.
      */
-    protected function isOutsideBrno(?string $location, ?string $text = '', ?int $venueId = null): bool
+    protected function isOutsideBrno(?string $location, ?string $text = '', ?int $venueId = null, ?VenueResolverService $resolver = null): bool
     {
         if ($venueId) {
             $venue = Venue::find($venueId);
@@ -689,48 +579,7 @@ class ScrapeEventsCommand extends Command
             }
         }
 
-        $locLower = mb_strtolower($location ?? '');
-        $textLower = mb_strtolower($text ?? '');
-        $combined = $locLower . ' ' . $textLower;
-
-        // 1. Lednice / Valtice (např. ZF MENDELU)
-        if (preg_match('/\b(lednic[ie]|valtic[ie]|zf\s*mendelu)\b/u', $locLower)) {
-            return true;
-        }
-        if (str_contains($combined, 'v lednici') || str_contains($combined, 'areál lednice') || str_contains($combined, 'zámek lednice')) {
-            return true;
-        }
-
-        // 2. Telč (Univerzitní centrum Telč MUNI)
-        if (preg_match('/\b(telč|telci|v\s*telči)\b/u', $locLower) || str_contains($combined, 'centrum telč') || str_contains($combined, 'v telči')) {
-            return true;
-        }
-
-        // 3. Jiná města v lokaci
-        $nonBrnoCities = [
-            'praha', 'praze', 'prague',
-            'olomouc', 'olomouci',
-            'ostrava', 'ostravě', 'ostrave',
-            'zlín', 'zlin', 'zlíně', 'zline',
-            'bratislava', 'bratislavě', 'bratislave',
-            'plzeň', 'plzen', 'plzni',
-            'hradec králové', 'pardubice',
-            'české budějovice',
-            'liberec', 'ústí nad labem',
-            'vídeň', 'wien', 'vienna',
-            'mikulov', 'břeclav', 'znojmo', 'vyškov', 'blansko',
-        ];
-
-        foreach ($nonBrnoCities as $city) {
-            if (preg_match('/\b' . preg_quote($city, '/') . '\b/u', $locLower)) {
-                // Výjimka pro brněnské ulice (Bratislavská, Vídeňská, Olomoucká, Pražská, Znojemská, Hradecká, Jihlavská)
-                if (preg_match('/\b(bratislavsk|vídeňsk|vidensk|olomouck|pražsk|prazsk|znojemsk|hradeck|jihlavsk)[áéy]\b/u', $locLower)) {
-                    continue;
-                }
-                return true;
-            }
-        }
-
-        return false;
+        $resolver = $resolver ?: app(VenueResolverService::class);
+        return $resolver->isExplicitlyOutsideBrno($location, $text);
     }
 }

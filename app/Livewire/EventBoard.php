@@ -342,6 +342,7 @@ class EventBoard extends Component
 
                 return [
                     'id' => $e->id,
+                    'venue_id' => $e->venue_id,
                     'slug' => $e->slug,
                     'title' => $e->title,
                     'lat' => (float) $coords['lat'],

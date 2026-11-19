@@ -107,13 +107,18 @@ class EventResource extends Resource
                                 ->relationship('venue', 'name')
                                 ->searchable()
                                 ->preload()
-                                ->helperText('Vyberte existující klub, kolej nebo sál v Brně.'),
+                                ->helperText('Fyzické místo / fakulta / budova se souřadnicemi pro mapu.'),
+
+                            Forms\Components\TextInput::make('room_detail')
+                                ->label('Učebna / Místnost / Sál')
+                                ->placeholder('např. Učebna M2.12, posluchárna D105, sál O1')
+                                ->helperText('Zobrazí se studentům jako detail v rámci budovy.'),
 
                             Forms\Components\TextInput::make('location_name')
-                                ->label('Vlastní místo konání')
+                                ->label('Původní text lokace')
                                 ->placeholder('např. Fakulta informatiky MUNI, učebna D2')
-                                ->helperText('Vyplňte pouze pokud místo není v seznamu výše.'),
-                        ])->columns(2),
+                                ->helperText('Surový text získaný ze scraperu pro audit.'),
+                        ])->columns(3),
 
                     Forms\Components\Section::make('Datum a čas')
                         ->schema([
