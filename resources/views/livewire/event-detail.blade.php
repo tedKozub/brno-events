@@ -315,11 +315,20 @@
                     <div class="space-y-1 min-w-0">
                         <div class="text-[11px] font-bold text-base-content/50 uppercase tracking-wider">Místo konání</div>
                         <div class="font-extrabold text-base-content truncate">
-                            {{ $event->venue ? $event->venue->name : ($event->location_name ?: 'Brno') }}
+                            @if($event->location_name && $event->venue && !str_starts_with(mb_strtolower($event->location_name), mb_strtolower($event->venue->name)))
+                                {{ $event->location_name }}
+                            @else
+                                {{ $event->venue ? $event->venue->name : ($event->location_name ?: 'Brno') }}
+                            @endif
                         </div>
-                        @if($event->venue && $event->venue->address)
-                            <div class="text-xs text-base-content/70 mt-0.5 truncate">{{ $event->venue->address }}, {{ $event->venue->city }}</div>
-                        @elseif($event->venue && $event->location_name && $event->location_name !== $event->venue->name)
+                        @if($event->venue)
+                            <div class="text-xs text-base-content/70 mt-0.5 truncate">
+                                @if($event->location_name && !str_contains(mb_strtolower($event->location_name), mb_strtolower($event->venue->name)))
+                                    {{ $event->venue->name }} –
+                                @endif
+                                {{ $event->venue->address ? $event->venue->address . ', ' : '' }}{{ $event->venue->city }}
+                            </div>
+                        @elseif($event->location_name)
                             <div class="text-xs text-base-content/70 mt-0.5 truncate">{{ $event->location_name }}</div>
                         @endif
                         <div class="mt-2 flex items-center gap-3">

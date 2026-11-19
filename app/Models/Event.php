@@ -112,11 +112,26 @@ class Event extends Model
 
     public function getLocationDisplayAttribute(): string
     {
+        $loc = trim($this->location_name ?? '');
+
         if ($this->venue) {
-            return $this->venue->name . ($this->venue->address ? ', ' . $this->venue->address : '');
+            $baseVenue = $this->venue->name . ($this->venue->address ? ', ' . $this->venue->address : '');
+
+            // Pokud location_name obsahuje specifickou učebnu, místnost, budovu či sál
+            if ($loc !== '' && !str_starts_with(mb_strtolower($loc), mb_strtolower($this->venue->name))) {
+                if (preg_match('/(učebn|ucebn|místnost|mistnost|budov|sál|sal|aula|posluchárn|poslucharn|q\d+|lab)/ui', $loc)) {
+                    $cleanLoc = preg_replace('/,?\s*brno\s*$/ui', '', $loc);
+                    if (str_contains(mb_strtolower($cleanLoc), mb_strtolower($this->venue->name))) {
+                        return $cleanLoc;
+                    }
+                    return "{$cleanLoc} ({$this->venue->name})";
+                }
+            }
+
+            return $baseVenue;
         }
 
-        return $this->location_name ?: 'Brno centrum';
+        return $loc ?: 'Brno centrum';
     }
 
     public function getIsMultiDayAttribute(): bool

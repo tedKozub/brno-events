@@ -290,4 +290,43 @@ PY;
         $this->assertEquals('08:30', $quantumDay->starts_at->format('H:i'));
         $this->assertEquals('16:00', $quantumDay->ends_at->format('H:i'));
     }
+
+    public function test_specific_classroom_or_room_preserves_room_and_assigns_campus_coordinates(): void
+    {
+        $mendeluVenue = Venue::firstOrCreate(
+            ['slug' => 'areal-mendelu-zemedelska'],
+            [
+                'name' => 'Areál MENDELU',
+                'address' => 'Zemědělská 1',
+                'city' => 'Brno',
+                'latitude' => 49.2104,
+                'longitude' => 16.6166,
+            ]
+        );
+
+        $roomEvent = Event::create([
+            'title' => 'Workshop Otevřená Data MENDELU',
+            'slug' => 'workshop-otevrena-data-mendelu-' . uniqid(),
+            'starts_at' => Carbon::now()->addDays(3)->setTime(14, 0),
+            'status' => 'published',
+            'venue_id' => $mendeluVenue->id,
+            'location_name' => 'Budova M, místnost M2.12',
+        ]);
+
+        // 1. Zobrazení místa musí zachovat specifickou učebnu i areál
+        $this->assertStringContainsString('Budova M, místnost M2.12', $roomEvent->location_display);
+        $this->assertStringContainsString('Areál MENDELU', $roomEvent->location_display);
+
+        // 2. Souřadnice na mapě musí ukazovat na areál univerzity
+        $coords = $roomEvent->map_coordinates;
+        $this->assertEquals(49.2104, $coords['lat']);
+        $this->assertEquals(16.6166, $coords['lng']);
+        $this->assertTrue($coords['is_exact']);
+
+        // 3. Detail akce musí zobrazovat učebnu v nadpisu místa
+        $response = $this->get('/akce/' . $roomEvent->slug);
+        $response->assertStatus(200);
+        $response->assertSee('Budova M, místnost M2.12');
+        $response->assertSee('Areál MENDELU');
+    }
 }
