@@ -212,30 +212,24 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         @foreach($places as $place)
                             @php
-                                $badgeColor = match($place['category']) {
-                                    'study' => 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20',
-                                    'cafes' => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
-                                    'date' => 'bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20',
-                                    'pubs' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
-                                    'parks' => 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20',
-                                    default => 'bg-primary/10 text-primary border-primary/20',
-                                };
                                 $categoryName = $categories[$place['category']]['name'] ?? $place['category'];
                                 $gMapsUrl = "https://www.google.com/maps/search/?api=1&query=" . urlencode($place['name'] . ', ' . $place['address']);
                                 $mapyCzUrl = "https://mapy.cz/zakladni?q=" . urlencode($place['name'] . ', ' . $place['address']);
+
+                                $categoryIcon = match($place['category']) {
+                                    'study' => '<svg class="w-3.5 h-3.5 text-purple-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>',
+                                    'cafes' => '<svg class="w-3.5 h-3.5 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 8h1a3 3 0 010 6h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 3v2M10 3v2M14 3v2"/></svg>',
+                                    'date' => '<svg class="w-3.5 h-3.5 text-pink-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>',
+                                    'pubs' => '<svg class="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11h1a3 3 0 010 6h-1M4 9h15v10a2 2 0 01-2 2H6a2 2 0 01-2-2V9zM7 5v4M11 5v4M15 5v4"/></svg>',
+                                    'parks' => '<svg class="w-3.5 h-3.5 text-cyan-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2L4 12h3v8h10v-8h3L12 2z"/></svg>',
+                                    default => '<svg class="w-3.5 h-3.5 text-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>',
+                                };
                             @endphp
                             <div
                                 class="card bg-base-100 border border-base-300 hover:border-primary/50 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
                             >
-                                <div class="card-body p-4 sm:p-5 space-y-3">
-                                    {{-- Horní štítky (stručné a čisté) --}}
-                                    <div>
-                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border {{ $badgeColor }}">
-                                            {{ $categories[$place['category']]['short_name'] ?? $place['category'] }}
-                                        </span>
-                                    </div>
-
-                                    {{-- Název & adresa --}}
+                                <div class="card-body p-4 sm:p-5 space-y-2.5">
+                                    {{-- Název & adresa s minimalistickou ikonou kategorie --}}
                                     <div>
                                         <h3
                                             @click="flyToPlace({{ $place['id'] }}, {{ $place['lat'] }}, {{ $place['lng'] }})"
@@ -243,9 +237,12 @@
                                         >
                                             {{ $place['name'] }}
                                         </h3>
-                                        <p class="text-xs text-base-content/60 font-medium mt-0.5 truncate">
-                                            {{ $place['address'] }}
-                                        </p>
+                                        <div class="flex items-center gap-1.5 mt-1 text-xs text-base-content/65 font-medium min-w-0">
+                                            <span class="inline-flex items-center shrink-0" title="{{ $categoryName }}">
+                                                {!! $categoryIcon !!}
+                                            </span>
+                                            <span class="truncate">{{ $place['address'] }}</span>
+                                        </div>
                                     </div>
 
                                     {{-- Popis --}}

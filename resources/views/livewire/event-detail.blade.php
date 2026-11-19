@@ -166,14 +166,14 @@
         <div class="card bg-base-100 shadow-sm border border-base-300 rounded-2xl overflow-hidden">
             {{-- Plakát / Fotka akce s poměrem stran - kliknutím se otevře lightbox --}}
             <div
-                class="relative aspect-[16/9] sm:aspect-[21/9] w-full bg-base-300 overflow-hidden cursor-pointer group"
+                class="relative min-h-[260px] xs:min-h-[300px] aspect-[4/3] xs:aspect-[16/10] sm:aspect-[21/9] w-full bg-base-300 overflow-hidden cursor-pointer group"
                 onclick="document.getElementById('poster_modal').showModal()"
                 title="Kliknutím zobrazit v plné velikosti"
             >
                 <img
                     src="{{ $event->cover_image_url }}"
                     alt="{{ $event->title }}"
-                    class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                    class="w-full h-full object-cover object-[center_35%] sm:object-center group-hover:scale-[1.02] transition-transform duration-300"
                     onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=800&q=75';"
                 />
                 <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent"></div>
@@ -486,7 +486,7 @@
                                 <img
                                     src="{{ $rel->cover_image_url }}"
                                     alt="{{ $rel->title }}"
-                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    class="w-full h-full object-cover object-[center_35%] group-hover:scale-105 transition-transform duration-300"
                                     loading="lazy"
                                     onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=800&q=75';"
                                 />

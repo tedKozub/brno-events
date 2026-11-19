@@ -13,16 +13,18 @@
     <!-- Modal Dialog -->
     @if($isOpen)
         <div
+            x-data
+            x-init="$nextTick(() => { document.getElementById('propose-name')?.focus() })"
             class="fixed inset-0 z-50 overflow-y-auto"
             aria-labelledby="propose-place-title"
             role="dialog"
             aria-modal="true"
             @keydown.escape.window="$wire.closeModal()"
         >
-            <!-- Backdrop -->
+            <!-- Backdrop se zasedlým pozadím pro zvýraznění formuláře -->
             <div
                 wire:click="closeModal"
-                class="fixed inset-0 bg-base-900/60 backdrop-blur-xs transition-opacity cursor-pointer"
+                class="fixed inset-0 bg-neutral-950/75 backdrop-blur-xs transition-opacity cursor-pointer"
             ></div>
 
             <div class="flex min-h-full items-center justify-center p-3 sm:p-4 text-center pointer-events-none">
@@ -31,13 +33,7 @@
                 >
                     <!-- Modal Header -->
                     <div class="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-base-200">
-                        <div class="flex items-center gap-2.5 text-base sm:text-lg font-black text-base-content">
-                            <span class="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                </svg>
-                            </span>
+                        <div class="text-base sm:text-lg font-black text-base-content">
                             <span id="propose-place-title">Navrhnout studentské místo</span>
                         </div>
                         <button
@@ -95,6 +91,7 @@
                                         wire:model="name"
                                         placeholder="např. Podnik cafe bar, MZK noční studovna, U Poutníka..."
                                         class="input input-bordered w-full rounded-xl text-sm font-semibold @error('name') input-error @enderror"
+                                        autofocus
                                         required
                                     />
                                     @error('name') <span class="text-xs text-error mt-1 block">{{ $message }}</span> @enderror
@@ -179,32 +176,17 @@
                                     </div>
                                 </div>
 
-                                {{-- Kontakt (nepovinné) --}}
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
-                                    <div>
-                                        <label class="block text-xs font-bold uppercase tracking-wider text-base-content/70 mb-1">
-                                            Tvé jméno / Nick (nepovinné)
-                                        </label>
-                                        <input
-                                            type="text"
-                                            wire:model="submitterName"
-                                            placeholder="např. Terka z FSS"
-                                            class="input input-bordered w-full rounded-xl text-sm"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-xs font-bold uppercase tracking-wider text-base-content/70 mb-1">
-                                            Tvůj e-mail (nepovinné)
-                                        </label>
-                                        <input
-                                            type="email"
-                                            wire:model="submitterEmail"
-                                            placeholder="pro potvrzení schválení"
-                                            class="input input-bordered w-full rounded-xl text-sm @error('submitterEmail') input-error @enderror"
-                                        />
-                                        @error('submitterEmail') <span class="text-xs text-error mt-1 block">{{ $message }}</span> @enderror
-                                    </div>
+                                {{-- Tvé jméno / Nick (nepovinné) --}}
+                                <div class="pt-1">
+                                    <label class="block text-xs font-bold uppercase tracking-wider text-base-content/70 mb-1">
+                                        Tvé jméno / Nick (nepovinné)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        wire:model="submitterName"
+                                        placeholder="např. Terka z FSS"
+                                        class="input input-bordered w-full rounded-xl text-sm"
+                                    />
                                 </div>
 
                                 {{-- Buttons --}}

@@ -299,7 +299,7 @@
                                 <img
                                     src="{{ $event->cover_image_url }}"
                                     alt="{{ $event->title }}"
-                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    class="w-full h-full object-cover object-[center_35%] group-hover:scale-105 transition-transform duration-300"
                                     loading="lazy"
                                     onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=800&q=75';"
                                 />
@@ -489,7 +489,7 @@
                                     <img
                                         src="{{ $event->cover_image_url }}"
                                         alt="{{ $event->title }}"
-                                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                        class="w-full h-full object-cover object-[center_35%] group-hover:scale-105 transition-transform duration-300"
                                         loading="lazy"
                                         onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=800&q=75';"
                                     />
@@ -644,10 +644,11 @@
                 }, 200);
             },
 
-            createPinIcon(isMulti = false, index = null, total = null) {
-                const badgeHtml = isMulti && index ? `
-                    <div style="position: absolute; top: -5px; right: -5px; background: #0f172a; color: #ffffff; border: 1.5px solid #ffffff; width: 19px; height: 19px; border-radius: 50%; font-size: 10px; font-weight: 900; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.4); z-index: 10;">
-                        ${index}
+            createPinIcon(count = 1) {
+                // Čísílko se zobrazí POUZE pokud je na daném místě 2 a více akcí (nikdy ne 1)
+                const badgeHtml = count > 1 ? `
+                    <div style="position: absolute; top: -6px; right: -6px; background: #0f172a; color: #ffffff; border: 2px solid #ffffff; min-width: 20px; height: 20px; padding: 0 4px; border-radius: 10px; font-size: 11px; font-weight: 900; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.4); z-index: 10;">
+                        ${count}
                     </div>
                 ` : '';
 
@@ -670,46 +671,61 @@
                 });
             },
 
-            createPopupHtml(item, otherItems = []) {
-                let othersHtml = '';
-                if (otherItems && otherItems.length > 0) {
-                    const links = otherItems.map(o => `
-                        <a href="/akce/${o.slug || o.id}" style="display: block; text-decoration: none; padding: 5px 8px; border-radius: 6px; background: #f8fafc; border: 1px solid #e2e8f0; margin-bottom: 4px; color: #0f172a; font-size: 11px; font-weight: 700; transition: background 0.15s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
-                            <span style="color: #ea580c; font-weight: 900;">•</span> ${o.title}
-                            <span style="display: block; font-size: 10px; font-weight: 500; color: #64748b; margin-top: 1px;">${o.time}</span>
-                        </a>
-                    `).join('');
+            createPopupHtml(items) {
+                if (!items) return '';
+                const list = Array.isArray(items) ? items : [items];
+                if (list.length === 0) return '';
 
-                    othersHtml = `
-                        <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid #e2e8f0;">
-                            <div style="font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px;">
-                                Další akce na tomto místě (${otherItems.length}):
+                if (list.length === 1) {
+                    const item = list[0];
+                    return `
+                        <div style="font-family: inherit; font-size: 13px; min-width: 220px; max-width: 270px; padding: 2px;">
+                            <div style="font-size: 10px; font-weight: 800; color: #ea580c; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">
+                                ${item.category || 'Akce'}
                             </div>
-                            <div style="max-height: 130px; overflow-y: auto; padding-right: 2px;">
-                                ${links}
+                            <strong style="display: block; font-size: 14px; font-weight: 900; line-height: 1.25; margin-bottom: 4px; color: #0f172a;">
+                                ${item.title}
+                            </strong>
+                            <div style="color: #64748b; font-size: 11px; margin-bottom: 4px;">
+                                📍 ${item.venue}
                             </div>
+                            <div style="font-weight: 800; font-size: 12px; color: #ea580c; margin-bottom: 8px;">
+                                ${item.time} • ${item.price}
+                            </div>
+                            <a href="/akce/${item.slug || item.id}" style="display: block; text-align: center; text-decoration: none; background: #ea580c; color: #ffffff; padding: 7px 12px; border-radius: 8px; font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; box-shadow: 0 2px 4px rgba(234, 88, 12, 0.3);">
+                                Zobrazit detail akce &rarr;
+                            </a>
                         </div>
                     `;
                 }
 
+                // 2 a více akcí na stejném místě: seznam v přehledném popoveru
+                const venueName = list[0].venue || 'Brno';
+                const eventCards = list.map(ev => `
+                    <a href="/akce/${ev.slug || ev.id}" style="display: block; text-decoration: none; padding: 7px 9px; border-radius: 8px; background: #f8fafc; border: 1px solid #e2e8f0; margin-bottom: 5px; color: #0f172a; transition: background 0.15s, border-color 0.15s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1'" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0'">
+                        <div style="font-size: 9px; font-weight: 800; color: #ea580c; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1px;">
+                            ${ev.category || 'Akce'}
+                        </div>
+                        <div style="font-size: 12px; font-weight: 800; line-height: 1.25; color: #0f172a; margin-bottom: 2px;">
+                            ${ev.title}
+                        </div>
+                        <div style="font-size: 11px; font-weight: 700; color: #64748b;">
+                            ${ev.time} • <span style="color: #ea580c;">${ev.price}</span>
+                        </div>
+                    </a>
+                `).join('');
+
                 return `
-                    <div style="font-family: inherit; font-size: 13px; min-width: 220px; max-width: 270px; padding: 2px;">
-                        <div style="font-size: 10px; font-weight: 800; color: #ea580c; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">
-                            ${item.category || 'Akce'}
+                    <div style="font-family: inherit; font-size: 13px; min-width: 240px; max-width: 290px; padding: 2px;">
+                        <div style="font-size: 10px; font-weight: 900; color: #ea580c; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">
+                            📍 ${venueName}
                         </div>
-                        <strong style="display: block; font-size: 14px; font-weight: 900; line-height: 1.25; margin-bottom: 4px; color: #0f172a;">
-                            ${item.title}
-                        </strong>
-                        <div style="color: #64748b; font-size: 11px; margin-bottom: 4px;">
-                            📍 ${item.venue}
+                        <div style="font-size: 13px; font-weight: 900; color: #0f172a; margin-bottom: 8px;">
+                            ${list.length} akce na tomto místě
                         </div>
-                        <div style="font-weight: 800; font-size: 12px; color: #ea580c; margin-bottom: 8px;">
-                            ${item.time} • ${item.price}
+                        <div style="max-height: 220px; overflow-y: auto; padding-right: 2px;">
+                            ${eventCards}
                         </div>
-                        <a href="/akce/${item.slug || item.id}" style="display: block; text-align: center; text-decoration: none; background: #ea580c; color: #ffffff; padding: 7px 12px; border-radius: 8px; font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; box-shadow: 0 2px 4px rgba(234, 88, 12, 0.3);">
-                            Zobrazit detail akce &rarr;
-                        </a>
-                        ${othersHtml}
                     </div>
                 `;
             },
@@ -729,7 +745,7 @@
                 this.markersLayer.clearLayers();
                 const bounds = [];
 
-                // 1. Seskupení markerů podle shodných souřadnic (tolerance cca 10 metrů)
+                // 1. Seskupení markerů podle shodných souřadnic
                 const groups = {};
                 (markersList || []).forEach(item => {
                     if (!item.lat || !item.lng) return;
@@ -744,120 +760,31 @@
                     groups[key].items.push(item);
                 });
 
-                // Pomocná funkce pro výpočet posunu v metrech do kruhu / vějíře
-                const calculateOffsetPos = (centerLat, centerLng, index, total, radiusMeters) => {
-                    if (total <= 1 || radiusMeters === 0) {
-                        return [centerLat, centerLng];
-                    }
-                    const angle = (2 * Math.PI * index) / total - (Math.PI / 2);
-                    const latOffset = (radiusMeters / 111111) * Math.sin(angle);
-                    const lngOffset = (radiusMeters / (111111 * Math.cos(centerLat * Math.PI / 180))) * Math.cos(angle);
-                    return [centerLat + latOffset, centerLng + lngOffset];
-                };
-
-                // 2. Vykreslení skupin markerů
+                // 2. Vykreslení: přesně 1 špendlík na bod. Pokud je akcí 2+, nese badge s číslem (2, 3...)
                 Object.values(groups).forEach(group => {
                     const total = group.items.length;
                     const center = [group.centerLat, group.centerLng];
                     bounds.push(center);
 
-                    // Samostatný marker na unikátní adrese
-                    if (total === 1) {
-                        const item = group.items[0];
-                        const marker = L.marker(center, { icon: this.createPinIcon(false) }).addTo(this.markersLayer);
-                        marker.bindPopup(this.createPopupHtml(item, []));
-                        return;
-                    }
-
-                    // Vícenásobné akce na stejném místě:
-                    // Klidový jemný offset (18-28 metrů)
-                    const baseRadius = total === 2 ? 18 : (total <= 4 ? 24 : 30);
-                    // Rozšířený hover offset při najetí myší (38-55 metrů)
-                    const hoverRadius = baseRadius * 1.85;
-
-                    const markersInGroup = [];
-                    const linesInGroup = [];
-
-                    // Centrální pulzující bodík společného místa
-                    const centerDot = L.circleMarker(center, {
-                        radius: 5.5,
-                        color: '#ea580c',
-                        fillColor: '#ffffff',
-                        fillOpacity: 1,
-                        weight: 2.5
+                    const pinIcon = this.createPinIcon(total);
+                    const marker = L.marker(center, {
+                        icon: pinIcon,
+                        zIndexOffset: total > 1 ? 50 : 0
                     }).addTo(this.markersLayer);
 
-                    group.items.forEach((item, idx) => {
-                        const basePos = calculateOffsetPos(group.centerLat, group.centerLng, idx, total, baseRadius);
-                        const hoverPos = calculateOffsetPos(group.centerLat, group.centerLng, idx, total, hoverRadius);
-
-                        // Spojovací nožička (spider leg)
-                        const leg = L.polyline([center, basePos], {
-                            color: '#ea580c',
-                            weight: 1.5,
-                            opacity: 0.55,
-                            dashArray: '3, 4'
-                        }).addTo(this.markersLayer);
-                        linesInGroup.push({ leg, idx });
-
-                        // Špendlík s indexem pořadí akce
-                        const pinIcon = this.createPinIcon(true, idx + 1, total);
-                        const marker = L.marker(basePos, {
-                            icon: pinIcon,
-                            zIndexOffset: 100 + idx
-                        }).addTo(this.markersLayer);
-
-                        const otherItems = group.items.filter((_, i) => i !== idx);
-                        marker.bindPopup(this.createPopupHtml(item, otherItems));
-
-                        markersInGroup.push({ marker, basePos, hoverPos, idx });
-                    });
-
-                    // On-hover rozbalení celé skupiny do vějíře
-                    let isExpanded = false;
-                    const expandGroup = () => {
-                        if (isExpanded) return;
-                        isExpanded = true;
-                        markersInGroup.forEach(m => {
-                            m.marker.setLatLng(m.hoverPos);
-                            m.marker.setZIndexOffset(600 + m.idx);
-                            const el = m.marker.getElement();
-                            if (el) {
-                                el.style.transform += ' scale(1.12)';
-                            }
-                        });
-                        linesInGroup.forEach(l => {
-                            l.leg.setLatLngs([center, markersInGroup[l.idx].hoverPos]);
-                            l.leg.setStyle({ opacity: 0.95, weight: 2 });
-                        });
-                        centerDot.setStyle({ radius: 7, fillColor: '#ea580c', color: '#ffffff' });
-                    };
-
-                    const collapseGroup = () => {
-                        if (!isExpanded) return;
-                        isExpanded = false;
-                        markersInGroup.forEach(m => {
-                            m.marker.setLatLng(m.basePos);
-                            m.marker.setZIndexOffset(100 + m.idx);
-                            const el = m.marker.getElement();
-                            if (el) {
-                                el.style.transform = el.style.transform.replace(' scale(1.12)', '');
-                            }
-                        });
-                        linesInGroup.forEach(l => {
-                            l.leg.setLatLngs([center, markersInGroup[l.idx].basePos]);
-                            l.leg.setStyle({ opacity: 0.55, weight: 1.5 });
-                        });
-                        centerDot.setStyle({ radius: 5.5, fillColor: '#ffffff', color: '#ea580c' });
-                    };
-
-                    markersInGroup.forEach(m => {
-                        m.marker.on('mouseover', expandGroup);
-                        m.marker.on('mouseout', collapseGroup);
-                    });
-                    centerDot.on('mouseover', expandGroup);
-                    centerDot.on('mouseout', collapseGroup);
+                    marker.bindPopup(this.createPopupHtml(group.items));
                 });
+
+                if (bounds.length > 0) {
+                    this.map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+                } else {
+                    this.map.setView([49.1951, 16.6068], 13);
+                }
+
+                setTimeout(() => {
+                    if (this.map) this.map.invalidateSize();
+                }, 100);
+            }
 
                 if (bounds.length > 0) {
                     this.map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
