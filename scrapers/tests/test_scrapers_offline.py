@@ -71,8 +71,21 @@ class TestScrapersOffline(unittest.TestCase):
         with open(path, "r", encoding="utf-8") as f:
             html = f.read()
         events = parse_mendelu(html, base_url="https://mendelu.cz/akce/")
-        self.assertGreaterEqual(len(events), 1)
-        self.assertIn("MENDELU", events[0]["title"])
+        self.assertGreaterEqual(len(events), 2)
+        
+        # Verify festival
+        festival = next((e for e in events if "festival" in e["title"].lower()), None)
+        self.assertIsNotNone(festival)
+        
+        # Verify Lednice event with precise time and location
+        lednice = next((e for e in events if "zahradnictví" in e["title"].lower()), None)
+        self.assertIsNotNone(lednice)
+        self.assertIn("09:00:00", lednice["starts_at"])
+        self.assertIn("15:00:00", lednice["ends_at"])
+        self.assertIn("Lednice", lednice["location_name"])
+        self.assertIn("Valtická 337", lednice["location_name"])
+        self.assertNotEqual("10:00:00", lednice["starts_at"][-8:])
+
         # Administrative card must be filtered out
         for e in events:
             self.assertFalse(is_administrative_or_irrelevant(e["title"]))

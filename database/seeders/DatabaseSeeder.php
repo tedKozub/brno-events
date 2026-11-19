@@ -152,6 +152,25 @@ class DatabaseSeeder extends Seeder
             'description' => 'Studentský hudební klub a lounge bar v centru Brna.',
         ]);
 
+        Venue::firstOrCreate(['slug' => 'areal-mendelu-zemedelska'], [
+            'name' => 'Areál MENDELU',
+            'address' => 'Zemědělská 1',
+            'city' => 'Brno',
+            'latitude' => 49.2104,
+            'longitude' => 16.6166,
+            'description' => 'Hlavní kampus Mendelovy univerzity v Brně (Černá Pole).',
+        ]);
+
+        Venue::firstOrCreate(['slug' => 'zf-mendelu-lednice'], [
+            'name' => 'ZF MENDELU',
+            'address' => 'Valtická 337',
+            'city' => 'Lednice',
+            'latitude' => 48.7997,
+            'longitude' => 16.8043,
+            'website_url' => 'https://zf.mendelu.cz',
+            'description' => 'Zahradnická fakulta Mendelovy univerzity v Lednici.',
+        ]);
+
         // 2. Categories
         $catParty = Category::create([
             'name' => 'Párty & Kluby',

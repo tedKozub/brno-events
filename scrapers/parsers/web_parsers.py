@@ -66,53 +66,131 @@ def parse_mendelu(html: str, base_url: str = "https://mendelu.cz/akce/") -> List
             continue
         title = heading_el.get_text(strip=True)
 
-        # Date parsing
-        day_el = card.find(class_=lambda c: c and "day" in c)
-        month_el = card.find(class_=lambda c: c and "month" in c)
-        day_matches = re.findall(r"\d+", day_el.get_text()) if day_el else []
-        day = int(day_matches[0]) if day_matches else None
-        end_day = int(day_matches[1]) if len(day_matches) > 1 else None
-        month_str = month_el.get_text(strip=True).lower() if month_el else ""
-        month = CZECH_MONTHS.get(month_str[:3], datetime.datetime.now().month)
-
-        year = current_year
-        if month < datetime.datetime.now().month - 1:
-            year += 1
-
-        ends_at = None
-        if day and month:
-            starts_at = f"{year:04d}-{month:02d}-{day:02d} 10:00:00"
-            if end_day and 1 <= end_day <= 31:
-                ends_at = f"{year:04d}-{month:02d}-{end_day:02d} 18:00:00"
-        else:
-            starts_at = f"{current_year:04d}-11-20 10:00:00"
-
-        # Details/location
-        clean_info = []
+        # Classification of .event-card__info-item elements:
+        # Items can be:
+        # 1. Date string (e.g. "24. 11. 2026" or "2. 11. 2026 – 30. 11. 2026")
+        # 2. Time string (e.g. "9:00 – 15:00" or "15:00")
+        # 3. Location string (e.g. "ZF MENDELU, Valtická 337, Lednice", "Q48", "Budova M, místnost M2.12")
+        info_items = []
         for i in card.find_all(class_=lambda c: c and "info-item" in c):
             t = i.get_text(separator=" ", strip=True)
             t = re.sub(r"Svg Vector Icons\s*:?\s*https?://\S+", "", t, flags=re.I).strip()
+            t = re.sub(r"\s+", " ", t.replace("\xa0", " ")).strip()
             if t:
-                clean_info.append(t)
+                info_items.append(t)
 
-        loc_str = "Areál MENDELU, Zemědělská 1, Brno"
-        for inf in clean_info:
-            if any(k in inf.lower() for k in ["brno", "budova", "učebna", "pavilon", "sál", "kampus", "lab", "zemědělská"]):
+        time_str = None
+        date_item_str = None
+        loc_str = None
+
+        for inf in info_items:
+            is_time = bool(
+                re.search(r"\b\d{1,2}:\d{2}\b", inf)
+                and not re.search(r"\b\d{4}\b", inf)
+                and not re.search(r"\d{1,2}\.\s*\d{1,2}\.", inf)
+            )
+            is_date = bool(
+                re.search(r"\b\d{4}\b", inf)
+                or re.search(r"\d{1,2}\.\s*\d{1,2}\.", inf)
+                or any(m in inf.lower() for m in CZECH_MONTHS)
+            )
+
+            if is_time and not time_str:
+                time_str = inf
+            elif is_date and not date_item_str:
+                date_item_str = inf
+            elif not loc_str:
                 loc_str = inf
-                break
+
+        # Date parsing
+        day, month, year = None, None, current_year
+        end_day, end_month, end_year = None, None, current_year
+
+        # Priority 1: From explicit date info item (e.g. "24. 11. 2026" or "2. 11. 2026 – 30. 11. 2026")
+        if date_item_str:
+            dates = re.findall(r"(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})", date_item_str)
+            if dates:
+                day = int(dates[0][0])
+                month = int(dates[0][1])
+                year = int(dates[0][2])
+                if len(dates) > 1:
+                    end_day = int(dates[1][0])
+                    end_month = int(dates[1][1])
+                    end_year = int(dates[1][2])
+
+        # Priority 2: From calendar badge .event-card__date-day and .event-card__date-month
+        if not day or not month:
+            day_el = card.find(class_=lambda c: c and "day" in c)
+            month_el = card.find(class_=lambda c: c and "month" in c)
+            day_matches = re.findall(r"\d+", day_el.get_text()) if day_el else []
+            day = int(day_matches[0]) if day_matches else None
+            if len(day_matches) > 1:
+                end_day = int(day_matches[1])
+            month_str = month_el.get_text(strip=True).lower() if month_el else ""
+            month = CZECH_MONTHS.get(month_str[:3], datetime.datetime.now().month)
+            if month < datetime.datetime.now().month - 1:
+                year += 1
+
+        if not day or not month:
+            day = 20
+            month = 11
+
+        # Time parsing
+        start_hour, start_min = 10, 0
+        end_hour, end_min = None, None
+        has_explicit_time = False
+
+        if time_str:
+            time_matches = re.findall(r"\b(\d{1,2}):(\d{2})\b", time_str)
+            if time_matches:
+                start_hour = int(time_matches[0][0])
+                start_min = int(time_matches[0][1])
+                has_explicit_time = True
+                if len(time_matches) > 1:
+                    end_hour = int(time_matches[1][0])
+                    end_min = int(time_matches[1][1])
+
+        starts_at = f"{year:04d}-{month:02d}-{day:02d} {start_hour:02d}:{start_min:02d}:00"
+        
+        ends_at = None
+        if end_hour is not None and end_min is not None:
+            e_year = end_year if end_year else year
+            e_month = end_month if end_month else month
+            e_day = end_day if end_day else day
+            ends_at = f"{e_year:04d}-{e_month:02d}-{e_day:02d} {end_hour:02d}:{end_min:02d}:00"
+        elif end_day and 1 <= end_day <= 31:
+            e_year = end_year if end_year else year
+            e_month = end_month if end_month else month
+            ends_at = f"{e_year:04d}-{e_month:02d}-{end_day:02d} 18:00:00"
+
+        # Location
+        if not loc_str:
+            loc_str = "Areál MENDELU, Zemědělská 1, Brno"
 
         desc = f"Akce Mendelovy univerzity v Brně: {title}."
-        if clean_info:
-            desc += " " + " | ".join(clean_info)
+        if info_items:
+            desc += " " + " | ".join(info_items)
+
+        # Cover image extraction from .event-card__image or style background-image
+        cover_image = None
+        img_el = card.find(class_=lambda c: c and "image" in c)
+        if img_el:
+            style = img_el.get("style", "")
+            bg_match = re.search(r"url\s*\(\s*['\"]?([^'\")]+)['\"]?\s*\)", style)
+            if bg_match:
+                cover_image = urljoin(base_url, bg_match.group(1).strip())
+            elif img_el.name == "img":
+                cover_image = urljoin(base_url, img_el.get("src", ""))
 
         events.append({
             "title": title,
             "short_description": desc[:200],
             "description": desc,
             "starts_at": starts_at,
-            "ends_at": None,
-            "is_all_day": False,
+            "ends_at": ends_at,
+            "is_all_day": not has_explicit_time and not time_str,
             "location_name": loc_str,
+            "cover_image": cover_image,
             "source_url": url,
             "source_type": "scraper_web",
         })

@@ -468,7 +468,10 @@ class ScrapeEventsCommand extends Command
         if (str_contains($locLower, 'kamenice') || str_contains($locLower, 'kampus bohunice')) {
             return Venue::where('slug', 'kampus-bohunice')->value('id');
         }
-        if (str_contains($locLower, 'zemědělsk') || str_contains($locLower, 'mendelu')) {
+        if (str_contains($locLower, 'lednice') || str_contains($locLower, 'valtická')) {
+            return Venue::where('slug', 'zf-mendelu-lednice')->value('id');
+        }
+        if (str_contains($locLower, 'zemědělsk') || (str_contains($locLower, 'mendelu') && !str_contains($locLower, 'lednice'))) {
             return Venue::where('slug', 'areal-mendelu-zemedelska')->value('id');
         }
         if (str_contains($locLower, 'joštov') || str_contains($locLower, 'fss')) {

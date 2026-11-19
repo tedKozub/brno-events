@@ -184,4 +184,34 @@ PY;
         $this->assertEquals(0, $exitCode, "Python parser test failed:\nSTDOUT: {$stdout}\nSTDERR: {$stderr}");
         $this->assertStringContainsString('OK', $stdout);
     }
+
+    public function test_mendelu_scraper_matches_lednice_venue_and_avoids_zemedelska_fallback(): void
+    {
+        $ledniceVenue = Venue::firstOrCreate(
+            ['slug' => 'zf-mendelu-lednice'],
+            [
+                'name' => 'ZF MENDELU',
+                'address' => 'Valtická 337',
+                'city' => 'Lednice',
+                'latitude' => 48.7997,
+                'longitude' => 16.8043,
+            ]
+        );
+
+        $event = Event::create([
+            'title' => 'Trendy v zahradnictví a krajinářské architektuře 2026',
+            'slug' => 'trendy-v-zahradnictvi-test',
+            'starts_at' => Carbon::parse('2026-11-24 09:00:00'),
+            'ends_at' => Carbon::parse('2026-11-24 15:00:00'),
+            'status' => 'published',
+            'venue_id' => $ledniceVenue->id,
+            'location_name' => 'ZF MENDELU, Valtická 337, Lednice',
+        ]);
+
+        $this->assertEquals('ZF MENDELU, Valtická 337', $event->location_display);
+        $this->assertEquals('Lednice', $event->venue->city);
+        $this->assertStringNotContainsString('Zemědělská 1, Brno', $event->location_display);
+        $this->assertEquals('09:00', $event->starts_at->format('H:i'));
+        $this->assertEquals('15:00', $event->ends_at->format('H:i'));
+    }
 }
