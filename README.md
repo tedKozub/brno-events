@@ -1,72 +1,67 @@
-<p align="center">
-  <h1 align="center">🎓 BrnoAkce – Studentské akce Brno</h1>
-  <p align="center">
-    <strong>Moderní, rychlá a otevřená platforma sdružující všechny studentské akce, festivaly, workshopy a komunitní život v Brně na jednom místě.</strong>
-  </p>
-</p>
+# studyBrno / Brno Events
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Laravel-12.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel 12" />
-  <img src="https://img.shields.io/badge/Livewire-3.x-FB70A9?style=for-the-badge&logo=livewire&logoColor=white" alt="Livewire 3" />
-  <img src="https://img.shields.io/badge/TailwindCSS-3.x-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" />
-  <img src="https://img.shields.io/badge/Python_Scraper-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.11" />
-  <img src="https://img.shields.io/badge/Playwright-E2E-2EAD33?style=for-the-badge&logo=playwright&logoColor=white" alt="Playwright" />
-</p>
+Open-source aggregator, search engine, and interactive directory of university and student events, venues, and study spaces in Brno, Czech Republic.
 
 ---
 
-## 🌟 Hlavní funkce platformy
+## Technical Overview
 
-* **⚡ Dynamický Feed akcí:** Okamžité filtrování podle univerzit (**MUNI**, **VUT**, **MENDELU**, **UNOB**, **VETUNI**), kategorií a vstupného s plynulým načítáním dalších dávek a tlačítkem *Scroll to Top*.
-* **🧠 Sémantické vektorové vyhledávání:** Vyhledávání založené na 384-dimenzionálních embeddingových vektorech s bleskovou kosinovou podobností přímo v PHP. Najde *„pivo“*, i když je v popisu jen *„hospodský kvíz“*.
-* **🗺️ Interaktivní Mapa Brna & Crowdsourcing (`/mista`):** Zobrazení akcí i studentských míst na mapovém podkladu OpenStreetMap přes Leaflet.js s podporou dotykových gest. Studenti mohou sami navrhovat nová místa přes frontendový formulář, která administrátor jedním kliknutím schválí s automatickým geocodingem souřadnic.
-* **🖼️ Full-screen Media Lightbox:** Zobrazení originálních plakátů ve vysokém rozlišení. Zavírá se intuitivně kliknutím kamkoliv mimo plakát nebo klávesou `Escape`, bez rušivých prvků.
-* **🤖 Multimodální AI Scraping & Moderace:** Automatické vytěžování akcí z univerzitních webů, iCal kalendářů, RSS i sociálních sítí (Instagram & Facebook). Oficiální kalendáře se publikují rovnou, příspěvky ze sociálních sítí jdou do přehledné moderace ke schválení.
-* **📊 Cookieless Anonymní Analytika:** 100% v souladu s GDPR, žádné ukládání IP adres, automatická detekce státu a možnost vyloučení interního testovacího provozu na 1 kliknutí.
-* **📱 Progresivní Webová Aplikace (PWA):** Responzivní mobilní zobrazení, instalace na plochu telefonu, podpora tmavého i světlého režimu.
-* **🛡️ Administrace & Moderace:** Správa akcí, zdrojů, schvalovací fronta a přehledné statistiky ve Filament 3 (`/admin`).
+The application is built as a high-performance, single-instance platform optimized for low latency, zero external API costs, and strict data normalization:
 
----
-
-## 🏗️ Architektura a Pravidla
-
-Kompletní technická specifikace, datové toky, právní mantinely (§ 34 autorského zákona) a pravidla pro vývojáře a budoucí AI agenty naleznete v samostatném dokumentu:
-
-👉 **[Přečíst ARCHITECTURE.md](ARCHITECTURE.md)**
+- **Backend:** Laravel 12 on PHP 8.4 (PHP-CLI / PHP-FPM, SQLite with WAL mode).
+- **Frontend:** Livewire 3, Alpine.js, Tailwind CSS, DaisyUI.
+- **Search Engine:** Hybrid full-text and semantic vector search using 384-dimensional embeddings (`BAAI/bge-small-en-v1.5` / fastembed ONNX) with vector cosine similarity computed directly in PHP.
+- **Venue & Geodata Engine:** Fully normalized 3NF venue schema (`venues`, `venue_aliases`, `geocoding_cache`). Physical entities store coordinates; events link to venues while preserving room/hall details (`room_detail`). Includes an in-memory alias dictionary and an OpenStreetMap (Nominatim) rate-limited geocoding pipeline.
+- **Event Harvester:** Multi-source pipeline extracting event data from university portals (MUNI, VUT, MENDELU, VETUNI, UNOB), iCal feeds, RSS, and social media. Features raw daily snapshot archiving, SHA-256 card slicing, and local LLM extraction.
+- **Analytics:** Lightweight, cookieless, GDPR-compliant analytics tracking visits and outbound clicks without personal data collection.
+- **Administration:** Filament 3 admin panel for event review, venue management, and system monitoring.
 
 ---
 
-## 🚀 Rychlý start (Vývojové prostředí)
+## System Requirements
 
-### Požadavky
-* **PHP:** 8.4+ s rozšířeními `pdo_sqlite`, `mbstring`, `curl`, `dom`, `fileinfo`
-* **Node.js:** 20+ a npm
-* **Python:** 3.11+ (pro scrapery)
-* **Composer**
+- **PHP:** 8.2 or higher with `pdo_sqlite`, `mbstring`, `curl`, `dom`, `fileinfo` extensions
+- **Composer:** 2.x
+- **Node.js:** 20.x or higher with npm
+- **Python:** 3.11 or higher (for scraping and raw harvesting)
+- **SQLite:** 3.35 or higher
 
-### Instalace krok za krokem
+---
+
+## Installation & Setup
+
+### 1. Clone Repository & Install Dependencies
 
 ```bash
-# 1. Klonování repozitáře
 git clone https://github.com/tedKozub/brno-events.git
 cd brno-events
 
-# 2. Instalace PHP závislostí
 composer install
-
-# 3. Instalace JS závislostí a sestavení stylů
 npm install
 npm run build
+```
 
-# 4. Příprava konfiguračního souboru
+### 2. Environment Configuration
+
+```bash
 cp .env.example .env
 php artisan key:generate
+```
 
-# 5. Inicializace SQLite databáze a migrace
+Configure `APP_URL`, `APP_TIMEZONE` (`Europe/Prague`), and database settings in `.env`.
+
+### 3. Database Initialization
+
+```bash
 touch database/database.sqlite
-php artisan migrate --seed
+php artisan migrate --force
+php artisan db:seed --force
+php artisan venues:seed-aliases --resolve-events
+```
 
-# 6. Příprava Python virtuálního prostředí pro scrapery
+### 4. Scraper Virtual Environment
+
+```bash
 cd scrapers
 python3 -m venv .venv
 source .venv/bin/activate
@@ -75,57 +70,69 @@ playwright install chromium
 cd ..
 ```
 
-### Spuštění vývojového serveru
+### 5. Running Development Server
 
 ```bash
-# Spuštění aplikace
+# Start backend server
 php artisan serve --port=8085
 
-# Sledování změn frontendu (Vite)
+# Start frontend asset compiler
 npm run dev
 ```
 
 ---
 
-## 🧪 Spouštění testů (Quality Assurance)
+## Testing & Verification
 
-Každá úprava v projektu podléhá přísnému testování. Před odesláním do větve `master` musí projít všechny testy:
+Automated test suites cover backend business logic, scraper parsers, and browser-based end-to-end interactions.
 
 ```bash
-# Backend unit a feature testy (PHPUnit)
-php artisan test
+# Backend unit and feature tests (PHPUnit)
+./vendor/bin/phpunit
 
-# E2E testy v prohlížeči (Playwright Desktop Chrome)
+# Scraper parser tests (Python unittest)
+scrapers/.venv/bin/python3 -m unittest discover -s scrapers/tests/
+
+# End-to-end browser tests (Playwright)
 npm run test:e2e:desktop
-
-# E2E testy v mobilním viewportu (iPhone 14)
-npx playwright test --project="Mobile iPhone 14"
 ```
 
 ---
 
-## 📜 Správa Scraperů
+## Command Reference
 
-Zdroje pro scraping jsou deklarativně definovány v [`config/scrape_sources.yaml`](config/scrape_sources.yaml).
+### Scraping & Data Pipeline
 
 ```bash
-# Synchronizace YAML definic do databáze
-php artisan scrape-sources:sync
-
-# Spuštění scrapingu všech aktivních zdrojů
+# Scrape all active sources defined in config/scrape_sources.yaml
 php artisan events:scrape
 
-# Spuštění konkrétního zdroje podle ID
-php artisan events:scrape 8
+# Scrape a specific source with a limit
+php artisan events:scrape 1 --limit=10
 
-# Dotipování plakátů a bannerů k již existujícím akcím
+# Archive raw HTML/JSON snapshots without parsing
+php artisan events:harvest-raw
+
+# Seed venue aliases and re-link event locations
+php artisan venues:seed-aliases --resolve-events
+
+# Enrich missing event posters and banners
 php artisan events:enrich-banners
 ```
 
+### Maintenance
+
+```bash
+# Clear application configuration cache
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+```
+
 ---
 
-## ⚖️ Právní rámec & Licence
+## Legal Notice & Licensing
 
-* Platforma operuje v režimu **zpravodajské licence podle § 34 odst. 1 písm. c) autorského zákona (zákon č. 121/2000 Sb.)** pro informování studentů o veřejných univerzitních událostech.
-* Všechny akce a plakáty uvádějí odkaz na původní zdroj pořadatele. Pořadatelé mohou kdykoliv požádat o stažení či úpravu přes integrovaný formulář nahlášení nebo na e-mailu správce.
-* Tento projekt je licencován pod licencí [MIT](LICENSE).
+- Content aggregation operates within the reporting fair-use framework under Section 34(1)(c) of the Czech Copyright Act (Act No. 121/2000 Coll.) to inform students about public educational, cultural, and academic events.
+- All scraped event records provide attribution and a direct link to the organizer's original publication URL.
+- This project is released under the [MIT License](LICENSE).
