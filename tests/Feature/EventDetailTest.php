@@ -53,4 +53,23 @@ class EventDetailTest extends TestCase
         $response->assertSee('Informace slouží jako archiv');
         $response->assertSee('Vstupenky (archiv)');
     }
+
+    public function test_event_ended_earlier_today_is_not_ongoing(): void
+    {
+        $event = Event::published()->first();
+        $endedToday = $event->replicate();
+        $endedToday->title = 'Dnes skončená akce ' . uniqid();
+        $endedToday->slug = 'ended-today-' . uniqid();
+        $endedToday->starts_at = now()->subHours(4);
+        $endedToday->ends_at = now()->subMinutes(20);
+        $endedToday->save();
+
+        $this->assertFalse($endedToday->is_ongoing);
+        $this->assertTrue($endedToday->ends_at->isPast());
+
+        $response = $this->get('/akce/' . $endedToday->slug);
+        $response->assertStatus(200);
+        $response->assertSee('Tato akce již proběhla');
+        $response->assertDontSee('zbývá');
+    }
 }
