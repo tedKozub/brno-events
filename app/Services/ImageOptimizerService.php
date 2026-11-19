@@ -132,7 +132,7 @@ class ImageOptimizerService
         $src = match ($type) {
             IMAGETYPE_JPEG => @imagecreatefromjpeg($filePath),
             IMAGETYPE_PNG => @imagecreatefrompng($filePath),
-            IMAGETYPE_WEBP => @imagewebp($filePath),
+            IMAGETYPE_WEBP => @imagecreatefromwebp($filePath),
             default => null,
         };
 
@@ -149,6 +149,12 @@ class ImageOptimizerService
         }
 
         imagecopyresampled($dst, $src, 0, 0, 0, 0, $newW, $newH, $w, $h);
+
+        // Also write modern lightweight .webp copy alongside for high performance
+        $webpPath = preg_replace('/\.(png|jpe?g)$/i', '.webp', $targetPath);
+        if ($webpPath !== $targetPath && function_exists('imagewebp')) {
+            @imagewebp($dst, $webpPath, self::DEFAULT_WEBP_QUALITY);
+        }
 
         $tempPath = tempnam(sys_get_temp_dir(), 'img_opt_');
         if ($type === IMAGETYPE_PNG) {

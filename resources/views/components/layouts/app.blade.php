@@ -114,18 +114,22 @@
         </script>
     @endif
 
-    <!-- Google Font: Inter (Asynchronously loaded to eliminate render-blocking) -->
+    <!-- Google Font & CDN preconnects -->
     <link rel="preconnect" href="https://fonts.googleapis.com" data-navigate-once>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin data-navigate-once>
+    <link rel="preconnect" href="https://cdn.muni.cz" data-navigate-once>
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" as="style" data-navigate-once>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'" data-navigate-once>
     <noscript>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     </noscript>
 
-    <!-- Leaflet Map CSS & JS (Self-hosted) -->
-    <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" data-navigate-once/>
-    <script src="/vendor/leaflet/leaflet.js" data-navigate-once></script>
+    <!-- Leaflet Map CSS & JS (Deferred and asynchronously loaded to prevent render blocking) -->
+    <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" media="print" onload="this.media='all'" data-navigate-once/>
+    <noscript>
+        <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+    </noscript>
+    <script src="/vendor/leaflet/leaflet.js" defer data-navigate-once></script>
 
     <!-- Vite Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])

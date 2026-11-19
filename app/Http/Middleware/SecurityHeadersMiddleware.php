@@ -27,6 +27,11 @@ class SecurityHeadersMiddleware
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
         $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
 
+        // Allow Back/Forward Cache (bfcache) for public GET requests while ensuring freshness on direct visits
+        if ($request->isMethod('GET') && !$request->is('admin*')) {
+            $response->headers->set('Cache-Control', 'private, no-cache, must-revalidate');
+        }
+
         return $response;
     }
 }

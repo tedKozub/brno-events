@@ -80,7 +80,13 @@
                             Nezbytné pro základní funkce (zabezpečení proti CSRF útokům, udržení relace, uložení zvoleného motivu vzhledu). Nelze je vypnout.
                         </p>
                     </div>
-                    <input type="checkbox" checked disabled class="toggle toggle-primary toggle-sm mt-1" />
+                    <input
+                        type="checkbox"
+                        checked
+                        disabled
+                        aria-label="Technické a nezbytné cookies (vždy aktivní)"
+                        class="toggle toggle-primary toggle-sm mt-1"
+                    />
                 </div>
 
                 {{-- 2. Analytické cookies --}}
@@ -97,6 +103,7 @@
                     <input
                         type="checkbox"
                         id="cookie_pref_analytics"
+                        aria-label="Povolit analytické a statistické cookies"
                         class="toggle toggle-primary toggle-sm mt-1"
                     />
                 </div>

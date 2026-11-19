@@ -23,7 +23,7 @@ export default {
         themes: [
             {
                 "events-light": {
-                    "primary": "#ea580c",         // Energetic Orange
+                    "primary": "#c2410c",         // Deep Energetic Orange (WCAG AA compliant 5.18:1)
                     "primary-content": "#ffffff",
                     "secondary": "#1e293b",       // Deep Slate
                     "secondary-content": "#ffffff",
@@ -35,13 +35,13 @@ export default {
                     "base-200": "#f8fafc",        // Slate-50 page background
                     "base-300": "#e2e8f0",        // Slate-200 borders
                     "base-content": "#0f172a",    // Slate-900 high contrast text
-                    "info": "#2563eb",
+                    "info": "#1d4ed8",            // Deep Blue (WCAG AA compliant 6.70:1)
                     "info-content": "#ffffff",
-                    "success": "#16a34a",         // Emerald green for free/confirmed
+                    "success": "#15803d",         // Deep Emerald green (WCAG AA compliant 5.02:1)
                     "success-content": "#ffffff",
-                    "warning": "#d97706",
+                    "warning": "#b45309",         // Deep Amber (WCAG AA compliant 5.02:1)
                     "warning-content": "#ffffff",
-                    "error": "#dc2626",
+                    "error": "#b91c1c",           // Deep Red (WCAG AA compliant 6.47:1)
                     "error-content": "#ffffff",
                 },
                 "events-dark": {

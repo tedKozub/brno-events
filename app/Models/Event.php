@@ -241,6 +241,12 @@ class Event extends Model
             return $stockUrl;
         }
 
+        // If a lightweight .webp version exists, prefer it for faster LCP and lower data transfer
+        $webpPath = preg_replace('/\.(png|jpe?g)$/i', '.webp', $cleanPath);
+        if ($webpPath !== $cleanPath && Storage::disk('public')->exists($webpPath)) {
+            return '/storage/' . $webpPath;
+        }
+
         return '/storage/' . $cleanPath;
     }
 

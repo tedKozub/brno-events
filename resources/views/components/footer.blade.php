@@ -6,7 +6,7 @@
                 <div class="flex items-center justify-center sm:justify-start">
                     {!! \App\Helpers\BrandHelper::logoHtml('sm') !!}
                 </div>
-                <p class="text-[11px] text-base-content/50">
+                <p class="text-[11px] text-slate-600 dark:text-slate-400 font-medium">
                     Otevřená nástěnka pro studentský život a spolky na MUNI, VUT, MENDELU, UNOB & VETUNI.
                 </p>
             </div>
@@ -32,7 +32,7 @@
 
         {{-- DOLNÍ ČÁST: PRÁVNÍ NAVIGACE & COOKIES (GDPR, AUTORSKÁ PRÁVA, NOTICE & TAKEDOWN) --}}
         <div class="pt-4 border-t border-base-200 flex flex-col md:flex-row items-center justify-between gap-3 text-center md:text-left">
-            <div class="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-2 text-[11px] text-base-content/60">
+            <div class="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-2 text-[11px] text-slate-600 dark:text-slate-400 font-medium">
                 <a href="/podminky" class="hover:text-primary transition-colors underline-offset-4 hover:underline" wire:navigate>
                     Podmínky užití & Autorská práva
                 </a>
@@ -54,7 +54,7 @@
                 </a>
             </div>
 
-            <div class="text-[11px] text-base-content/50">
+            <div class="text-[11px] text-slate-600 dark:text-slate-400 font-medium">
                 <span>© {{ date('Y') }} {{ \App\Helpers\BrandHelper::brandName() }}. Autorská práva k obsahu akcí náleží jejich pořadatelům.</span>
             </div>
         </div>

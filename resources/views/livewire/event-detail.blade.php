@@ -45,7 +45,7 @@
                     <a
                         href="/mista"
                         wire:navigate
-                        class="px-3 sm:px-3.5 py-1.5 rounded-sm font-bold text-xs sm:text-sm inline-flex items-center transition-all text-base-content/50 hover:text-base-content hover:bg-base-200"
+                        class="px-3 sm:px-3.5 py-1.5 rounded-sm font-bold text-xs sm:text-sm inline-flex items-center transition-all text-slate-600 dark:text-slate-400 hover:text-base-content hover:bg-base-200"
                     >
                         <span class="hidden sm:inline">Studentská místa</span>
                         <span class="sm:hidden">Místa</span>

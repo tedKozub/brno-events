@@ -1,4 +1,2 @@
-import axios from 'axios';
-window.axios = axios;
-
-window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+// Brno Events Frontend Bootstrap
+// Livewire 3 provides built-in Alpine.js and native fetch HTTP transport.

@@ -25,7 +25,7 @@
                     <a
                         href="/mista"
                         wire:navigate
-                        class="px-3 sm:px-3.5 py-1.5 rounded-sm font-bold text-xs sm:text-sm inline-flex items-center transition-all text-base-content/50 hover:text-base-content hover:bg-base-200"
+                        class="px-3 sm:px-3.5 py-1.5 rounded-sm font-bold text-xs sm:text-sm inline-flex items-center transition-all text-slate-600 dark:text-slate-400 hover:text-base-content hover:bg-base-200"
                     >
                         <span class="hidden sm:inline">Studentská místa</span>
                         <span class="sm:hidden">Místa</span>
@@ -145,7 +145,7 @@
 
                 {{-- 2. Časové filtry (Bez víkendu – studenti přes víkend akce nemají!) --}}
                 <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-none">
-                    <span class="text-[11px] font-black uppercase tracking-wider text-base-content/50 pr-1 shrink-0">Kdy:</span>
+                    <span class="text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 pr-1 shrink-0">Kdy:</span>
                     @php
                         $dateOptions = [
                             'all' => 'Všechny dny',
@@ -169,7 +169,7 @@
                 <div class="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-base-200">
                     {{-- Univerzity --}}
                     <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                        <span class="text-[11px] font-black uppercase tracking-wider text-base-content/50 pr-1 shrink-0">Škola:</span>
+                        <span class="text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 pr-1 shrink-0">Škola:</span>
                         @foreach(['' => 'Všechny', 'MUNI' => 'MUNI', 'VUT' => 'VUT', 'MENDELU' => 'MENDELU', 'UNOB' => 'UNOB', 'VETUNI' => 'VETUNI'] as $code => $uLabel)
                             <button
                                 wire:click="setUniversity('{{ $code }}')"
@@ -201,7 +201,7 @@
                         class="px-4 py-2 rounded-full text-xs font-bold shrink-0 transition-all cursor-pointer whitespace-nowrap border flex items-center gap-1.5 {{ empty($selectedCategory) ? 'bg-primary text-primary-content border-primary shadow-sm' : 'bg-base-200 text-base-content/80 border-base-300 hover:bg-base-300' }}"
                     >
                         <span>Všechny kategorie</span>
-                        <span class="opacity-80 text-[11px] font-semibold">({{ $allCategoriesCount }})</span>
+                        <span class="{{ empty($selectedCategory) ? 'text-white/95' : 'text-slate-600 dark:text-slate-400' }} text-[11px] font-semibold">({{ $allCategoriesCount }})</span>
                     </button>
                     @foreach($categories as $cat)
                         <button
@@ -209,7 +209,7 @@
                             class="px-4 py-2 rounded-full text-xs font-bold shrink-0 transition-all cursor-pointer whitespace-nowrap border flex items-center gap-1.5 {{ $selectedCategory === $cat->slug ? 'bg-primary text-primary-content border-primary shadow-sm' : ($cat->events_count > 0 ? 'bg-base-200 text-base-content/80 border-base-300 hover:bg-base-300' : 'bg-base-200/50 text-base-content/40 border-base-200 hover:bg-base-200') }}"
                         >
                             <span>{{ $cat->name }}</span>
-                            <span class="{{ $cat->events_count > 0 ? 'opacity-80' : 'opacity-60' }} text-[11px] font-semibold">({{ $cat->events_count }})</span>
+                            <span class="{{ $selectedCategory === $cat->slug ? 'text-white/95' : ($cat->events_count > 0 ? 'text-slate-600 dark:text-slate-400' : 'text-slate-400 dark:text-slate-500') }} text-[11px] font-semibold">({{ $cat->events_count }})</span>
                         </button>
                     @endforeach
                 </div>
@@ -300,7 +300,12 @@
                                     src="{{ $event->cover_image_url }}"
                                     alt="{{ $event->title }}"
                                     class="w-full h-full object-cover object-[center_35%] group-hover:scale-105 transition-transform duration-300"
-                                    loading="lazy"
+                                    @if($loop->first)
+                                        fetchpriority="high"
+                                    @else
+                                        loading="lazy"
+                                    @endif
+                                    decoding="async"
                                     onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=800&q=75';"
                                 />
 
@@ -346,12 +351,12 @@
                                         @if($event->organization)
                                             @php
                                                 $uBadge = match($event->organization->university) {
-                                                    'MUNI' => 'bg-info/15 text-info border border-info/20',
-                                                    'VUT' => 'bg-error/15 text-error border border-error/20',
-                                                    'MENDELU' => 'bg-success/15 text-success border border-success/20',
-                                                    'UNOB' => 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30',
-                                                    'VETUNI' => 'bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30',
-                                                    default => 'bg-neutral/15 text-base-content/70 border border-base-300',
+                                                    'MUNI' => 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800',
+                                                    'VUT' => 'bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800',
+                                                    'MENDELU' => 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800',
+                                                    'UNOB' => 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800',
+                                                    'VETUNI' => 'bg-purple-50 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800',
+                                                    default => 'bg-base-200 text-slate-700 dark:text-slate-300 border border-base-300',
                                                 };
                                             @endphp
                                             <span class="px-2 py-0.5 rounded text-[11px] font-black uppercase tracking-wider {{ $uBadge }}">
@@ -491,6 +496,7 @@
                                         alt="{{ $event->title }}"
                                         class="w-full h-full object-cover object-[center_35%] group-hover:scale-105 transition-transform duration-300"
                                         loading="lazy"
+                                        decoding="async"
                                         onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=800&q=75';"
                                     />
 
@@ -527,12 +533,12 @@
                                             @if($event->organization)
                                                 @php
                                                     $uBadge = match($event->organization->university) {
-                                                        'MUNI' => 'bg-info/15 text-info border border-info/20',
-                                                        'VUT' => 'bg-error/15 text-error border border-error/20',
-                                                        'MENDELU' => 'bg-success/15 text-success border border-success/20',
-                                                        'UNOB' => 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30',
-                                                        'VETUNI' => 'bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30',
-                                                        default => 'bg-neutral/15 text-base-content/70 border border-base-300',
+                                                        'MUNI' => 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800',
+                                                        'VUT' => 'bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800',
+                                                        'MENDELU' => 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800',
+                                                        'UNOB' => 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800',
+                                                        'VETUNI' => 'bg-purple-50 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800',
+                                                        default => 'bg-base-200 text-slate-700 dark:text-slate-300 border border-base-300',
                                                     };
                                                 @endphp
                                                 <span class="px-2 py-0.5 rounded text-[11px] font-black uppercase tracking-wider {{ $uBadge }}">
