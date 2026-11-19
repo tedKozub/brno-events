@@ -125,7 +125,7 @@
 
     <!-- Leaflet Map CSS & JS (Self-hosted) -->
     <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" data-navigate-once/>
-    <script src="/vendor/leaflet/leaflet.js" defer data-navigate-once></script>
+    <script src="/vendor/leaflet/leaflet.js" data-navigate-once></script>
 
     <!-- Vite Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])

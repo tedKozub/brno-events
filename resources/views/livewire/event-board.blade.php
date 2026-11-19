@@ -607,7 +607,12 @@
                     if (typeof L !== 'undefined') {
                         this.initLeaflet();
                     } else {
-                        window.addEventListener('load', () => this.initLeaflet(), { once: true });
+                        const checkLeaflet = setInterval(() => {
+                            if (typeof L !== 'undefined') {
+                                clearInterval(checkLeaflet);
+                                this.initLeaflet();
+                            }
+                        }, 50);
                     }
                 });
             },
@@ -857,17 +862,6 @@
                     centerDot.on('mouseover', expandGroup);
                     centerDot.on('mouseout', collapseGroup);
                 });
-
-                if (bounds.length > 0) {
-                    this.map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
-                } else {
-                    this.map.setView([49.1951, 16.6068], 13);
-                }
-
-                setTimeout(() => {
-                    if (this.map) this.map.invalidateSize();
-                }, 100);
-            }
 
                 if (bounds.length > 0) {
                     this.map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
