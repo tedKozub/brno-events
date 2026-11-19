@@ -410,60 +410,211 @@
                     default: `<svg style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>`,
                 };
 
+                // 1. Seskupení míst podle shodných souřadnic pro eliminaci překryvů
+                const groups = {};
                 (this.places || []).forEach(place => {
-                    const color = categoryColors[place.category] || '#6366f1';
-                    const iconSvg = categoryIcons[place.category] || categoryIcons.default;
-                    const customIcon = L.divIcon({
-                        className: 'custom-student-pin',
-                        html: `
-                            <div style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.32));">
-                                <div style="background-color: ${color}; width: 34px; height: 34px; border-radius: 50%; border: 2.5px solid #ffffff; display: flex; align-items: center; justify-content: center; color: #ffffff;">
-                                    ${iconSvg}
+                    if (!place.lat || !place.lng) return;
+                    const key = `${place.lat.toFixed(4)}_${place.lng.toFixed(4)}`;
+                    if (!groups[key]) {
+                        groups[key] = {
+                            centerLat: place.lat,
+                            centerLng: place.lng,
+                            items: []
+                        };
+                    }
+                    groups[key].items.push(place);
+                });
+
+                const calculateOffsetPos = (centerLat, centerLng, index, total, radiusMeters) => {
+                    if (total <= 1 || radiusMeters === 0) {
+                        return [centerLat, centerLng];
+                    }
+                    const angle = (2 * Math.PI * index) / total - (Math.PI / 2);
+                    const latOffset = (radiusMeters / 111111) * Math.sin(angle);
+                    const lngOffset = (radiusMeters / (111111 * Math.cos(centerLat * Math.PI / 180))) * Math.cos(angle);
+                    return [centerLat + latOffset, centerLng + lngOffset];
+                };
+
+                Object.values(groups).forEach(group => {
+                    const total = group.items.length;
+                    const center = [group.centerLat, group.centerLng];
+                    bounds.push(center);
+
+                    if (total === 1) {
+                        const place = group.items[0];
+                        const color = categoryColors[place.category] || '#6366f1';
+                        const iconSvg = categoryIcons[place.category] || categoryIcons.default;
+                        const customIcon = L.divIcon({
+                            className: 'custom-student-pin',
+                            html: `
+                                <div style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.32));">
+                                    <div style="background-color: ${color}; width: 34px; height: 34px; border-radius: 50%; border: 2.5px solid #ffffff; display: flex; align-items: center; justify-content: center; color: #ffffff;">
+                                        ${iconSvg}
+                                    </div>
+                                    <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 7px solid ${color}; margin-top: -2px;"></div>
                                 </div>
-                                <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 7px solid ${color}; margin-top: -2px;"></div>
+                            `,
+                            iconSize: [34, 42],
+                            iconAnchor: [17, 40],
+                            popupAnchor: [0, -42],
+                        });
+
+                        const gMapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + place.lat + ',' + place.lng;
+                        const mapyCzUrl = 'https://mapy.cz/zakladni?q=' + place.lat + ',' + place.lng;
+
+                        const popupContent = `
+                            <div style="font-family: inherit; font-size: 13px; min-width: 220px; max-width: 290px; padding: 4px;">
+                                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 6px; background-color: ${color}; color: #ffffff; shrink: 0;">
+                                        ${iconSvg.replace('width: 16px; height: 16px;', 'width: 12px; height: 12px;')}
+                                    </span>
+                                </div>
+                                <h3 style="font-weight: 900; font-size: 14px; line-height: 1.25; margin-bottom: 4px; color: #0f172a;">
+                                    ${place.name}
+                                </h3>
+                                <p style="font-size: 11px; color: #64748b; margin-bottom: 6px;">
+                                    ${place.address}
+                                </p>
+                                <p style="font-size: 12px; color: #334155; line-height: 1.4; margin-bottom: 10px;">
+                                    ${place.description}
+                                </p>
+                                <div style="display: flex; gap: 6px;">
+                                    <a href="${gMapsUrl}" target="_blank" rel="noopener noreferrer" style="flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 700; background-color: #0284c7; color: white; border-radius: 8px; text-decoration: none; text-align: center;">
+                                        Google Maps
+                                    </a>
+                                    <a href="${mapyCzUrl}" target="_blank" rel="noopener noreferrer" style="flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 700; background-color: #16a34a; color: white; border-radius: 8px; text-decoration: none; text-align: center;">
+                                        Mapy.cz
+                                    </a>
+                                </div>
                             </div>
-                        `,
-                        iconSize: [34, 42],
-                        iconAnchor: [17, 40],
-                        popupAnchor: [0, -42],
+                        `;
+
+                        const marker = L.marker(center, { icon: customIcon })
+                            .addTo(this.markersLayer)
+                            .bindPopup(popupContent);
+
+                        this.markers[place.id] = marker;
+                        return;
+                    }
+
+                    // Vícenásobná místa se stejnou adresou / souřadnicemi
+                    const baseRadius = total === 2 ? 18 : (total <= 4 ? 24 : 30);
+                    const hoverRadius = baseRadius * 1.85;
+
+                    const markersInGroup = [];
+                    const linesInGroup = [];
+
+                    const centerDot = L.circleMarker(center, {
+                        radius: 5,
+                        color: '#6366f1',
+                        fillColor: '#ffffff',
+                        fillOpacity: 1,
+                        weight: 2.5
+                    }).addTo(this.markersLayer);
+
+                    group.items.forEach((place, idx) => {
+                        const color = categoryColors[place.category] || '#6366f1';
+                        const iconSvg = categoryIcons[place.category] || categoryIcons.default;
+                        const basePos = calculateOffsetPos(group.centerLat, group.centerLng, idx, total, baseRadius);
+                        const hoverPos = calculateOffsetPos(group.centerLat, group.centerLng, idx, total, hoverRadius);
+
+                        const leg = L.polyline([center, basePos], {
+                            color: color,
+                            weight: 1.5,
+                            opacity: 0.55,
+                            dashArray: '3, 4'
+                        }).addTo(this.markersLayer);
+                        linesInGroup.push({ leg, idx });
+
+                        const customIcon = L.divIcon({
+                            className: 'custom-student-pin',
+                            html: `
+                                <div style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.32)); transition: transform 0.18s ease;">
+                                    <div style="background-color: ${color}; width: 34px; height: 34px; border-radius: 50%; border: 2.5px solid #ffffff; display: flex; align-items: center; justify-content: center; color: #ffffff;">
+                                        ${iconSvg}
+                                    </div>
+                                    <div style="position: absolute; top: -5px; right: -5px; background: #0f172a; color: #ffffff; border: 1.5px solid #ffffff; width: 18px; height: 18px; border-radius: 50%; font-size: 10px; font-weight: 900; display: flex; align-items: center; justify-content: center; z-index: 10;">
+                                        ${idx + 1}
+                                    </div>
+                                    <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 7px solid ${color}; margin-top: -2px;"></div>
+                                </div>
+                            `,
+                            iconSize: [34, 42],
+                            iconAnchor: [17, 40],
+                            popupAnchor: [0, -42],
+                        });
+
+                        const gMapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + place.lat + ',' + place.lng;
+                        const mapyCzUrl = 'https://mapy.cz/zakladni?q=' + place.lat + ',' + place.lng;
+
+                        const popupContent = `
+                            <div style="font-family: inherit; font-size: 13px; min-width: 220px; max-width: 290px; padding: 4px;">
+                                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 6px; background-color: ${color}; color: #ffffff; shrink: 0;">
+                                        ${iconSvg.replace('width: 16px; height: 16px;', 'width: 12px; height: 12px;')}
+                                    </span>
+                                </div>
+                                <h3 style="font-weight: 900; font-size: 14px; line-height: 1.25; margin-bottom: 4px; color: #0f172a;">
+                                    ${place.name}
+                                </h3>
+                                <p style="font-size: 11px; color: #64748b; margin-bottom: 6px;">
+                                    ${place.address}
+                                </p>
+                                <p style="font-size: 12px; color: #334155; line-height: 1.4; margin-bottom: 10px;">
+                                    ${place.description}
+                                </p>
+                                <div style="display: flex; gap: 6px;">
+                                    <a href="${gMapsUrl}" target="_blank" rel="noopener noreferrer" style="flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 700; background-color: #0284c7; color: white; border-radius: 8px; text-decoration: none; text-align: center;">
+                                        Google Maps
+                                    </a>
+                                    <a href="${mapyCzUrl}" target="_blank" rel="noopener noreferrer" style="flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 700; background-color: #16a34a; color: white; border-radius: 8px; text-decoration: none; text-align: center;">
+                                        Mapy.cz
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+
+                        const marker = L.marker(basePos, { icon: customIcon, zIndexOffset: 100 + idx })
+                            .addTo(this.markersLayer)
+                            .bindPopup(popupContent);
+
+                        this.markers[place.id] = marker;
+                        markersInGroup.push({ marker, basePos, hoverPos, idx });
                     });
 
-                    const gMapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + place.lat + ',' + place.lng;
-                    const mapyCzUrl = 'https://mapy.cz/zakladni?q=' + place.lat + ',' + place.lng;
+                    let isExpanded = false;
+                    const expandGroup = () => {
+                        if (isExpanded) return;
+                        isExpanded = true;
+                        markersInGroup.forEach(m => {
+                            m.marker.setLatLng(m.hoverPos);
+                            m.marker.setZIndexOffset(600 + m.idx);
+                        });
+                        linesInGroup.forEach(l => {
+                            l.leg.setLatLngs([center, markersInGroup[l.idx].hoverPos]);
+                            l.leg.setStyle({ opacity: 0.95, weight: 2 });
+                        });
+                    };
 
-                    const popupContent = `
-                        <div style="font-family: inherit; font-size: 13px; min-width: 220px; max-width: 290px; padding: 4px;">
-                            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
-                                <span style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 6px; background-color: ${color}; color: #ffffff; shrink: 0;">
-                                    ${iconSvg.replace('width: 16px; height: 16px;', 'width: 12px; height: 12px;')}
-                                </span>
-                            </div>
-                            <h3 style="font-weight: 900; font-size: 14px; line-height: 1.25; margin-bottom: 4px; color: #0f172a;">
-                                ${place.name}
-                            </h3>
-                            <p style="font-size: 11px; color: #64748b; margin-bottom: 6px;">
-                                ${place.address}
-                            </p>
-                            <p style="font-size: 12px; color: #334155; line-height: 1.4; margin-bottom: 10px;">
-                                ${place.description}
-                            </p>
-                            <div style="display: flex; gap: 6px;">
-                                <a href="${gMapsUrl}" target="_blank" rel="noopener noreferrer" style="flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 700; background-color: #0284c7; color: white; border-radius: 8px; text-decoration: none; text-align: center;">
-                                    Google Maps
-                                </a>
-                                <a href="${mapyCzUrl}" target="_blank" rel="noopener noreferrer" style="flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 700; background-color: #16a34a; color: white; border-radius: 8px; text-decoration: none; text-align: center;">
-                                    Mapy.cz
-                                </a>
-                            </div>
-                        </div>
-                    `;
+                    const collapseGroup = () => {
+                        if (!isExpanded) return;
+                        isExpanded = false;
+                        markersInGroup.forEach(m => {
+                            m.marker.setLatLng(m.basePos);
+                            m.marker.setZIndexOffset(100 + m.idx);
+                        });
+                        linesInGroup.forEach(l => {
+                            l.leg.setLatLngs([center, markersInGroup[l.idx].basePos]);
+                            l.leg.setStyle({ opacity: 0.55, weight: 1.5 });
+                        });
+                    };
 
-                    const marker = L.marker([place.lat, place.lng], { icon: customIcon })
-                        .addTo(this.markersLayer)
-                        .bindPopup(popupContent);
-
-                    this.markers[place.id] = marker;
-                    bounds.push([place.lat, place.lng]);
+                    markersInGroup.forEach(m => {
+                        m.marker.on('mouseover', expandGroup);
+                        m.marker.on('mouseout', collapseGroup);
+                    });
+                    centerDot.on('mouseover', expandGroup);
+                    centerDot.on('mouseout', collapseGroup);
                 });
 
                 if (bounds.length > 0 && this.map) {
