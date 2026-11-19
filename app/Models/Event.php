@@ -165,11 +165,11 @@ class Event extends Model
             return '';
         }
 
-        if ($this->is_ongoing && $this->ends_at) {
-            return 'Probíhá • do ' . $this->ends_at->format('j. n.');
-        }
+        if ($this->is_multi_day) {
+            if ($this->is_ongoing && $this->ends_at) {
+                return 'Probíhá • do ' . $this->ends_at->format('j. n.');
+            }
 
-        if ($this->is_multi_day && $this->ends_at) {
             if ($this->starts_at->month === $this->ends_at->month && $this->starts_at->year === $this->ends_at->year) {
                 return $this->starts_at->format('j.') . ' – ' . $this->ends_at->format('j. n.');
             }

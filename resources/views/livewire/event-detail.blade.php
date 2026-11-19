@@ -211,13 +211,16 @@
                 {{-- Spodní info na obrázku --}}
                 <div class="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4 text-white space-y-2">
                     <div class="inline-flex items-center gap-1.5 bg-base-100/95 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-bold text-base-content border border-base-300 shadow-sm whitespace-nowrap">
-                        @if($event->is_ongoing && $event->ends_at)
+                        @if($event->is_ongoing && $event->is_multi_day && $event->ends_at)
                             <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
                             <span class="text-amber-600 dark:text-amber-400 font-extrabold">Probíhá • do {{ $event->ends_at->translatedFormat('d. F Y') }}</span>
+                        @elseif($event->is_ongoing && !$event->is_multi_day && $event->ends_at)
+                            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+                            <span class="text-amber-600 dark:text-amber-400 font-extrabold">Právě probíhá • dnes do {{ $event->ends_at->format('H:i') }}</span>
                         @elseif($event->is_multi_day && $event->ends_at)
                             <span>{{ $event->starts_at->translatedFormat('d. m.') }} – {{ $event->ends_at->translatedFormat('d. m. Y') }}</span>
                         @else
-                            <span>{{ \Illuminate\Support\Str::ucfirst($event->starts_at->translatedFormat('l, d. F Y • H:i')) }}</span>
+                            <span>{{ \Illuminate\Support\Str::ucfirst($event->starts_at->translatedFormat('l, d. F Y • H:i')) }}@if($event->ends_at) – {{ $event->ends_at->format('H:i') }}@endif</span>
                         @endif
                     </div>
                     <h1 class="text-xl sm:text-3xl lg:text-4xl font-black text-white leading-tight drop-shadow-md">
@@ -286,13 +289,22 @@
                     {{-- Datum & Čas --}}
                     <div class="space-y-1">
                         <div class="text-[11px] font-bold text-base-content/50 uppercase tracking-wider">Datum a čas</div>
-                        @if($event->is_ongoing && $event->ends_at)
+                        @if($event->is_ongoing && $event->is_multi_day && $event->ends_at)
                             <div class="font-extrabold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
                                 <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
                                 <span>Probíhá (do {{ $event->ends_at->translatedFormat('d. m. Y') }})</span>
                             </div>
                             <div class="text-xs text-base-content/70 mt-0.5">
                                 Zahájeno {{ $event->starts_at->translatedFormat('d. m. Y') }} • zbývá {{ $event->ends_at->diffForHumans(['parts' => 1]) }}
+                            </div>
+                        @elseif($event->is_ongoing && !$event->is_multi_day && $event->ends_at)
+                            <div class="font-extrabold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+                                <span>Právě probíhá (dnes do {{ $event->ends_at->format('H:i') }})</span>
+                            </div>
+                            <div class="text-xs text-base-content/80 mt-0.5 font-semibold">
+                                Dnes {{ $event->starts_at->format('H:i') }} – {{ $event->ends_at->format('H:i') }}
+                                <span class="text-base-content/50 font-normal">(zbývá {{ $event->ends_at->diffForHumans(['parts' => 1], true) }})</span>
                             </div>
                         @elseif($event->is_multi_day && $event->ends_at)
                             <div class="font-extrabold text-base-content">{{ $event->starts_at->translatedFormat('d. m.') }} – {{ $event->ends_at->translatedFormat('d. m. Y') }}</div>
