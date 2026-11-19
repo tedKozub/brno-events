@@ -507,3 +507,49 @@ def is_administrative_or_irrelevant(text: str) -> bool:
         "düsseldorf",
     ]
     return any(p in lower for p in blocked_phrases)
+
+
+def is_outside_brno(location_str: str = "", text: str = "") -> bool:
+    """
+    Detects if an event is explicitly located outside of Brno.
+    BrnoAkce is strictly for events taking place in Brno.
+    Events hosted in Lednice, Valtice, Telč, Prague, Ostrava, etc. must be skipped.
+    """
+    loc_lower = (location_str or "").lower()
+    text_lower = (text or "").lower()
+    combined = f"{loc_lower} {text_lower}"
+
+    # 1. Lednice / Valtice (e.g. ZF MENDELU detached faculty)
+    if any(k in loc_lower for k in ["lednice", "valtická", "valticka", "zf mendelu"]):
+        return True
+    if any(k in combined for k in ["v lednici", "areál lednice", "areal lednice", "zámek lednice", "zamek lednice"]):
+        return True
+
+    # 2. Telč (Univerzitní centrum Telč MUNI)
+    if any(k in loc_lower for k in ["telč", "telc"]):
+        return True
+    if "v telči" in combined or "v telci" in combined or "centrum telč" in combined:
+        return True
+
+    # 3. Other major Czech/Slovak cities in location
+    non_brno_cities = [
+        "praha", "praze", "prague",
+        "olomouc", "olomouci",
+        "ostrava", "ostravě", "ostrave",
+        "zlín", "zlin", "zlíně", "zline",
+        "bratislava", "bratislavě", "bratislave",
+        "plzeň", "plzen", "plzni",
+        "hradec králové", "hradeckralove", "pardubice",
+        "české budějovice", "ceske budejovice",
+        "liberec", "ústí nad labem",
+        "vídeň", "viden", "wien", "vienna",
+        "mikulov", "břeclav", "breclav", "znojmo", "vyškov", "vyskov", "blansko"
+    ]
+    for city in non_brno_cities:
+        if re.search(r'\b' + re.escape(city) + r'\b', loc_lower):
+            # Check against street names in Brno (e.g. Bratislavská, Vídeňská, Olomoucká, Pražská)
+            if re.search(r'\b(bratislavsk|vídeňsk|vidensk|olomouck|pražsk|prazsk|znojemsk|hradeck|jihlavsk)[áéy]\b', loc_lower):
+                continue
+            return True
+
+    return False

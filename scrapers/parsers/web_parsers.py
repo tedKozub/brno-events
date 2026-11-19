@@ -18,6 +18,7 @@ from parsers.common import (
     extract_price_info,
     detect_event_category,
     is_administrative_or_irrelevant,
+    is_outside_brno,
 )
 
 
@@ -150,6 +151,10 @@ def parse_mendelu(html: str, base_url: str = "https://mendelu.cz/akce/") -> List
         desc = f"Akce Mendelovy univerzity v Brně: {title}."
         if info_items:
             desc += " " + " | ".join(info_items)
+
+        # Skip events outside Brno (e.g. Lednice, Valtice)
+        if is_outside_brno(loc_str, title + " " + desc):
+            continue
 
         # Cover image extraction from .event-card__image or style background-image
         cover_image = None
@@ -514,8 +519,10 @@ def parse_muni(html: str, base_url: str = "https://www.muni.cz/kalendar") -> Lis
             if not starts_at:
                 continue
 
-            # Skip irrelevant or foreign locations (e.g. fairs in Germany)
+            # Skip irrelevant or foreign locations (e.g. fairs in Germany, events outside Brno like Telč)
             if loc_cand and is_administrative_or_irrelevant(loc_cand):
+                continue
+            if is_outside_brno(loc_cand or "", title + " " + desc):
                 continue
             if loc_cand and any(w in loc_cand.lower() for w in ["německo", "germany", "austria", "rakousko", "slovakia", "polsko"]):
                 continue

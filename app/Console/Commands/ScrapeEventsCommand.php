@@ -303,6 +303,13 @@ class ScrapeEventsCommand extends Command
                 $locName = $item['location_name'] ?? '';
                 $venueId = $this->matchVenue($locName, $university);
 
+                // BrnoAkce je výhradně pro akce v Brně. Akce z Lednice, jiných měst nebo se zahraniční lokací striktně přeskakujeme.
+                if ($this->isOutsideBrno($locName, $title . ' ' . $cleanDesc, $venueId)) {
+                    $sourceSkipped++;
+                    $totalSkipped++;
+                    continue;
+                }
+
                 // Detekce kategorie podle specifikovaného slugu nebo textu
                 $categoryId = null;
                 if (!empty($item['category_slug'])) {
@@ -584,6 +591,64 @@ class ScrapeEventsCommand extends Command
 
         foreach ($articlePhrases as $phrase) {
             if (str_contains($combined, $phrase)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Zjistí, zda se akce koná mimo Brno (např. Lednice, Valtice, Telč, Praha, atd.).
+     * Projekt BrnoAkce / studyBrno přijímá pouze události konané v Brně.
+     */
+    protected function isOutsideBrno(?string $location, ?string $text = '', ?int $venueId = null): bool
+    {
+        if ($venueId) {
+            $venue = Venue::find($venueId);
+            if ($venue && !empty($venue->city) && mb_strtolower($venue->city) !== 'brno') {
+                return true;
+            }
+        }
+
+        $locLower = mb_strtolower($location ?? '');
+        $textLower = mb_strtolower($text ?? '');
+        $combined = $locLower . ' ' . $textLower;
+
+        // 1. Lednice / Valtice (např. ZF MENDELU)
+        if (preg_match('/\b(lednic[ie]|valtic[ie]|zf\s*mendelu)\b/u', $locLower)) {
+            return true;
+        }
+        if (str_contains($combined, 'v lednici') || str_contains($combined, 'areál lednice') || str_contains($combined, 'zámek lednice')) {
+            return true;
+        }
+
+        // 2. Telč (Univerzitní centrum Telč MUNI)
+        if (preg_match('/\b(telč|telci|v\s*telči)\b/u', $locLower) || str_contains($combined, 'centrum telč') || str_contains($combined, 'v telči')) {
+            return true;
+        }
+
+        // 3. Jiná města v lokaci
+        $nonBrnoCities = [
+            'praha', 'praze', 'prague',
+            'olomouc', 'olomouci',
+            'ostrava', 'ostravě', 'ostrave',
+            'zlín', 'zlin', 'zlíně', 'zline',
+            'bratislava', 'bratislavě', 'bratislave',
+            'plzeň', 'plzen', 'plzni',
+            'hradec králové', 'pardubice',
+            'české budějovice',
+            'liberec', 'ústí nad labem',
+            'vídeň', 'wien', 'vienna',
+            'mikulov', 'břeclav', 'znojmo', 'vyškov', 'blansko',
+        ];
+
+        foreach ($nonBrnoCities as $city) {
+            if (preg_match('/\b' . preg_quote($city, '/') . '\b/u', $locLower)) {
+                // Výjimka pro brněnské ulice (Bratislavská, Vídeňská, Olomoucká, Pražská, Znojemská, Hradecká, Jihlavská)
+                if (preg_match('/\b(bratislavsk|vídeňsk|vidensk|olomouck|pražsk|prazsk|znojemsk|hradeck|jihlavsk)[áéy]\b/u', $locLower)) {
+                    continue;
+                }
                 return true;
             }
         }
