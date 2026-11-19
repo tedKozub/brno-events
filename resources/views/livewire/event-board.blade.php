@@ -623,6 +623,10 @@
                     this.map = null;
                 }
 
+                if (this.$refs.mapContainer && this.$refs.mapContainer._leaflet_id) {
+                    delete this.$refs.mapContainer._leaflet_id;
+                }
+
                 this.map = L.map(this.$refs.mapContainer, {
                     scrollWheelZoom: true,
                     touchZoom: true,
@@ -774,17 +778,6 @@
 
                     marker.bindPopup(this.createPopupHtml(group.items));
                 });
-
-                if (bounds.length > 0) {
-                    this.map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
-                } else {
-                    this.map.setView([49.1951, 16.6068], 13);
-                }
-
-                setTimeout(() => {
-                    if (this.map) this.map.invalidateSize();
-                }, 100);
-            }
 
                 if (bounds.length > 0) {
                     this.map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });

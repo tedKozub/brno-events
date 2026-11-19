@@ -7,7 +7,7 @@ test.describe('Feed Dynamic Fetching, Nav Highlighting & Scroll To Top', () => {
 
     // Check "Akce" nav link is styled active
     const akceLink = page.locator('nav a[href="/"]').first();
-    await expect(akceLink).toHaveClass(/bg-primary/);
+    await expect(akceLink).toHaveClass(/border-primary/);
 
     // Switch to "Mapa Brna"
     const mapSwitcherBtn = page.locator('button:has-text("Mapa Brna")').first();
@@ -19,7 +19,7 @@ test.describe('Feed Dynamic Fetching, Nav Highlighting & Scroll To Top', () => {
     await expect(page.locator('text=Místa akcí a kluby v Brně').first()).toBeVisible();
 
     // Verify "Akce" nav item is STILL styled active
-    await expect(akceLink).toHaveClass(/bg-primary/);
+    await expect(akceLink).toHaveClass(/border-primary/);
   });
 
   test('feed initially renders first chunk (12 events) and shows load more button', async ({ page }) => {
