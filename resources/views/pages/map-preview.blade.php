@@ -301,7 +301,7 @@
 
                             L.marker([pt.lat, pt.lng], { icon: icon })
                                 .addTo(map)
-                                .bindPopup('<strong>' + pt.title + '</strong><br><span style="font-size: 11px; color: #666;">Brno centrum</span>');
+                                .bindPopup('<strong>' + pt.title + '</strong><br><span style="font-size: 11px; color: #666;">Brno</span>');
                         });
 
                         if (loadingEl) {

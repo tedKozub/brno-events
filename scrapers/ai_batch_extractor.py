@@ -32,7 +32,7 @@ AGY_SCHEMA = {
                     "title": {"type": "string"},
                     "is_in_brno": {
                         "type": "boolean",
-                        "description": "TRUE if the event takes place in the city of Brno. FALSE if it takes place in Lednice, Valtice, Telč, Praha, or anywhere outside Brno."
+                        "description": "TRUE if the event takes place in the city of Brno. FALSE if it takes place in Lednice, Valtice, Telč, Praha, Vyškov, Hradec Králové, or anywhere outside Brno."
                     },
                     "starts_at": {
                         "type": "string",
@@ -80,7 +80,7 @@ def build_batch_prompt(cards: List[Dict[str, Any]], university: str = "") -> str
         "DŮLEŽITÁ PRAVIDLA:\n"
         "1. Město Brno (is_in_brno):\n"
         "   - BrnoAkce přijímá POUZE akce konané v Brně!\n"
-        "   - Pokud je akce v Lednici (např. ZF MENDELU Lednice), Valticích, Telči, Praze, atd., nastav 'is_in_brno': false!\n"
+        "   - Pokud je akce v Lednici (např. ZF MENDELU Lednice), Valticích, Telči, Praze, Vyškově (např. kasárna Dědice / ÚOPZHN Vyškov), Hradci Králové (VLF UNOB), atd., nastav 'is_in_brno': false!\n"
         "2. Skutečná lokace (location_name):\n"
         "   - Čti přesnou budovu, fakultu nebo místnost z textu akce (např. 'FEKT VUT, Technická 12', 'Budova M, místnost M2.12, Zemědělská 1').\n"
         "   - NIKDY nepřiřazuj defaultní rektorát ani FIT VUT, pokud se akce koná na jiné fakultě nebo v jiné aule!\n"

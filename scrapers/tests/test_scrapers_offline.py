@@ -98,6 +98,9 @@ class TestScrapersOffline(unittest.TestCase):
         self.assertTrue(is_outside_brno("Univerzitní centrum Telč"))
         self.assertTrue(is_outside_brno("Praha 1 - Staré Město"))
         self.assertTrue(is_outside_brno("Olomouc centrum"))
+        self.assertTrue(is_outside_brno("Univerzita obrany", "Dny otevřených dveří ÚOPZHN (Vyškov)"))
+        self.assertTrue(is_outside_brno("", "Dny otevřených dveří ÚOPZHN (Vyškov)"))
+        self.assertTrue(is_outside_brno("Kasárna Dědice, Vyškov"))
         self.assertFalse(is_outside_brno("Areál MENDELU, Zemědělská 1, Brno"))
         self.assertFalse(is_outside_brno("Poříčí 7/9, Brno"))
         self.assertFalse(is_outside_brno("Bratislavská 15, Brno"))
@@ -200,18 +203,18 @@ Vstup: Základní 250,- / v dresscodu 200,-"""
 
     def test_nova_radnice_and_custom_location_preservation(self):
         from parsers.common import extract_venue_and_address
-        v, a = extract_venue_and_address("Nová radnice, Brno", default_venue="Brno centrum")
+        v, a = extract_venue_and_address("Nová radnice, Brno", default_venue="Brno")
         self.assertIn("Nová radnice", v)
         self.assertIn("Dominikánské náměstí 1", v)
 
         # Custom non-listed location must be preserved, never converted to generic university rectorate
-        v2, a2 = extract_venue_and_address("I. neurologická klinika ve FN u sv. Anny", default_venue="Brno centrum")
+        v2, a2 = extract_venue_and_address("I. neurologická klinika ve FN u sv. Anny", default_venue="Brno")
         self.assertEqual("I. neurologická klinika ve FN u sv. Anny", v2)
         self.assertNotIn("Rektorát", v2)
 
-        # Empty or generic university fallback must become Brno centrum
-        v3, a3 = extract_venue_and_address("Masarykova univerzita", default_venue="Brno centrum")
-        self.assertEqual("Brno centrum", v3)
+        # Empty or generic university fallback must become Brno
+        v3, a3 = extract_venue_and_address("Masarykova univerzita", default_venue="Brno")
+        self.assertEqual("Brno", v3)
 
     def test_main_cli_dry_run_all_types(self):
         """Executes main.py with --dry-run for each parser type via subprocess."""

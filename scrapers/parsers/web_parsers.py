@@ -565,7 +565,11 @@ def parse_muni(html: str, base_url: str = "https://www.muni.cz/kalendar") -> Lis
             tags_text = ""
 
             # Attempt fetching rich detail page if available and online
-            if client and "muni.cz/kalendar/u/" in url:
+            should_fetch_detail = client and (
+                "muni.cz/kalendar/u/" in url or
+                (url.startswith("http") and not any(skip in url for skip in ["is.muni.cz", "facebook.com", "instagram.com", "muni.cz/kalendar"]))
+            )
+            if should_fetch_detail:
                 try:
                     d_resp = client.get(url)
                     if d_resp.status_code == 200:
@@ -608,6 +612,21 @@ def parse_muni(html: str, base_url: str = "https://www.muni.cz/kalendar") -> Lis
                             v_el = d_soup.select_one(".box-event-detail2__venues, [class*=\"venues\"]")
                             if v_el:
                                 loc_cand = v_el.get_text(" ", strip=True).replace("Zobrazit mapu", "").strip()
+
+                        # 6. For external landing pages, detect venue or time directly from page body
+                        page_text = " ".join(d_soup.get_text(" ", strip=True).split())
+                        if not loc_cand:
+                            v_found, _ = extract_venue_and_address(page_text, default_venue="")
+                            if v_found and v_found not in ["Brno", "Brno centrum"]:
+                                loc_cand = v_found
+
+                        if not starts_at:
+                            time_match = re.search(r"\b(\d{1,2}:\d{2})\b", page_text[:1500])
+                            if time_match:
+                                t_val = time_match.group(1)
+                                t_h, t_m = t_val.split(":")
+                                if int(t_h) <= 23 and int(t_m) <= 59:
+                                    start_time = f"{int(t_h):02d}:{t_m}:00"
                 except Exception:
                     pass
 
@@ -677,9 +696,9 @@ def parse_muni(html: str, base_url: str = "https://www.muni.cz/kalendar") -> Lis
             if not desc:
                 desc = f"Událost Masarykovy univerzity: {title} ({date_str})."
 
-            # Determine venue & address (use extracted loc_cand, otherwise Brno centrum fallback)
-            loc_input = loc_cand if loc_cand else full_card_text
-            venue_display, _ = extract_venue_and_address(loc_input, default_venue="Brno centrum")
+            # Determine venue & address (use extracted loc_cand, otherwise Brno fallback)
+            loc_input = loc_cand if loc_cand else ""
+            venue_display, _ = extract_venue_and_address(loc_input, default_venue="Brno")
 
             # Determine category & price
             cat_slug = detect_event_category(f"{title} {tags_text} {desc}")

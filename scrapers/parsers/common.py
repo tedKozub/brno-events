@@ -240,15 +240,21 @@ KNOWN_VENUES: List[Dict[str, Any]] = [
         'city': 'Brno',
     },
     {
-        'keywords': ['kamenice', 'kampus bohunice', 'bohunice', 'simu', 'simulační centrum', 'simulacni centrum', 'fn brno', 'jihlavská', 'jihlavska'],
+        'keywords': ['kamenice', 'kampus bohunice', 'bohunice', 'simu', 'simulační centrum', 'simulacni centrum', 'fn brno', 'jihlavská', 'jihlavska', 'fsps', 'fsps mu', 'fsps muni', 'fakulta sportovních studií', 'fakulta sportovnich studii'],
         'name': 'Univerzitní kampus Bohunice',
         'address': 'Kamenice 5, Brno',
         'city': 'Brno',
     },
     {
-        'keywords': ['arna nováka', 'arna novaka', 'filozofická fakulta', 'filozoficka fakulta', 'ff mu', 'ff muni'],
+        'keywords': ['arne nováka', 'arne novaka', 'arna nováka', 'arna novaka', 'filozofická fakulta', 'filozoficka fakulta', 'ff mu', 'ff muni'],
         'name': 'Filozofická fakulta MUNI',
-        'address': 'Arna Nováka 1/1, Brno',
+        'address': 'Arne Nováka 1/1, Brno',
+        'city': 'Brno',
+    },
+    {
+        'keywords': ['clubco', 'clubco vlněna', 'clubco vlnena', 'vlněna clubco', 'vlnena clubco', 'vlněna brno', 'vlnena brno'],
+        'name': 'Clubco Vlněna',
+        'address': 'Přízova 5, Brno',
         'city': 'Brno',
     },
     {
@@ -506,8 +512,14 @@ def extract_venue_and_address(text: str, default_venue: str = "Brno") -> Tuple[s
     clean_stripped = cleaned.strip()
     if 3 < len(clean_stripped) < 120 and "\n" not in clean_stripped:
         lower_s = clean_stripped.lower()
-        generic_names = {"masarykova univerzita", "masarykova univerzita, brno", "muni", "mendelu", "vut", "unob", "vetuni", "brno"}
-        if lower_s not in generic_names and not lower_s.startswith("událost"):
+        generic_names = {"masarykova univerzita", "masarykova univerzita, brno", "muni", "mendelu", "vut", "unob", "vetuni", "brno", "brno centrum"}
+        is_bad_venue = (
+            lower_s.startswith("událost") or
+            bool(re.search(r"\d+\.\s*[–—-]\s*\d+\.", lower_s)) or
+            bool(re.search(r"\b(ročník|rocnik|konference|workshop|seminář|seminar|přednáška|prednaska|festival)\b", lower_s)) or
+            bool(re.search(r"\b(prezenčně|prezencne|online|hybridně|hybridne)\b", lower_s))
+        )
+        if lower_s not in generic_names and not is_bad_venue:
             return clean_stripped, None
 
     return default_venue, None
@@ -634,9 +646,9 @@ def is_outside_brno(location_str: str = "", text: str = "") -> bool:
         "mikulov", "břeclav", "breclav", "znojmo", "vyškov", "vyskov", "blansko"
     ]
     for city in non_brno_cities:
-        if re.search(r'\b' + re.escape(city) + r'\b', loc_lower):
+        if re.search(r'\b' + re.escape(city) + r'\b', combined):
             # Check against street names in Brno (e.g. Bratislavská, Vídeňská, Olomoucká, Pražská)
-            if re.search(r'\b(bratislavsk|vídeňsk|vidensk|olomouck|pražsk|prazsk|znojemsk|hradeck|jihlavsk)[áéy]\b', loc_lower):
+            if re.search(r'\b(bratislavsk|vídeňsk|vidensk|olomouck|pražsk|prazsk|znojemsk|hradeck|jihlavsk|vyškovsk|vyskovsk)[áéy]\b', combined):
                 continue
             return True
 

@@ -84,7 +84,7 @@ class StudentPlacesSeeder extends Seeder
             [
                 'name' => 'Ústřední knihovna Filozofické fakulty MUNI',
                 'category' => 'study',
-                'address' => 'Arna Nováka 1, Brno',
+                'address' => 'Arne Nováka 1, Brno',
                 'lat' => 49.2001,
                 'lng' => 16.5986,
                 'description' => 'Moderní prosklená budova s týmovými studovnami, pohodlnými křesly a relaxačními zónami. Otevřeno všem studentům s kartou ISIC.',

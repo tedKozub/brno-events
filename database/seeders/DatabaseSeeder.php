@@ -171,14 +171,14 @@ class DatabaseSeeder extends Seeder
             'description' => 'Zahradnická fakulta Mendelovy univerzity v Lednici.',
         ]);
 
-        Venue::firstOrCreate(['slug' => 'ff-muni-arna-novaka'], [
+        Venue::firstOrCreate(['slug' => 'ff-muni-arne-novaka'], [
             'name' => 'Filozofická fakulta MUNI',
-            'address' => 'Arna Nováka 1/1',
+            'address' => 'Arne Nováka 1/1',
             'city' => 'Brno',
             'latitude' => 49.2001,
             'longitude' => 16.5986,
             'website_url' => 'https://phil.muni.cz',
-            'description' => 'Areál Filozofické fakulty Masarykovy univerzity na ulici Arna Nováka.',
+            'description' => 'Areál Filozofické fakulty Masarykovy univerzity na ulici Arne Nováka.',
         ]);
 
         Venue::firstOrCreate(['slug' => 'law-muni-veveri'], [

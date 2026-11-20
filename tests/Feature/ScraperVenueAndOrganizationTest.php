@@ -249,12 +249,12 @@ PY;
         $this->assertEquals(49.1937, $event->map_coordinates['lat']);
         $this->assertEquals(16.6066, $event->map_coordinates['lng']);
 
-        // Akce bez známého místa musí mít fallback "Brno centrum", nikoliv Rektorát
+        // Akce bez známého místa musí mít fallback "Brno", nikoliv Rektorát
         $genericEvent = new Event([
             'title' => 'Neznámá akce univerzity',
             'location_name' => null,
         ]);
-        $this->assertEquals('Brno centrum', $genericEvent->location_display);
+        $this->assertEquals('Brno', $genericEvent->location_display);
         $this->assertStringNotContainsString('Rektorát', $genericEvent->map_coordinates['title']);
         $this->assertStringNotContainsString('Žerotínovo náměstí', $genericEvent->map_coordinates['address']);
     }

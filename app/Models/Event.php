@@ -159,7 +159,7 @@ class Event extends Model
             return $this->venue->address ? "{$this->venue->name}, {$this->venue->address}" : $this->venue->name;
         }
 
-        return $loc ?: 'Brno centrum';
+        return $loc ?: 'Brno';
     }
 
     public function getIsMultiDayAttribute(): bool
@@ -340,13 +340,13 @@ class Event extends Model
         }
 
         $loc = trim($this->location_name ?? '');
-        $hasCustomLoc = !empty($loc) && !in_array(mb_strtolower($loc), ['brno', 'brno centrum', 'brno - střed']);
+        $hasCustomLoc = !empty($loc) && !in_array(mb_strtolower($loc), ['brno', 'brno centrum', 'brno stred', 'brno - střed', 'brno-střed']);
 
         return [
             'lat' => 49.1951,
             'lng' => 16.6068,
-            'title' => $hasCustomLoc ? $loc : 'Brno centrum',
-            'address' => $hasCustomLoc ? (str_contains(mb_strtolower($loc), 'brno') ? $loc : ($loc . ', Brno')) : 'Brno centrum',
+            'title' => $hasCustomLoc ? $loc : 'Brno',
+            'address' => $hasCustomLoc ? (str_contains(mb_strtolower($loc), 'brno') ? $loc : ($loc . ', Brno')) : 'Brno',
             'is_exact' => false,
         ];
     }

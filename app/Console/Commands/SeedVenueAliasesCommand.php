@@ -65,9 +65,14 @@ class SeedVenueAliasesCommand extends Command
                 'fss muni', 'fss mu', 'fakulta sociálních studií', 'fakulta socialnich studii',
                 'joštova 10', 'jostova 10', 'joštova', 'jostova', 'aula fss',
             ],
-            'ff-muni-arna-novaka' => [
+            'ff-muni-arne-novaka' => [
                 'ff muni', 'ff mu', 'filozofická fakulta', 'filozoficka fakulta',
-                'arna nováka 1', 'arne nováka', 'arna novaka', 'arna nováka 1/1', 'arne novaka 1',
+                'arne nováka', 'arne novaka', 'arne nováka 1', 'arne nováka 1/1', 'arne novaka 1',
+                'arna nováka 1', 'arna nováka', 'arna novaka',
+            ],
+            'clubco-vlnena' => [
+                'clubco', 'clubco vlněna', 'clubco vlnena', 'vlněna clubco', 'vlnena clubco',
+                'vlněna', 'vlnena', 'přízova 5', 'prizova 5', 'přízova', 'prizova',
             ],
             'law-muni-veveri' => [
                 'právnická fakulta', 'pravnicka fakulta', 'law muni', 'veveří 70',
@@ -232,6 +237,15 @@ class SeedVenueAliasesCommand extends Command
                 'latitude' => 49.1913,
                 'longitude' => 16.5985,
                 'place_type' => 'other',
+            ],
+            [
+                'name' => 'Clubco Vlněna',
+                'slug' => 'clubco-vlnena',
+                'address' => 'Přízova 5',
+                'city' => 'Brno',
+                'latitude' => 49.1896,
+                'longitude' => 16.6174,
+                'place_type' => 'coworking',
             ],
         ];
 

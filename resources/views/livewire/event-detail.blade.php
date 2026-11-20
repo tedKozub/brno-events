@@ -320,7 +320,7 @@
                             @elseif($event->venue)
                                 {{ $event->venue->name }}
                             @else
-                                {{ $event->location_name ?: 'Brno centrum' }}
+                                {{ $event->location_name ?: 'Brno' }}
                             @endif
                         </div>
                         @if($event->venue)
@@ -330,7 +330,7 @@
                                 @endif
                                 {{ $event->venue->address ? $event->venue->address . ', ' : '' }}{{ $event->venue->city }}
                             </div>
-                        @elseif($event->location_name)
+                        @elseif($event->room_detail && $event->location_name)
                             <div class="text-xs text-base-content/70 mt-0.5 truncate">{{ $event->location_name }}</div>
                         @endif
                         <div class="mt-2 flex items-center gap-3">
