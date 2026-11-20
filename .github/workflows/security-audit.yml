@@ -29,7 +29,7 @@ jobs:
 
       - name: Composer Security Audit
         run: |
-          echo "🔍 Kontrola zranitelností v PHP balíčcích (Composer Audit)..."
+          echo "Kontrola zranitelnosti v PHP baliccich (Composer Audit)..."
           composer audit --format=table || true
 
       - name: Setup Node.js
@@ -39,7 +39,7 @@ jobs:
 
       - name: NPM Security Audit
         run: |
-          echo "🔍 Kontrola zranitelností v Node.js/NPM balíčcích (NPM Audit)..."
+          echo "Kontrola zranitelnosti v Node.js/NPM baliccich (NPM Audit)..."
           npm audit --audit-level=high || true
 
   sast-code-scan:
@@ -107,12 +107,12 @@ jobs:
 
           if [ "$ALL_PASSED" = "true" ]; then
             COLOR=1096065
-            TITLE="🛡️ Bezpečnostní audit: Všechny kontroly v pořádku"
-            STATUS_DESC="Týdenní bezpečnostní audit neshledal žádné kritické zranitelnosti ani úniky hesel."
+            TITLE="Bezpecnostni audit: Vsechny kontroly v poradku"
+            STATUS_DESC="Tydenni bezpecnostni audit neshledal zadne kriticke zranitelnosti ani uniky hesel."
           else
             COLOR=15680580
-            TITLE="⚠️ Bezpečnostní audit: Nalezeny incidenty nebo zranitelnosti"
-            STATUS_DESC="Jedna nebo více bezpečnostních kontrol selhaly nebo nalezly bezpečnostní problém."
+            TITLE="Bezpecnostni audit: Nalezeny incidenty nebo zranitelnosti"
+            STATUS_DESC="Jedna nebo vice bezpecnostnich kontrol selhaly nebo nalezly bezpecnostni problem."
           fi
 
           JSON_PAYLOAD=$(cat <<EOF
@@ -124,17 +124,17 @@ jobs:
                 "color": $COLOR,
                 "fields": [
                   {
-                    "name": "📦 Balíčky (Composer & NPM)",
+                    "name": "Balicky (Composer & NPM)",
                     "value": "$PKG_RESULT",
                     "inline": true
                   },
                   {
-                    "name": "🔍 SAST Kód (Semgrep OWASP)",
+                    "name": "SAST Kod (Semgrep OWASP)",
                     "value": "$SAST_RESULT",
                     "inline": true
                   },
                   {
-                    "name": "🔑 Úniky hesel (Gitleaks)",
+                    "name": "Uniky hesel (Gitleaks)",
                     "value": "$SECRETS_RESULT",
                     "inline": true
                   },
