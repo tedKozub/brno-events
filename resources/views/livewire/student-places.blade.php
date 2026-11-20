@@ -422,6 +422,53 @@
                     groups[key].items.push(place);
                 });
 
+                const escapeHtml = (text) => {
+                    if (text === null || text === undefined) return '';
+                    return String(text)
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#039;');
+                };
+
+                const createPopupContent = (place, color, iconSvg) => {
+                    const safeLat = encodeURIComponent(place.lat);
+                    const safeLng = encodeURIComponent(place.lng);
+                    const gMapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + safeLat + ',' + safeLng;
+                    const mapyCzUrl = 'https://mapy.cz/zakladni?q=' + safeLat + ',' + safeLng;
+                    const safeName = escapeHtml(place.name);
+                    const safeAddress = escapeHtml(place.address);
+                    const safeDesc = escapeHtml(place.description);
+
+                    return `
+                        <div style="font-family: inherit; font-size: 13px; min-width: 220px; max-width: 290px; padding: 4px;">
+                            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                                <span style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 6px; background-color: ${color}; color: #ffffff; shrink: 0;">
+                                    ${iconSvg.replace('width: 16px; height: 16px;', 'width: 12px; height: 12px;')}
+                                </span>
+                            </div>
+                            <h3 style="font-weight: 900; font-size: 14px; line-height: 1.25; margin-bottom: 4px; color: #0f172a;">
+                                ${safeName}
+                            </h3>
+                            <p style="font-size: 11px; color: #64748b; margin-bottom: 6px;">
+                                ${safeAddress}
+                            </p>
+                            <p style="font-size: 12px; color: #334155; line-height: 1.4; margin-bottom: 10px;">
+                                ${safeDesc}
+                            </p>
+                            <div style="display: flex; gap: 6px;">
+                                <a href="${gMapsUrl}" target="_blank" rel="noopener noreferrer" style="flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 700; background-color: #0284c7; color: white; border-radius: 8px; text-decoration: none; text-align: center;">
+                                    Google Maps
+                                </a>
+                                <a href="${mapyCzUrl}" target="_blank" rel="noopener noreferrer" style="flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 700; background-color: #16a34a; color: white; border-radius: 8px; text-decoration: none; text-align: center;">
+                                    Mapy.cz
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                };
+
                 const calculateOffsetPos = (centerLat, centerLng, index, total, radiusMeters) => {
                     if (total <= 1 || radiusMeters === 0) {
                         return [centerLat, centerLng];
@@ -456,35 +503,7 @@
                             popupAnchor: [0, -42],
                         });
 
-                        const gMapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + place.lat + ',' + place.lng;
-                        const mapyCzUrl = 'https://mapy.cz/zakladni?q=' + place.lat + ',' + place.lng;
-
-                        const popupContent = `
-                            <div style="font-family: inherit; font-size: 13px; min-width: 220px; max-width: 290px; padding: 4px;">
-                                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
-                                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 6px; background-color: ${color}; color: #ffffff; shrink: 0;">
-                                        ${iconSvg.replace('width: 16px; height: 16px;', 'width: 12px; height: 12px;')}
-                                    </span>
-                                </div>
-                                <h3 style="font-weight: 900; font-size: 14px; line-height: 1.25; margin-bottom: 4px; color: #0f172a;">
-                                    ${place.name}
-                                </h3>
-                                <p style="font-size: 11px; color: #64748b; margin-bottom: 6px;">
-                                    ${place.address}
-                                </p>
-                                <p style="font-size: 12px; color: #334155; line-height: 1.4; margin-bottom: 10px;">
-                                    ${place.description}
-                                </p>
-                                <div style="display: flex; gap: 6px;">
-                                    <a href="${gMapsUrl}" target="_blank" rel="noopener noreferrer" style="flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 700; background-color: #0284c7; color: white; border-radius: 8px; text-decoration: none; text-align: center;">
-                                        Google Maps
-                                    </a>
-                                    <a href="${mapyCzUrl}" target="_blank" rel="noopener noreferrer" style="flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 700; background-color: #16a34a; color: white; border-radius: 8px; text-decoration: none; text-align: center;">
-                                        Mapy.cz
-                                    </a>
-                                </div>
-                            </div>
-                        `;
+                        const popupContent = createPopupContent(place, color, iconSvg);
 
                         const marker = L.marker(center, { icon: customIcon })
                             .addTo(this.markersLayer)
@@ -541,35 +560,7 @@
                             popupAnchor: [0, -42],
                         });
 
-                        const gMapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + place.lat + ',' + place.lng;
-                        const mapyCzUrl = 'https://mapy.cz/zakladni?q=' + place.lat + ',' + place.lng;
-
-                        const popupContent = `
-                            <div style="font-family: inherit; font-size: 13px; min-width: 220px; max-width: 290px; padding: 4px;">
-                                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
-                                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 6px; background-color: ${color}; color: #ffffff; shrink: 0;">
-                                        ${iconSvg.replace('width: 16px; height: 16px;', 'width: 12px; height: 12px;')}
-                                    </span>
-                                </div>
-                                <h3 style="font-weight: 900; font-size: 14px; line-height: 1.25; margin-bottom: 4px; color: #0f172a;">
-                                    ${place.name}
-                                </h3>
-                                <p style="font-size: 11px; color: #64748b; margin-bottom: 6px;">
-                                    ${place.address}
-                                </p>
-                                <p style="font-size: 12px; color: #334155; line-height: 1.4; margin-bottom: 10px;">
-                                    ${place.description}
-                                </p>
-                                <div style="display: flex; gap: 6px;">
-                                    <a href="${gMapsUrl}" target="_blank" rel="noopener noreferrer" style="flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 700; background-color: #0284c7; color: white; border-radius: 8px; text-decoration: none; text-align: center;">
-                                        Google Maps
-                                    </a>
-                                    <a href="${mapyCzUrl}" target="_blank" rel="noopener noreferrer" style="flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 700; background-color: #16a34a; color: white; border-radius: 8px; text-decoration: none; text-align: center;">
-                                        Mapy.cz
-                                    </a>
-                                </div>
-                            </div>
-                        `;
+                        const popupContent = createPopupContent(place, color, iconSvg);
 
                         const marker = L.marker(basePos, { icon: customIcon, zIndexOffset: 100 + idx })
                             .addTo(this.markersLayer)

@@ -34,6 +34,18 @@ class StudentPlaceSuggestion extends Model
         'tags' => 'array',
     ];
 
+    protected static function booted()
+    {
+        static::saving(function ($suggestion) {
+            if (!empty($suggestion->website_url)) {
+                $scheme = strtolower(parse_url($suggestion->website_url, PHP_URL_SCHEME) ?? '');
+                if (!in_array($scheme, ['http', 'https'], true)) {
+                    $suggestion->website_url = null;
+                }
+            }
+        });
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(StudentPlaceCategory::class, 'student_place_category_id');

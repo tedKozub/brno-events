@@ -10,16 +10,25 @@ if (!headers_sent() && extension_loaded('zlib')) {
 }
 
 $publicPath = __DIR__.'/public';
+$realPublicPath = realpath($publicPath);
+$realStoragePath = realpath(__DIR__.'/storage/app/public');
 
 $uri = urldecode(
     parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? ''
 );
 
 $filePath = $publicPath . $uri;
+$realFilePath = realpath($filePath);
 
-// If the requested path is an existing static file, serve it with high-efficiency caching
-if ($uri !== '/' && file_exists($filePath) && !is_dir($filePath)) {
-    $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+// Strictly enforce path containment: file must resolve inside public/ or storage/app/public/
+$isContained = $realFilePath !== false && is_file($realFilePath) && (
+    ($realPublicPath && str_starts_with($realFilePath, $realPublicPath . DIRECTORY_SEPARATOR)) ||
+    ($realStoragePath && str_starts_with($realFilePath, $realStoragePath . DIRECTORY_SEPARATOR))
+);
+
+// If the requested path is an existing safe static file, serve it with high-efficiency caching
+if ($uri !== '/' && $isContained) {
+    $ext = strtolower(pathinfo($realFilePath, PATHINFO_EXTENSION));
     $mimeTypes = [
         'css' => 'text/css; charset=utf-8',
         'js' => 'application/javascript; charset=utf-8',
@@ -53,12 +62,12 @@ if ($uri !== '/' && file_exists($filePath) && !is_dir($filePath)) {
         }
 
         header('Content-Type: ' . $mimeTypes[$ext]);
-        header('Content-Length: ' . filesize($filePath));
+        header('Content-Length: ' . filesize($realFilePath));
         header('Access-Control-Allow-Origin: *');
 
         // ETag and Last-Modified conditional validation
-        $mtime = filemtime($filePath);
-        $etag = sprintf('"%x-%x"', $mtime, filesize($filePath));
+        $mtime = filemtime($realFilePath);
+        $etag = sprintf('"%x-%x"', $mtime, filesize($realFilePath));
         header('ETag: ' . $etag);
         header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $mtime) . ' GMT');
 
@@ -70,7 +79,7 @@ if ($uri !== '/' && file_exists($filePath) && !is_dir($filePath)) {
             exit;
         }
 
-        readfile($filePath);
+        readfile($realFilePath);
         exit;
     }
 

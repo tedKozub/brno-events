@@ -12,6 +12,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class StudentPlaceSuggestionResource extends Resource
 {
@@ -22,6 +23,26 @@ class StudentPlaceSuggestionResource extends Resource
     protected static ?string $modelLabel = 'Návrh místa';
     protected static ?string $pluralModelLabel = 'Návrhy od studentů';
     protected static ?int $navigationSort = 3;
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->isSuperAdmin() ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return auth()->user()?->isSuperAdmin() ?? false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return auth()->user()?->isSuperAdmin() ?? false;
+    }
 
     public static function getNavigationBadge(): ?string
     {

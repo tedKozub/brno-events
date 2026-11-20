@@ -66,6 +66,7 @@
                             </div>
                         @else
                             <form wire:submit.prevent="submit" class="space-y-4">
+                                <input type="text" wire:model="honeypot" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true" />
                                 <div>
                                     <label class="block text-xs font-bold uppercase tracking-wider text-base-content/70 mb-1.5">
                                         Co je u akce špatně? <span class="text-error">*</span>

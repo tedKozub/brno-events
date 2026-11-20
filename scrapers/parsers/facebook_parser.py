@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import re
+import urllib.parse
 import urllib.request
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -187,19 +188,36 @@ async def scrape_single_facebook_event(
 
         # Ticket URL
         ticket_url = None
-        ticket_services = ['goout.net', 'smsticket.cz', 'fairplay.events', 'boomticketing', 'ticketmaster', 'ticketstream']
+        ticket_services = ['goout.net', 'smsticket.cz', 'fairplay.events', 'boomticketing.com', 'ticketmaster.cz', 'ticketstream.cz']
+
+        def is_safe_ticket_url(u: str) -> bool:
+            if not u:
+                return False
+            try:
+                parsed = urllib.parse.urlparse(u)
+                if parsed.scheme not in ('http', 'https'):
+                    return False
+                netloc = parsed.netloc.lower()
+                return any(netloc == dom or netloc.endswith('.' + dom) for dom in ticket_services)
+            except Exception:
+                return False
+
         for a in soup.find_all('a', href=True):
-            h = a['href']
-            if any(svc in h for svc in ticket_services):
+            h = a['href'].strip()
+            if h.startswith('//'):
+                h = 'https:' + h
+            if is_safe_ticket_url(h):
                 ticket_url = h
                 break
 
         if not ticket_url:
             for i, line in enumerate(lines):
                 if 'vstupenk' in line.lower() and i + 1 < len(lines):
-                    next_line = lines[i + 1]
-                    if any(svc in next_line for svc in ticket_services) or next_line.startswith('http') or next_line.startswith('www.'):
-                        ticket_url = next_line if next_line.startswith('http') else 'https://' + next_line
+                    next_line = lines[i + 1].strip()
+                    if next_line.startswith('www.'):
+                        next_line = 'https://' + next_line
+                    if is_safe_ticket_url(next_line):
+                        ticket_url = next_line
                         break
 
         # Date & Time parsing

@@ -36,6 +36,17 @@ class Organization extends Model
                 $org->slug = Str::slug($org->name);
             }
         });
+
+        static::saving(function ($org) {
+            foreach (['website_url', 'facebook_url', 'logo_url'] as $urlField) {
+                if (!empty($org->{$urlField})) {
+                    $scheme = strtolower(parse_url($org->{$urlField}, PHP_URL_SCHEME) ?? '');
+                    if (!in_array($scheme, ['http', 'https'], true)) {
+                        $org->{$urlField} = null;
+                    }
+                }
+            }
+        });
     }
 
     public function events(): HasMany

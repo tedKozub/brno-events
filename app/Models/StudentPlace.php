@@ -48,6 +48,15 @@ class StudentPlace extends Model
             }
         });
 
+        static::saving(function ($place) {
+            if (!empty($place->website_url)) {
+                $scheme = strtolower(parse_url($place->website_url, PHP_URL_SCHEME) ?? '');
+                if (!in_array($scheme, ['http', 'https'], true)) {
+                    $place->website_url = null;
+                }
+            }
+        });
+
         // Invalidate allPlaces cache on any save/delete
         static::saved(function () {
             Cache::forget('student_places_all');

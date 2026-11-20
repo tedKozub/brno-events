@@ -717,9 +717,12 @@
                         popupAnchor: [0, -34]
                     });
 
+                    const popupEl = document.createElement('strong');
+                    popupEl.textContent = title;
+
                     L.marker([lat, lng], { icon: pinIcon })
                         .addTo(this.map)
-                        .bindPopup(`<strong>${title}</strong>`)
+                        .bindPopup(popupEl)
                         .openPopup();
 
                     setTimeout(() => {

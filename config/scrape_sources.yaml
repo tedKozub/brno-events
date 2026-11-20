@@ -62,23 +62,6 @@ sources:
     organization_slug: "unob"
     description: "Veřejné, prezentační a sportovní události studentů Univerzity obrany v Brně."
 
-  - id_slug: "student-ical-feed"
-    name: "Studentský iCal Kalendář (Beerpong, Ligy & Hudba)"
-    type: "web_ical"
-    university: "OTHER"
-    url: "file:///root/brno-events/scrapers/fixtures/sample_student_events.ics"
-    is_active: true
-    description: "iCal feed studentských turnajů, večírků a jam sessions na Flédě a v ArtBaru."
-
-  - id_slug: "vetuni-spolek-feed"
-    name: "VETUNI Kalendář akcí (Areál Palackého)"
-    type: "web_ical"
-    university: "VETUNI"
-    url: "file:///root/brno-events/scrapers/fixtures/sample_vetuni_events.ics"
-    is_active: true
-    organization_slug: "vetuni"
-    description: "Akce a workshopy Veterinární univerzity Brno (VETUNI)."
-
   - id_slug: "sppdf-muni-instagram"
     name: "Spolek přátel PdF MUNI (Instagram @sppdf_muni)"
     type: "web_instagram"

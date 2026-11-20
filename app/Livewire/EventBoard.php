@@ -106,13 +106,21 @@ class EventBoard extends Component
 
     public function downloadIcal(int $id)
     {
-        $event = Event::with('venue', 'organization')->findOrFail($id);
+        $event = Event::with('venue', 'organization')->published()->findOrFail($id);
 
         $start = $event->starts_at->format('Ymd\THis');
         $end = ($event->ends_at ?: $event->starts_at->copy()->addHours(3))->format('Ymd\THis');
-        $title = addcslashes($event->title, ",;\\");
-        $desc = addcslashes($event->short_description ?: $event->description ?: '', ",;\\");
-        $loc = addcslashes($event->location_display, ",;\\");
+
+        // Escape text per RFC 5545 (escape backslashes, semicolons, commas, and serialize newlines as \n)
+        $escapeIcs = function (?string $text): string {
+            if (!$text) return '';
+            $text = str_replace(["\r\n", "\r", "\n"], "\\n", $text);
+            return addcslashes($text, ",;\\");
+        };
+
+        $title = $escapeIcs($event->title);
+        $desc = $escapeIcs($event->short_description ?: $event->description ?: '');
+        $loc = $escapeIcs($event->location_display);
 
         $ics = "BEGIN:VCALENDAR\r\n";
         $ics .= "VERSION:2.0\r\n";

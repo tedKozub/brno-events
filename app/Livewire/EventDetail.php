@@ -14,16 +14,16 @@ class EventDetail extends Component
     {
         $this->slug = $slug;
 
-        $event = Event::with(['category', 'organization'])->where('slug', $slug)->first();
+        $event = Event::with(['category', 'organization'])->published()->where('slug', $slug)->first();
         if ($event) {
-            $event->increment('views_count');
+            $event->incrementQuietly('views_count');
             app(\App\Services\AnalyticsService::class)->trackPageView('/akce/' . $slug, $event);
         }
     }
 
     public function trackOutbound(string $type = 'ticket'): void
     {
-        $event = Event::with(['category', 'organization'])->where('slug', $this->slug)->first();
+        $event = Event::with(['category', 'organization'])->published()->where('slug', $this->slug)->first();
         if ($event) {
             if ($type === 'map') {
                 app(\App\Services\AnalyticsService::class)->trackMapClick($event);
@@ -35,14 +35,22 @@ class EventDetail extends Component
 
     public function downloadIcal()
     {
-        $event = Event::with('venue', 'organization', 'category')->where('slug', $this->slug)->firstOrFail();
+        $event = Event::with('venue', 'organization', 'category')->published()->where('slug', $this->slug)->firstOrFail();
         app(\App\Services\AnalyticsService::class)->trackIcalDownload($event);
 
         $start = $event->starts_at->format('Ymd\THis');
         $end = ($event->ends_at ?: $event->starts_at->copy()->addHours(3))->format('Ymd\THis');
-        $title = addcslashes($event->title, ",;\\");
-        $desc = addcslashes($event->short_description ?: $event->description ?: '', ",;\\");
-        $loc = addcslashes($event->location_display, ",;\\");
+
+        // Escape text per RFC 5545 (escape backslashes, semicolons, commas, and serialize newlines as \n)
+        $escapeIcs = function (?string $text): string {
+            if (!$text) return '';
+            $text = str_replace(["\r\n", "\r", "\n"], "\\n", $text);
+            return addcslashes($text, ",;\\");
+        };
+
+        $title = $escapeIcs($event->title);
+        $desc = $escapeIcs($event->short_description ?: $event->description ?: '');
+        $loc = $escapeIcs($event->location_display);
 
         $ics = "BEGIN:VCALENDAR\r\n";
         $ics .= "VERSION:2.0\r\n";
@@ -74,6 +82,7 @@ class EventDetail extends Component
     public function render()
     {
         $event = Event::with(['organization', 'venue', 'category'])
+            ->published()
             ->where('slug', $this->slug)
             ->firstOrFail();
 
@@ -144,7 +153,7 @@ class EventDetail extends Component
             'ogImage' => !empty($event->cover_image) ? (str_starts_with($event->cover_image_url, 'http') ? $event->cover_image_url : url($event->cover_image_url)) : route('event.og-image', ['slug' => $event->slug]),
             'ogType' => 'event',
             'ogUrl' => url('/akce/' . $event->slug),
-            'schemaJson' => json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
+            'schemaJson' => json_encode($schema, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
         ]);
     }
 }

@@ -2,24 +2,34 @@
 
 namespace App\Livewire;
 
+use App\Models\Event;
 use App\Models\EventReport;
 use App\Services\DiscordNotifier;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\Rule;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 class ReportEventModal extends Component
 {
+    #[Locked]
     public int $eventId;
+
     public bool $isOpen = false;
     public string $reason = 'cancelled';
     public string $details = '';
     public string $contactEmail = '';
+    public string $honeypot = '';
     public bool $submitted = false;
 
-    protected $rules = [
-        'reason' => 'required|string',
-        'details' => 'nullable|string|max:1000',
-        'contactEmail' => 'nullable|email|max:150',
-    ];
+    protected function rules(): array
+    {
+        return [
+            'reason' => ['required', 'string', Rule::in(array_keys(EventReport::$reasons))],
+            'details' => ['nullable', 'string', 'max:1000'],
+            'contactEmail' => ['nullable', 'email', 'max:150'],
+        ];
+    }
 
     public function openModal()
     {
@@ -34,7 +44,27 @@ class ReportEventModal extends Component
 
     public function submit()
     {
+        if (!empty($this->honeypot)) {
+            $this->submitted = true;
+            return;
+        }
+
+        $ip = request()?->ip() ?? '127.0.0.1';
+        $rateLimitKey = 'report-event:' . $ip;
+
+        if (!app()->environment('testing') && RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
+            $seconds = RateLimiter::availableIn($rateLimitKey);
+            $this->addError('reason', "Příliš mnoho hlášení. Zkus to prosím znovu za {$seconds} sekund.");
+            return;
+        }
+
         $this->validate();
+
+        $eventExists = Event::where('id', $this->eventId)->exists();
+        if (!$eventExists) {
+            $this->addError('reason', 'Akce nebyla nalezena.');
+            return;
+        }
 
         $report = EventReport::create([
             'event_id' => $this->eventId,
@@ -44,16 +74,9 @@ class ReportEventModal extends Component
             'status' => 'pending',
         ]);
 
-        $isE2eTest = request()->header('X-E2E-Testing') === 'true'
-            || str_contains(mb_strtolower($this->details ?? ''), 'e2e')
-            || str_contains(mb_strtolower($this->details ?? ''), 'testovac');
+        RateLimiter::hit($rateLimitKey, 3600);
 
-        if ($isE2eTest) {
-            // In automated E2E tests, immediately clean up the record so it doesn't
-            // pollute the production/dev database or the administration panel
-            $report->delete();
-        } elseif (!app()->environment('testing')) {
-            // Send alert to Discord webhook if configured
+        if (!app()->environment('testing')) {
             DiscordNotifier::notifyEventReport($report);
         }
 

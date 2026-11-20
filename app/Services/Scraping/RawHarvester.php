@@ -46,13 +46,16 @@ class RawHarvester
         $statusCode = 200;
         $contentType = 'text/plain';
 
-        if (str_starts_with($url, 'file://')) {
-            $localPath = substr($url, 7);
-            if (File::exists($localPath)) {
-                $content = File::get($localPath);
+        if (str_starts_with($url, 'file://') || (file_exists($url) && !filter_var($url, FILTER_VALIDATE_URL))) {
+            if (app()->environment('testing')) {
+                $localPath = str_starts_with($url, 'file://') ? substr($url, 7) : $url;
+                if (File::exists($localPath)) {
+                    $content = File::get($localPath);
+                }
+            } else {
+                Log::warning("Blocked attempt to harvest local file in non-testing environment: {$url}");
+                return null;
             }
-        } elseif (File::exists($url)) {
-            $content = File::get($url);
         } elseif (filter_var($url, FILTER_VALIDATE_URL)) {
             $response = Http::withHeaders([
                 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 LiveBrnoHarvester/2.0',

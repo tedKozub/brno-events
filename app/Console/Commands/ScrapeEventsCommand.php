@@ -406,11 +406,12 @@ class ScrapeEventsCommand extends Command
                     default => 'scraper_web',
                 };
 
-                // Sociální sítě (Instagram, Facebook) vyžadují moderaci (pending_review).
+                // Sociální sítě a AI extrakce vyžadují moderaci (pending_review).
                 // Oficiální univerzitní weby, iCal kalendáře a RSS jsou důvěryhodné a publikují se rovnou (published).
                 $isSocialMedia = in_array($source->type, ['web_instagram', 'web_facebook'])
                     || in_array($sourceType, ['scraper_instagram', 'scraper_facebook', 'instagram', 'facebook']);
-                $initialStatus = $isSocialMedia ? 'pending_review' : 'published';
+                $isAiExtracted = !empty($item['is_ai_extracted']) || $engine === 'llm';
+                $initialStatus = ($isSocialMedia || $isAiExtracted) ? 'pending_review' : 'published';
 
                 $createdEvent = Event::create([
                     'organization_id' => $orgId,
@@ -422,7 +423,7 @@ class ScrapeEventsCommand extends Command
                     'description' => $cleanDesc ?: null,
                     'cover_image' => $item['cover_image'] ?? null,
                     'cover_image_type' => $item['cover_image_type'] ?? null,
-                    'original_image_url' => $item['original_image_url'] ?? null,
+                    'original_image_url' => $this->sanitizeUrl($item['original_image_url'] ?? null),
                     'starts_at' => $startsAt,
                     'ends_at' => $endsAt,
                     'is_all_day' => !empty($item['is_all_day']),
@@ -430,11 +431,11 @@ class ScrapeEventsCommand extends Command
                     'room_detail' => $roomDetail,
                     'price_type' => $item['price_type'] ?? 'free',
                     'price_amount' => $item['price_amount'] ?? null,
-                    'ticket_url' => $item['ticket_url'] ?? null,
+                    'ticket_url' => $this->sanitizeUrl($item['ticket_url'] ?? null),
                     'source_type' => $sourceType,
-                    'source_url' => $sourceUrl,
-                    'instagram_post_url' => $item['instagram_post_url'] ?? null,
-                    'facebook_event_url' => $item['facebook_event_url'] ?? null,
+                    'source_url' => $this->sanitizeUrl($sourceUrl),
+                    'instagram_post_url' => $this->sanitizeUrl($item['instagram_post_url'] ?? null),
+                    'facebook_event_url' => $this->sanitizeUrl($item['facebook_event_url'] ?? null),
                     'status' => $initialStatus,
                     'is_featured' => false,
                 ]);
@@ -581,5 +582,21 @@ class ScrapeEventsCommand extends Command
 
         $resolver = $resolver ?: app(VenueResolverService::class);
         return $resolver->isExplicitlyOutsideBrno($location, $text);
+    }
+
+    /**
+     * Sanitizes external URLs allowing only safe HTTP and HTTPS schemes.
+     */
+    protected function sanitizeUrl(?string $url): ?string
+    {
+        if (empty($url)) {
+            return null;
+        }
+        $url = trim($url);
+        $scheme = strtolower(parse_url($url, PHP_URL_SCHEME) ?? '');
+        if (!in_array($scheme, ['http', 'https'], true)) {
+            return null;
+        }
+        return filter_var($url, FILTER_VALIDATE_URL) ? $url : null;
     }
 }

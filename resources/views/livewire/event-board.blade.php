@@ -681,6 +681,16 @@
                 });
             },
 
+            escapeHtml(text) {
+                if (text === null || text === undefined) return '';
+                return String(text)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            },
+
             createPopupHtml(items) {
                 if (!items) return '';
                 const list = Array.isArray(items) ? items : [items];
@@ -688,21 +698,28 @@
 
                 if (list.length === 1) {
                     const item = list[0];
+                    const cat = this.escapeHtml(item.category || 'Akce');
+                    const title = this.escapeHtml(item.title);
+                    const venue = this.escapeHtml(item.venue);
+                    const time = this.escapeHtml(item.time);
+                    const price = this.escapeHtml(item.price);
+                    const link = encodeURI('/akce/' + (item.slug || item.id));
+
                     return `
                         <div style="font-family: inherit; font-size: 13px; min-width: 220px; max-width: 270px; padding: 2px;">
                             <div style="font-size: 10px; font-weight: 800; color: #ea580c; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">
-                                ${item.category || 'Akce'}
+                                ${cat}
                             </div>
                             <strong style="display: block; font-size: 14px; font-weight: 900; line-height: 1.25; margin-bottom: 4px; color: #0f172a;">
-                                ${item.title}
+                                ${title}
                             </strong>
                             <div style="color: #64748b; font-size: 11px; margin-bottom: 4px;">
-                                📍 ${item.venue}
+                                ${venue}
                             </div>
                             <div style="font-weight: 800; font-size: 12px; color: #ea580c; margin-bottom: 8px;">
-                                ${item.time} • ${item.price}
+                                ${time} • ${price}
                             </div>
-                            <a href="/akce/${item.slug || item.id}" style="display: block; text-align: center; text-decoration: none; background: #ea580c; color: #ffffff; padding: 7px 12px; border-radius: 8px; font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; box-shadow: 0 2px 4px rgba(234, 88, 12, 0.3);">
+                            <a href="${link}" style="display: block; text-align: center; text-decoration: none; background: #ea580c; color: #ffffff; padding: 7px 12px; border-radius: 8px; font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; box-shadow: 0 2px 4px rgba(234, 88, 12, 0.3);">
                                 Zobrazit detail akce &rarr;
                             </a>
                         </div>
@@ -710,25 +727,32 @@
                 }
 
                 // 2 a více akcí na stejném místě: seznam v přehledném popoveru
-                const venueName = list[0].venue || 'Brno';
-                const eventCards = list.map(ev => `
-                    <a href="/akce/${ev.slug || ev.id}" style="display: block; text-decoration: none; padding: 7px 9px; border-radius: 8px; background: #f8fafc; border: 1px solid #e2e8f0; margin-bottom: 5px; color: #0f172a; transition: background 0.15s, border-color 0.15s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1'" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0'">
+                const venueName = this.escapeHtml(list[0].venue || 'Brno');
+                const eventCards = list.map(ev => {
+                    const evCat = this.escapeHtml(ev.category || 'Akce');
+                    const evTitle = this.escapeHtml(ev.title);
+                    const evTime = this.escapeHtml(ev.time);
+                    const evPrice = this.escapeHtml(ev.price);
+                    const evLink = encodeURI('/akce/' + (ev.slug || ev.id));
+                    return `
+                    <a href="${evLink}" style="display: block; text-decoration: none; padding: 7px 9px; border-radius: 8px; background: #f8fafc; border: 1px solid #e2e8f0; margin-bottom: 5px; color: #0f172a; transition: background 0.15s, border-color 0.15s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#cbd5e1'" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0'">
                         <div style="font-size: 9px; font-weight: 800; color: #ea580c; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1px;">
-                            ${ev.category || 'Akce'}
+                            ${evCat}
                         </div>
                         <div style="font-size: 12px; font-weight: 800; line-height: 1.25; color: #0f172a; margin-bottom: 2px;">
-                            ${ev.title}
+                            ${evTitle}
                         </div>
                         <div style="font-size: 11px; font-weight: 700; color: #64748b;">
-                            ${ev.time} • <span style="color: #ea580c;">${ev.price}</span>
+                            ${evTime} • <span style="color: #ea580c;">${evPrice}</span>
                         </div>
                     </a>
-                `).join('');
+                `;
+                }).join('');
 
                 return `
                     <div style="font-family: inherit; font-size: 13px; min-width: 240px; max-width: 290px; padding: 2px;">
                         <div style="font-size: 10px; font-weight: 900; color: #ea580c; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">
-                            📍 ${venueName}
+                            ${venueName}
                         </div>
                         <div style="font-size: 13px; font-weight: 900; color: #0f172a; margin-bottom: 8px;">
                             ${list.length} akce na tomto místě

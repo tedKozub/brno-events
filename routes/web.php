@@ -79,7 +79,14 @@ Route::get('/analytics/toggle-device', function () {
     }
 
     if (request()->has('redirect_to')) {
-        return redirect()->to(request()->get('redirect_to'))->with('status', $msg);
+        $target = request()->get('redirect_to');
+        if (empty($target) || $target === '/') {
+            return redirect()->to('/')->with('status', $msg);
+        }
+        $target = (string) $target;
+        if (str_starts_with($target, '/') && !str_starts_with($target, '//') && !str_contains($target, '\\')) {
+            return redirect()->to($target)->with('status', $msg);
+        }
     }
 
     return redirect()->back()->with('status', $msg);

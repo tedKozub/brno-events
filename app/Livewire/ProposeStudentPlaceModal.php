@@ -67,14 +67,10 @@ class ProposeStudentPlaceModal extends Component
             return;
         }
 
-        $isE2eTest = (function_exists('request') && request() && request()->header('X-E2E-Testing') === 'true')
-            || str_contains(mb_strtolower($this->description), 'e2e')
-            || str_contains(mb_strtolower($this->name), 'e2e');
-
         $ip = request()?->ip() ?? '127.0.0.1';
         $rateLimitKey = 'suggest-place:' . $ip;
 
-        if (!app()->environment('testing') && !$isE2eTest && RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
+        if (!app()->environment('testing') && RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
             $seconds = RateLimiter::availableIn($rateLimitKey);
             $this->addError('name', "Příliš mnoho odeslaných návrhů. Zkus to prosím znovu za {$seconds} sekund.");
             return;
@@ -101,14 +97,9 @@ class ProposeStudentPlaceModal extends Component
             'ip_hash' => hash('sha256', $ip . config('app.key', 'brno-events')),
         ]);
 
-        if (!$isE2eTest) {
-            RateLimiter::hit($rateLimitKey, 3600);
-            if (!app()->environment('testing')) {
-                DiscordNotifier::notifyPlaceSuggestion($suggestion);
-            }
-        } else {
-            // V automatických E2E testech záznam po ověření smažeme, aby neznečišťoval databázi
-            $suggestion->delete();
+        RateLimiter::hit($rateLimitKey, 3600);
+        if (!app()->environment('testing')) {
+            DiscordNotifier::notifyPlaceSuggestion($suggestion);
         }
 
         $this->submitted = true;

@@ -65,6 +65,15 @@ class Event extends Model
         });
 
         static::saving(function ($event) {
+            foreach (['ticket_url', 'facebook_event_url', 'instagram_post_url', 'source_url', 'original_image_url'] as $urlField) {
+                if (!empty($event->{$urlField})) {
+                    $scheme = strtolower(parse_url($event->{$urlField}, PHP_URL_SCHEME) ?? '');
+                    if (!in_array($scheme, ['http', 'https'], true)) {
+                        $event->{$urlField} = null;
+                    }
+                }
+            }
+
             if (!empty($event->location_name)) {
                 try {
                     $resolver = app(\App\Services\VenueResolverService::class);

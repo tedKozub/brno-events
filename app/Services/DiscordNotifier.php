@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Event;
 use App\Models\EventReport;
+use App\Models\StudentPlaceSuggestion;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -32,6 +32,17 @@ class DiscordNotifier
     }
 
     /**
+     * Escape Discord Markdown special characters from untrusted user input.
+     */
+    public static function escapeMarkdown(?string $text): string
+    {
+        if ($text === null || $text === '') {
+            return '';
+        }
+        return preg_replace('/([\\\\`*_{}\\[\\]()#+\\-.!|~>])/u', '\\\\$1', $text);
+    }
+
+    /**
      * Sends a raw Discord Webhook payload to the general / scraping channel.
      */
     public static function send(array $payload): bool
@@ -46,6 +57,9 @@ class DiscordNotifier
             Log::info('Discord notification skipped: DISCORD_WEBHOOK_URL is not set.');
             return false;
         }
+
+        // Prevent @everyone / @here / role ping injection
+        $payload['allowed_mentions'] = ['parse' => []];
 
         try {
             $response = Http::timeout(10)->post($url, $payload);
@@ -76,6 +90,9 @@ class DiscordNotifier
             return false;
         }
 
+        // Prevent @everyone / @here / role ping injection
+        $payload['allowed_mentions'] = ['parse' => []];
+
         try {
             $response = Http::timeout(10)->post($url, $payload);
             if (!$response->successful()) {
@@ -104,10 +121,10 @@ class DiscordNotifier
         $totalSources = $stats['sources'] ?? 0;
         $hasErrors = count($errors) > 0;
 
-        $color = $hasErrors ? 0xE02424 : ($imported > 0 ? 0x10B981 : 0x3B82F6); // Red, Green, Blue
+        $color = $hasErrors ? 0xE02424 : ($imported > 0 ? 0x10B981 : 0x3B82F6);
         $title = $hasErrors
-            ? '⚠️ BrnoAkce Scraping: Dokončeno s chybami'
-            : ($imported > 0 ? "🎉 BrnoAkce Scraping: {$imported} nových akcí ke schválení" : 'ℹ️ BrnoAkce Scraping: Žádné nové akce');
+            ? '[Chyba] BrnoAkce Scraping: Dokončeno s chybami'
+            : ($imported > 0 ? "[Import] BrnoAkce Scraping: {$imported} nových akcí ke schválení" : '[Info] BrnoAkce Scraping: Žádné nové akce');
 
         $adminUrl = config('app.url', 'https://brnoakce.tadeaskozub.com') . '/admin/events';
 
@@ -122,7 +139,6 @@ class DiscordNotifier
 
         $fields = [];
 
-        // List newly imported events (up to 8)
         if (!empty($newEvents)) {
             $eventLines = [];
             foreach (array_slice($newEvents, 0, 8) as $ev) {
@@ -133,15 +149,17 @@ class DiscordNotifier
 
                 $evLink = !empty($ev['id']) ? "{$adminUrl}/{$ev['id']}/edit" : $adminUrl;
                 $dateStr = !empty($ev['starts_at']) ? date('d.m. H:i', strtotime($ev['starts_at'])) : 'neuvedeno';
-                $venueStr = $ev['venue'] ?? $ev['location'] ?? 'Brno';
+                $venueStr = self::escapeMarkdown($ev['venue'] ?? $ev['location'] ?? 'Brno');
+                $evTitle = self::escapeMarkdown(mb_substr($ev['title'] ?? 'Bez názvu', 0, 40));
+                $orgName = self::escapeMarkdown($ev['organization'] ?? 'Univerzita');
 
                 $eventLines[] = sprintf(
                     "• [%s](%s) — %s (%s, %s)%s",
-                    mb_substr($ev['title'] ?? 'Bez názvu', 0, 40),
+                    $evTitle,
                     $evLink,
                     $dateStr,
                     $venueStr,
-                    $ev['organization'] ?? 'Univerzita',
+                    $orgName,
                     $missingWarnings
                 );
             }
@@ -151,20 +169,21 @@ class DiscordNotifier
             }
 
             $fields[] = [
-                'name' => '📌 Nově nalezené akce',
+                'name' => 'Nově nalezené akce',
                 'value' => implode("\n", $eventLines),
                 'inline' => false,
             ];
         }
 
-        // List errors
         if (!empty($errors)) {
             $errLines = [];
             foreach (array_slice($errors, 0, 5) as $err) {
-                $errLines[] = sprintf("• **%s**: %s", $err['source'] ?? 'Zdroj', mb_substr($err['message'] ?? 'Neznámá chyba', 0, 100));
+                $errSource = self::escapeMarkdown($err['source'] ?? 'Zdroj');
+                $errMsg = self::escapeMarkdown(mb_substr($err['message'] ?? 'Neznámá chyba', 0, 100));
+                $errLines[] = sprintf("• **%s**: %s", $errSource, $errMsg);
             }
             $fields[] = [
-                'name' => '⚠️ Chyby při scrapování',
+                'name' => 'Chyby při scrapování',
                 'value' => implode("\n", $errLines),
                 'inline' => false,
             ];
@@ -189,7 +208,7 @@ class DiscordNotifier
     }
 
     /**
-     * Sends an instant alert when a student reports an issue or broken event.
+     * Sends an alert when a user reports an issue or broken event.
      */
     public static function notifyEventReport(EventReport $report): bool
     {
@@ -197,34 +216,29 @@ class DiscordNotifier
             return false;
         }
 
-        // Prevent sending notification for automated test reports
-        if (
-            str_contains(mb_strtolower($report->details ?? ''), 'e2e') ||
-            str_contains(mb_strtolower($report->details ?? ''), 'testovac') ||
-            (function_exists('request') && request() && request()->header('X-E2E-Testing') === 'true')
-        ) {
-            Log::info('Discord event report notification skipped: detected automated test report.');
-            return false;
-        }
-
         $event = $report->event;
         $adminEventUrl = config('app.url', 'https://brnoakce.tadeaskozub.com') . "/admin/events/{$report->event_id}/edit";
         $publicEventUrl = config('app.url', 'https://brnoakce.tadeaskozub.com') . "/akce/{$event?->slug}";
 
+        $cleanTitle = self::escapeMarkdown($event?->title ?? 'Neznámá akce');
+        $cleanReason = self::escapeMarkdown($report->reason_label);
+        $cleanDetails = $report->details ? self::escapeMarkdown($report->details) : '*bez doplňujícího popisu*';
+        $cleanContact = $report->contact_email ? self::escapeMarkdown($report->contact_email) : '*neuveden*';
+
         $payload = [
             'embeds' => [
                 [
-                    'title' => '🚨 Nahlášena chyba u akce',
+                    'title' => '[Hlášení] Nahlášena chyba u akce',
                     'description' => sprintf(
                         "Uživatel nahlásil problém u akce **[%s](%s)**.\n\n**Důvod:** `%s`\n**Podrobnosti:** %s\n**Kontakt:** %s\n\n[Upravit akci v administraci](%s)",
-                        $event?->title ?? 'Neznámá akce',
+                        $cleanTitle,
                         $publicEventUrl,
-                        $report->reason_label,
-                        $report->details ?: '*bez doplňujícího popisu*',
-                        $report->contact_email ?: '*neuveden*',
+                        $cleanReason,
+                        $cleanDetails,
+                        $cleanContact,
                         $adminEventUrl
                     ),
-                    'color' => 0xF59E0B, // Amber
+                    'color' => 0xF59E0B,
                     'footer' => [
                         'text' => 'BrnoAkce User Feedback System',
                     ],
@@ -239,42 +253,36 @@ class DiscordNotifier
     /**
      * Sends an alert when a student submits a tip for a new student place in Brno.
      */
-    public static function notifyPlaceSuggestion(\App\Models\StudentPlaceSuggestion $suggestion): bool
+    public static function notifyPlaceSuggestion(StudentPlaceSuggestion $suggestion): bool
     {
         if (app()->environment('testing') && !self::isHttpFaked()) {
             return false;
         }
 
-        // Prevent sending notification for automated test runs
-        if (
-            str_contains(mb_strtolower($suggestion->description ?? ''), 'e2e') ||
-            str_contains(mb_strtolower($suggestion->description ?? ''), 'testovac') ||
-            str_contains(mb_strtolower($suggestion->name ?? ''), 'test') ||
-            (function_exists('request') && request() && request()->header('X-E2E-Testing') === 'true')
-        ) {
-            Log::info('Discord place suggestion notification skipped: detected automated test.');
-            return false;
-        }
-
         $adminUrl = config('app.url', 'https://brnoakce.tadeaskozub.com') . "/admin/student-place-suggestions";
 
-        $categoryName = $suggestion->category?->name ?? 'Místo';
-        $submitter = $suggestion->submitter_name ?: ($suggestion->submitter_email ?: 'Anonymní student');
+        $categoryName = self::escapeMarkdown($suggestion->category?->name ?? 'Místo');
+        $submitterRaw = $suggestion->submitter_name ?: ($suggestion->submitter_email ?: 'Anonymní student');
+        $submitter = self::escapeMarkdown($submitterRaw);
+
+        $cleanName = self::escapeMarkdown($suggestion->name);
+        $cleanAddress = self::escapeMarkdown($suggestion->address);
+        $cleanDesc = self::escapeMarkdown($suggestion->description);
 
         $payload = [
             'embeds' => [
                 [
-                    'title' => '📍 Nový studentský tip na místo v Brně',
+                    'title' => '[Tip] Nový studentský tip na místo v Brně',
                     'description' => sprintf(
                         "Student navrhl nové místo: **%s** (%s)\n\n**Adresa:** %s\n**Proč doporučuje:** %s\n**Od:** %s\n\n[Zkontrolovat a schválit v administraci](%s)",
-                        $suggestion->name,
+                        $cleanName,
                         $categoryName,
-                        $suggestion->address,
-                        $suggestion->description,
+                        $cleanAddress,
+                        $cleanDesc,
                         $submitter,
                         $adminUrl
                     ),
-                    'color' => 0x6366F1, // Indigo
+                    'color' => 0x6366F1,
                     'footer' => [
                         'text' => 'BrnoAkce Crowdsourcing System',
                     ],
@@ -292,12 +300,12 @@ class DiscordNotifier
     public static function notifySecurityAlert(string $title, string $status, array $fields = []): bool
     {
         $isSuccess = in_array(strtolower($status), ['success', 'passed', 'ok']);
-        $color = $isSuccess ? 0x10B981 : 0xEF4444; // Green vs Red
+        $color = $isSuccess ? 0x10B981 : 0xEF4444;
 
         $payload = [
             'embeds' => [
                 [
-                    'title' => $title,
+                    'title' => self::escapeMarkdown($title),
                     'color' => $color,
                     'fields' => $fields,
                     'footer' => [
@@ -313,7 +321,6 @@ class DiscordNotifier
 
     /**
      * Sends a simple test notification to verify webhook configuration.
-     * $channel can be 'general' (or null) or 'security'.
      */
     public static function test(string $customMessage = 'Testovací zpráva spojení s Discordem', string $channel = 'general'): bool
     {
@@ -322,9 +329,9 @@ class DiscordNotifier
         $payload = [
             'embeds' => [
                 [
-                    'title' => $isSecurity ? '🛡️ Test spojení – Bezpečnostní kanál' : '🔌 Test spojení – Kanál pro scraping & hlášení',
-                    'description' => $customMessage,
-                    'color' => $isSecurity ? 0x10B981 : 0x6366F1, // Green vs Indigo
+                    'title' => $isSecurity ? '[Security] Test spojení – Bezpečnostní kanál' : '[Webhook] Test spojení – Kanál pro scraping a hlášení',
+                    'description' => self::escapeMarkdown($customMessage),
+                    'color' => $isSecurity ? 0x10B981 : 0x6366F1,
                     'fields' => [
                         [
                             'name' => 'Server',
@@ -333,7 +340,7 @@ class DiscordNotifier
                         ],
                         [
                             'name' => 'Kanál',
-                            'value' => $isSecurity ? 'Bezpečnostní audity & Pentesty' : 'Scraping & Feedback',
+                            'value' => $isSecurity ? 'Bezpečnostní audity a Pentesty' : 'Scraping a Feedback',
                             'inline' => true,
                         ],
                         [

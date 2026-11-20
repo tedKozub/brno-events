@@ -30,10 +30,27 @@ class EventBoardTest extends TestCase
 
     public function test_livewire_can_filter_events(): void
     {
+        $org = Organization::first();
+        Event::create([
+            'title' => 'Beerpong Turnaj Test',
+            'slug' => 'beerpong-turnaj-test-' . uniqid(),
+            'starts_at' => now()->addDays(2),
+            'status' => 'published',
+            'organization_id' => $org?->id,
+        ]);
+
+        Event::create([
+            'title' => 'Velký studentský hospodský kvíz Test',
+            'slug' => 'velky-studentsky-kviz-test-' . uniqid(),
+            'starts_at' => now()->addDays(2),
+            'status' => 'published',
+            'organization_id' => $org?->id,
+        ]);
+
         Livewire::test(\App\Livewire\EventBoard::class)
             ->set('search', 'Beerpong')
             ->assertSee('Beerpong')
-            ->assertDontSee('Velký studentský hospodský kvíz')
+            ->assertDontSee('Velký studentský hospodský kvíz Test')
             ->set('search', '')
             ->set('selectedUniversity', 'MUNI')
             ->assertSee('MUNI');

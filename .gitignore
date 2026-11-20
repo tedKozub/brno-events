@@ -31,4 +31,5 @@ scrapers/.venv
 __pycache__/
 /playwright-report/
 /test-results/
+/backups/
 

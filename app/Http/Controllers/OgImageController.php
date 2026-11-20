@@ -12,17 +12,22 @@ class OgImageController extends Controller
 {
     public function show(string $slug): BinaryFileResponse|Response
     {
-        $event = Event::with(['organization', 'category', 'venue'])->where('slug', $slug)->firstOrFail();
+        $event = Event::with(['organization', 'category', 'venue'])
+            ->published()
+            ->where('slug', $slug)
+            ->firstOrFail();
 
         $cacheDir = storage_path('app/public/og');
         if (!File::isDirectory($cacheDir)) {
             File::makeDirectory($cacheDir, 0755, true);
         }
 
-        $cacheFile = "{$cacheDir}/{$event->id}-{$event->slug}.jpg";
+        // Cache key based on actual content hash to prevent cache busting on page view counter increments
+        $contentHash = substr(md5($event->title . ($event->starts_at?->timestamp ?? 0) . $event->location_display . $event->cover_image), 0, 16);
+        $cacheFile = "{$cacheDir}/{$event->id}-{$contentHash}.jpg";
 
-        // Pokud cache existuje a nebyla modifikována před úpravou akce, vrátíme ji
-        if (File::exists($cacheFile) && File::lastModified($cacheFile) >= ($event->updated_at?->timestamp ?? 0)) {
+        // If cached image exists, serve immediately with 7-day immutable caching
+        if (File::exists($cacheFile)) {
             return response()->file($cacheFile, [
                 'Content-Type' => 'image/jpeg',
                 'Cache-Control' => 'public, max-age=604800, immutable',
