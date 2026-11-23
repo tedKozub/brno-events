@@ -1,6 +1,6 @@
 # studyBrno / Brno Events
 
-Open-source aggregator, search engine, and interactive directory of university and student events, venues, and study spaces in Brno, Czech Republic.
+Aggregator, search engine, and interactive directory of university and student events, venues, and study spaces in Brno, Czech Republic.
 
 <p align="center">
   <a href="https://github.com/tedKozub/brno-events/releases"><img src="https://img.shields.io/badge/Release-v2.2.0-007ACC?style=for-the-badge" alt="Release v2.2.0" /></a>
@@ -10,7 +10,7 @@ Open-source aggregator, search engine, and interactive directory of university a
   <a href="https://tailwindcss.com"><img src="https://img.shields.io/badge/Tailwind_CSS-3.x-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" /></a>
   <a href="https://www.python.org"><img src="https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.11" /></a>
   <a href="https://www.sqlite.org"><img src="https://img.shields.io/badge/Database-SQLite_WAL-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite WAL" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License MIT" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Proprietary-critical?style=for-the-badge" alt="License Proprietary" /></a>
 </p>
 
 ---
@@ -144,6 +144,6 @@ php artisan view:clear
 
 ## Legal Notice & Licensing
 
-- Content aggregation operates within the reporting fair-use framework under Section 34(1)(c) of the Czech Copyright Act (Act No. 121/2000 Coll.) to inform students about public educational, cultural, and academic events.
-- All scraped event records provide attribution and a direct link to the organizer's original publication URL.
-- This project is released under the [MIT License](LICENSE).
+- **Content Aggregation:** Operates within the reporting fair-use framework under Section 34(1)(c) of the Czech Copyright Act (Act No. 121/2000 Coll.) to inform students about public educational, cultural, and academic events.
+- **Attribution:** All scraped event records provide attribution and a direct link to the organizer's original publication URL.
+- **Source Code Licensing:** The source code, harvesters, schemas, and platform architecture are proprietary software. Copyright (c) 2026 Tadeáš Kozub. All rights reserved. Unauthorized copying, modification, redistribution, commercial exploitation, or redeployment is strictly prohibited. See [LICENSE](LICENSE) for full legal terms.

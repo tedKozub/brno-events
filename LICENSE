@@ -1,0 +1,24 @@
+# Proprietary Software License Agreement & Copyright Notice
+
+Copyright (c) 2026 Tadeáš Kozub. All rights reserved.
+
+The source code, algorithms, database schemas, scrapers, vector search implementation, and user interface designs contained within this repository are the proprietary and confidential intellectual property of Tadeáš Kozub ("Author").
+
+### 1. Prohibition of Copying, Distribution, and Derivative Works
+No part of this software, whether in source code, binary, or compiled format, may be copied, reproduced, duplicated, republished, downloaded, posted, broadcast, transmitted, sold, resold, sublicensed, or distributed in any manner or form, in whole or in part, without the prior explicit written permission of the Author.
+
+Creation of derivative works, forks, adaptations, reverse engineering, decompilation, or disassembly of any portion of this codebase is strictly prohibited.
+
+### 2. Prohibition of Unauthorized Deployment and Hosting
+Operating, hosting, deploying, or running an instance (whether private or public, commercial or non-commercial) of this application, its harvesters, or any derivative work is strictly prohibited without a separate, written commercial licensing agreement executed by the Author.
+
+### 3. Repository Visibility & Inspection
+If this repository is hosted or accessible on a public code platform (such as GitHub), repository access is provided strictly for educational and portfolio inspection under the platform's standard terms of service. Such access does not grant, convey, or imply any license, right, or entitlement to use, copy, reproduce, or run the software.
+
+### 4. No Warranty
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+---
+
+For licensing inquiries, commercial partnerships, or custom permissions, contact:
+`admin@livebrno.tadeaskozub.com`
