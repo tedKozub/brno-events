@@ -59,6 +59,29 @@ class VenueResolverServiceTest extends TestCase
         $this->assertEquals($venue->id, $resolved2->id);
     }
 
+    public function test_resolves_ukb_with_room_detail(): void
+    {
+        $kampus = Venue::firstOrCreate(['slug' => 'kampus-bohunice'], [
+            'name' => 'Univerzitní kampus Bohunice',
+            'address' => 'Kamenice 5',
+            'city' => 'Brno',
+            'latitude' => 49.1772,
+            'longitude' => 16.5684,
+        ]);
+        $this->resolver->registerAlias($kampus, 'ukb');
+        $this->resolver->registerAlias($kampus, 'recepce ukb');
+
+        // Test extraction of parenthesized building/room
+        $extracted = $this->resolver->extractRoomAndLocation('Recepce u hlavního vstupu UKB (B22)');
+        $this->assertEquals('B22', $extracted['room']);
+        $this->assertEquals('Recepce u hlavního vstupu UKB', $extracted['clean_location']);
+
+        // Test venue resolution
+        $resolved = $this->resolver->resolve('Recepce u hlavního vstupu UKB (B22)');
+        $this->assertNotNull($resolved);
+        $this->assertEquals($kampus->id, $resolved->id);
+    }
+
     public function test_detects_locations_outside_brno(): void
     {
         $this->assertTrue($this->resolver->isExplicitlyOutsideBrno('Valtická 337, Lednice', 'Zahradnická fakulta'));

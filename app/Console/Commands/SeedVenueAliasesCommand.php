@@ -29,7 +29,7 @@ class SeedVenueAliasesCommand extends Command
                 'artbar', 'artbar druhý pád', 'artbar druhy pad', 'druhý pád', 'druhy pad', 'štefánikova 1',
             ],
             'fit-vut-bozetechova' => [
-                'fit vut', 'fakulta informačních technologií', 'fakulta informacnich technologii',
+                'fit', 'fit vut', 'fakulta informačních technologií', 'fakulta informacnich technologii',
                 'božetěchova', 'bozetechova', 'božetěchova 1/2', 'kachnička', 'kachnicka',
                 'starý pivovar božetěchova', 'aula fit',
             ],
@@ -48,10 +48,13 @@ class SeedVenueAliasesCommand extends Command
                 'fakulta regionálního rozvoje', 'frrms mendelu',
             ],
             'kampus-bohunice' => [
-                'kampus bohunice', 'univerzitní kampus bohunice', 'kampus muni', 'kamenice 5',
-                'b11/', 'simu', 'simulační centrum', 'fn bohunice', 'přírodovědecká fakulta bohunice',
-                'lékařská fakulta bohunice', 'lf muni', 'fsps muni', 'fakulta sportovních studií',
-                'ceitec muni', 'biocev bohunice',
+                'ukb', 'kampus bohunice', 'univerzitní kampus bohunice', 'univerzitni kampus bohunice',
+                'recepce ukb', 'vstup ukb', 'hlavní vstup ukb', 'hlavni vstup ukb',
+                'kampus muni', 'kamenice', 'kamenice 5', 'b22', 'b11', 'b11/', 'simu', 'simulační centrum',
+                'simulacni centrum', 'fn bohunice', 'ceitec ukb', 'ceitec bohunice', 'simu ukb',
+                'přírodovědecká fakulta bohunice', 'lékařská fakulta bohunice', 'lf muni', 'fsps muni',
+                'fakulta sportovních studií', 'fakulta sportovnich studii', 'ceitec muni', 'biocev bohunice',
+                'bohunický kampus', 'bohunicky kampus',
             ],
             'fi-muni-botanicka' => [
                 'fi muni', 'fi mu', 'fakulta informatiky', 'botanická 68', 'botanická 68a',
@@ -62,7 +65,7 @@ class SeedVenueAliasesCommand extends Command
                 'kotlarska 2', 'kotlářská', 'kotlarska', 'aula přf muni',
             ],
             'fss-muni-jostova' => [
-                'fss muni', 'fss mu', 'fakulta sociálních studií', 'fakulta socialnich studii',
+                'fss', 'fss muni', 'fss mu', 'fakulta sociálních studií', 'fakulta socialnich studii',
                 'joštova 10', 'jostova 10', 'joštova', 'jostova', 'aula fss',
             ],
             'ff-muni-arne-novaka' => [

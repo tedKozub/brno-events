@@ -205,6 +205,10 @@ AGY_VISION_SCHEMA = {
             "type": "string",
             "description": "Presny nazev klubu, kavarny, fakulty nebo salu v Brne",
         },
+        "venue_slug_hint": {
+            "type": ["string", "null"],
+            "description": "Slug hint pro zname brnenske misto (napr. kampus-bohunice, fit-vut-bozetechova, fekt-vut-technicka, fsi-vut-technicka, fast-vut-veveri, areal-mendelu-zemedelska, ff-muni-arne-novaka, fss-muni-jostova, fi-muni-botanicka, prf-muni-kotlarska, law-muni-veveri, pdf-muni-porici, econ-muni-lipova, clubco-vlnena, fleda-club, artbar-druhy-pad)",
+        },
         "price_type": {
             "type": "string",
             "enum": ["free", "paid", "voluntary"],
@@ -258,6 +262,18 @@ STRIKTNI PRAVIDLA PRO DATUM (starts_at):
    - A TO I V PRIPADE, ZE DATUM Z PLAKATU JE JIZ V MINULOSTI VZHLEDEM K DNESKU ({now.strftime('%Y-%m-%d')})! Pokud je na plakatu 11.11.2026, MUSIS vratit 2026-11-11 a NIKDY ho neposouvat!
 2. POKUD JE NA PLAKATU NEBO V TEXTU UVEDEN POUZE DEN V TYDNU NEBO OPAKOVANI (napr. 'stredy', 'kazde utery', 'ctvrtek') BEZ KONKRETNIHO KALENDARNIHO DATA, VRAT "starts_at": null, PROTOZE AKCE BEZ KONKRETNIHO KALENDARNIHO DATA IGNORUJEME.
 3. Cas vyber dle plakatu a textu (napr. 16:00 -> 16:00:00). Pokud cas chybi, pouzij 18:00:00.
+
+PRAVIDLA PRO MISTO (location_name a venue_slug_hint):
+- UKB = Univerzitni kampus Bohunice (Kamenice 5, Brno – budovy A1-A35, B22, B11, CEITEC, SIMU) -> venue_slug_hint: 'kampus-bohunice'
+- FEKT VUT = Technicka 12 -> venue_slug_hint: 'fekt-vut-technicka'
+- FSI VUT = Technicka 2 -> venue_slug_hint: 'fsi-vut-technicka'
+- FIT VUT = Bozetechova 1/2 -> venue_slug_hint: 'fit-vut-bozetechova'
+- FAST VUT = Veveri 95 -> venue_slug_hint: 'fast-vut-veveri'
+- MENDELU = Zemedelska 1 -> venue_slug_hint: 'areal-mendelu-zemedelska'
+- FF MU = Arne Novaka 1 -> venue_slug_hint: 'ff-muni-arne-novaka'
+- FSS MU = Jostova 10 -> venue_slug_hint: 'fss-muni-jostova'
+- FI MU = Botanicka 68a -> venue_slug_hint: 'fi-muni-botanicka'
+- Clubco = Prizova 5 -> venue_slug_hint: 'clubco-vlnena'
 
 Popisek z Instagramu:
 <untrusted_event_text>

@@ -240,7 +240,13 @@ KNOWN_VENUES: List[Dict[str, Any]] = [
         'city': 'Brno',
     },
     {
-        'keywords': ['kamenice', 'kampus bohunice', 'bohunice', 'simu', 'simulační centrum', 'simulacni centrum', 'fn brno', 'jihlavská', 'jihlavska', 'fsps', 'fsps mu', 'fsps muni', 'fakulta sportovních studií', 'fakulta sportovnich studii'],
+        'keywords': [
+            'kamenice', 'kampus bohunice', 'bohunice', 'ukb', 'recepce ukb', 'vstup ukb',
+            'hlavní vstup ukb', 'hlavni vstup ukb', 'b22', 'b11', 'simu', 'simulační centrum',
+            'simulacni centrum', 'fn brno', 'fn bohunice', 'jihlavská', 'jihlavska', 'fsps',
+            'fsps mu', 'fsps muni', 'fakulta sportovních studií', 'fakulta sportovnich studii',
+            'ceitec ukb', 'ceitec bohunice'
+        ],
         'name': 'Univerzitní kampus Bohunice',
         'address': 'Kamenice 5, Brno',
         'city': 'Brno',
@@ -456,8 +462,8 @@ def extract_venue_and_address(text: str, default_venue: str = "Brno") -> Tuple[s
     # 1. Search for explicit known venues
     for v in KNOWN_VENUES:
         for kw in v['keywords']:
-            # Use word boundaries or whole substring match
-            pattern = r'\b' + re.escape(kw) + r'\b' if len(kw) > 3 else r'\b' + re.escape(kw)
+            # Use word boundaries for exact match
+            pattern = r'\b' + re.escape(kw) + r'\b'
             if re.search(pattern, lower):
                 display = f"{v['name']}, {v['address']}" if v['address'] else v['name']
                 return display, v.get('address')

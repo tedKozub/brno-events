@@ -46,13 +46,26 @@ class VenueResolverService
             return ['room' => null, 'clean_location' => ''];
         }
 
-        $raw = trim($rawLocation);
-        $parts = array_map('trim', explode(',', $raw));
-
         $roomSegments = [];
-        $cleanParts = [];
+        $workingRaw = trim($rawLocation);
 
         $roomRegex = '/(učebn|ucebn|místnost|mistnost|posluchárn|poslucharn|budov|sál|sal|aula|patro|\bNP\b|\b[A-Z]\d{1,3}(?:\.\d{1,3})?\b|laboratoř|lab\b)/ui';
+
+        // 1. Zkontrolujeme závorky, např. "Recepce u hlavního vstupu UKB (B22)" -> room: B22, loc: Recepce u hlavního vstupu UKB
+        if (preg_match_all('/\(([^)]+)\)/u', $workingRaw, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                $parenContent = trim($match[1]);
+                if (preg_match($roomRegex, $parenContent)) {
+                    $roomSegments[] = $parenContent;
+                    $workingRaw = str_replace($match[0], '', $workingRaw);
+                }
+            }
+            $workingRaw = trim(preg_replace('/\s+/', ' ', $workingRaw));
+        }
+
+        // 2. Pokud lokace obsahuje čárku, např. "FIT VUT, Božetěchova 2, učebna A112"
+        $parts = array_map('trim', explode(',', $workingRaw));
+        $cleanParts = [];
 
         foreach ($parts as $part) {
             if (empty($part)) {
@@ -65,8 +78,8 @@ class VenueResolverService
             }
         }
 
-        $roomDetail = !empty($roomSegments) ? implode(', ', $roomSegments) : null;
-        $cleanLocation = !empty($cleanParts) ? implode(', ', $cleanParts) : $raw;
+        $roomDetail = !empty($roomSegments) ? implode(', ', array_unique($roomSegments)) : null;
+        $cleanLocation = !empty($cleanParts) ? implode(', ', $cleanParts) : $workingRaw;
 
         return [
             'room' => $roomDetail,
@@ -163,27 +176,44 @@ class VenueResolverService
             return Venue::find($dictionary[$normClean]);
         }
 
-        // 4. Stupeň B: Podřetězcová shoda v aliasovém slovníku (od nejdelších klíčů)
-        // Seřadíme klíče podle délky sestupně, aby "fit vut" mělo přednost před "vut"
-        $matchedVenueId = null;
-        $longestMatchLen = 0;
-
-        foreach ($dictionary as $alias => $vId) {
-            $len = mb_strlen($alias);
-            if ($len < 4) {
-                continue; // Příliš krátká slova nebereme pro volnou podřetězcovou shodu
+        // 4. Stupeň B: Podřetězcová shoda v aliasovém slovníku
+        // Nejprve prohledáme samotnou očistěnou lokaci (normClean), poté doplňkový kontext (normCombined)
+        foreach ([$normClean, $normCombined] as $searchTarget) {
+            if (empty($searchTarget)) {
+                continue;
             }
-            if ($len > $longestMatchLen) {
-                // Hledáme v očistěné lokaci i v celém kontextovém řetězci
-                if (str_contains($normClean, $alias) || str_contains($normCombined, $alias)) {
-                    $matchedVenueId = $vId;
-                    $longestMatchLen = $len;
+            $matchedVenueId = null;
+            $longestMatchLen = 0;
+
+            foreach ($dictionary as $alias => $vId) {
+                $len = mb_strlen($alias);
+                if ($len < 3) {
+                    continue; // Zkratky kratší než 3 znaky ignorujeme pro volnou podřetězcovou shodu
+                }
+                if ($len > $longestMatchLen) {
+                    $matched = false;
+                    if ($len === 3) {
+                        // Pro 3-písmenné zkratky (např. ukb, fit, fsi, fss, mzk) striktně vyžadujeme hranici celých slov
+                        $pattern = '/\b' . preg_quote($alias, '/') . '\b/u';
+                        if (preg_match($pattern, $searchTarget)) {
+                            $matched = true;
+                        }
+                    } else {
+                        if (str_contains($searchTarget, $alias)) {
+                            $matched = true;
+                        }
+                    }
+
+                    if ($matched) {
+                        $matchedVenueId = $vId;
+                        $longestMatchLen = $len;
+                    }
                 }
             }
-        }
 
-        if ($matchedVenueId) {
-            return Venue::find($matchedVenueId);
+            if ($matchedVenueId) {
+                return Venue::find($matchedVenueId);
+            }
         }
 
         // 5. Stupeň C: Univerzitní kontextové zálohy
