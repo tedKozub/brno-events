@@ -27,24 +27,6 @@ from parsers.common import (
 )
 
 
-def get_openai_api_key() -> Optional[str]:
-    """Retrieves OPENAI_API_KEY from environment or .env file."""
-    key = os.environ.get("OPENAI_API_KEY")
-    if key:
-        return key
-
-    env_path = "/root/brno-events/.env"
-    if os.path.exists(env_path):
-        with open(env_path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith("OPENAI_API_KEY="):
-                    val = line.split("=", 1)[1].strip().strip('"').strip("'")
-                    if val:
-                        return val
-    return None
-
-
 def download_cover_image(img_url: str, event_id: str) -> Optional[str]:
     """Downloads Facebook event cover image and saves it to local public storage."""
     try:

@@ -209,7 +209,7 @@ PY;
         ]);
     }
 
-    public function test_openai_vision_error_does_not_pollute_stdout(): void
+    public function test_agy_vision_error_does_not_pollute_stdout(): void
     {
         $pythonBin = base_path('scrapers/.venv/bin/python');
         if (!file_exists($pythonBin)) {
@@ -219,7 +219,7 @@ PY;
         $script = <<<'PY'
 import sys
 import io
-from scrapers.parsers.instagram_parser import extract_with_openai_vision
+from scrapers.parsers.instagram_parser import extract_with_agy_vision
 
 # Intercept stdout and stderr
 old_stdout = sys.stdout
@@ -228,8 +228,8 @@ sys.stdout = io.StringIO()
 sys.stderr = io.StringIO()
 
 try:
-    # Use dummy invalid API key to trigger error handling
-    res, is_fatal = extract_with_openai_vision('/nonexistent/path.jpg', 'caption', 'invalid-key')
+    # Use nonexistent path to trigger graceful handling
+    res = extract_with_agy_vision('/nonexistent/path.jpg', 'caption')
     stdout_val = sys.stdout.getvalue()
     stderr_val = sys.stderr.getvalue()
 finally:
@@ -237,7 +237,7 @@ finally:
     sys.stderr = old_stderr
 
 assert stdout_val == '', f"stdout must remain completely empty on error, but got: {stdout_val}"
-assert res is None, "Result should be None on error"
+assert res is None, "Result should be None for missing file"
 print("OK_STDOUT_CLEAN")
 PY;
 
@@ -251,7 +251,7 @@ PY;
 
     public function test_json_decoder_extracts_json_with_prefix_noise(): void
     {
-        $noisyOutput = "Warning: some upstream library notice\nOpenAI error 429: quota exhausted\n{\n  \"status\": \"success\",\n  \"count\": 1,\n  \"events\": []\n}\n";
+        $noisyOutput = "Warning: some upstream library notice\n{\n  \"status\": \"success\",\n  \"count\": 1,\n  \"events\": []\n}\n";
 
         $rawOutput = trim($noisyOutput);
         $json = json_decode($rawOutput, true);

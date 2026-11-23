@@ -1,14 +1,14 @@
 import asyncio
-import base64
 import hashlib
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
 import urllib.request
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
-import httpx
 from playwright.async_api import async_playwright
 
 from parsers.common import (
@@ -183,204 +183,126 @@ def sanitize_extracted_event_date(event: Dict[str, Any], raw_text: str, now: Opt
     return None
 
 
-def get_gemini_api_key() -> Optional[str]:
-    """Retrieves GEMINI_API_KEY from environment or .env file."""
-    key = os.environ.get("GEMINI_API_KEY")
-    if key:
-        return key
+AGY_VISION_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "title": {
+            "type": "string",
+            "description": "Presny nazev akce z plakatu (bez emoji)",
+        },
+        "starts_at": {
+            "type": ["string", "null"],
+            "description": "Datum a cas zacatku YYYY-MM-DD HH:MM:SS",
+        },
+        "ends_at": {
+            "type": ["string", "null"],
+            "description": "Datum a cas konce YYYY-MM-DD HH:MM:SS nebo null",
+        },
+        "is_all_day": {
+            "type": "boolean",
+        },
+        "location_name": {
+            "type": "string",
+            "description": "Presny nazev klubu, kavarny, fakulty nebo salu v Brne",
+        },
+        "price_type": {
+            "type": "string",
+            "enum": ["free", "paid", "voluntary"],
+        },
+        "price_amount": {
+            "type": ["integer", "null"],
+        },
+        "category_slug": {
+            "type": "string",
+            "enum": ["party-kluby", "prednasky-workshopy", "sport", "kultura-umeni", "kariera-networking"],
+        },
+        "short_description": {
+            "type": "string",
+            "description": "Strucne shrnuti akce pro studenty na 1-2 vety bez emoji",
+        },
+        "description": {
+            "type": "string",
+            "description": "Kompletni popis a program bez emoji",
+        },
+    },
+    "required": ["title", "starts_at", "location_name", "price_type", "category_slug"],
+}
 
-    env_path = "/root/brno-events/.env"
-    if os.path.exists(env_path):
-        with open(env_path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith("GEMINI_API_KEY="):
-                    val = line.split("=", 1)[1].strip().strip('"').strip("'")
-                    if val:
-                        return val
-    return None
 
+def extract_with_agy_vision(
+    image_path: str,
+    caption: str,
+    model: str = "gemini-3.8-flash-low",
+    timeout_sec: int = 30,
+) -> Optional[Dict[str, Any]]:
+    """Uses local agy CLI (Gemini Flash Low) to extract structured event details from poster image + caption."""
+    if not shutil.which("agy"):
+        return None
 
-def get_openai_api_key() -> Optional[str]:
-    """Retrieves OPENAI_API_KEY from environment or .env file."""
-    key = os.environ.get("OPENAI_API_KEY")
-    if key:
-        return key
+    if not os.path.exists(image_path):
+        return None
 
-    env_path = "/root/brno-events/.env"
-    if os.path.exists(env_path):
-        with open(env_path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith("OPENAI_API_KEY="):
-                    val = line.split("=", 1)[1].strip().strip('"').strip("'")
-                    if val:
-                        return val
-    return None
-
-
-def extract_with_openai_vision(image_path: str, caption: str, api_key: str) -> Tuple[Optional[Dict[str, Any]], bool]:
-    """Uses OpenAI gpt-4o-mini Vision to extract structured event details from poster image + caption.
-    Returns (extracted_event_or_none, is_fatal_auth_or_quota_error).
-    """
     try:
-        with open(image_path, "rb") as f:
-            img_b64 = base64.b64encode(f.read()).decode("utf-8")
-
         now = datetime.now()
         today_cz = CZECH_WEEKDAY_NAMES.get(now.weekday(), "")
 
-        prompt = f"""Jsi expert na brněnský studentský život. Analyzuj přiložený grafický plakát a text příspěvku z Instagramu.
-Dnešní datum je: {now.strftime('%Y-%m-%d')} ({today_cz}).
+        prompt = f"""Jsi expert na brnensky studentsky zivot. Analyzuj prilozeny graficky plakat {image_path} a text prispevku z Instagramu.
+Dnesni datum je: {now.strftime('%Y-%m-%d')} ({today_cz}).
 
-Extrahuj informace o události a vrať POUZE validní JSON ve formátu:
-{{
-  "title": "Přesný název akce z plakátu (bez emoji)",
-  "starts_at": "YYYY-MM-DD HH:MM:SS",
-  "ends_at": null nebo "YYYY-MM-DD HH:MM:SS",
-  "is_all_day": false,
-  "location_name": "Přesný název klubu, kavárny, fakulty nebo sálu v Brně",
-  "price_type": "free" nebo "paid" nebo "voluntary",
-  "price_amount": 150 nebo null,
-  "category_slug": "party-kluby" nebo "prednasky-workshopy" nebo "sport" nebo "kultura-umeni" nebo "kariera-networking",
-  "short_description": "Stručné shrnutí akce pro studenty na 1-2 věty bez emoji",
-  "description": "Kompletní popis a program bez emoji"
-}}
+Extrahuj informace o udalosti a vrat strukturovany JSON podle zadaneho schematu.
 
-STRIKTNÍ PRAVIDLA PRO DATUM (starts_at):
-1. AKCI EXTRAHUJ POUZE V PŘÍPADĚ, ŽE JE NA PLAKÁTU NEBO V POPISKU UVEDENO KONKRÉTNÍ KALENDÁŘNÍ DATUM (např. 11.11., 18.11., 25. listopadu, 4.3.2027).
-   - POUŽIJ PŘESNĚ TOTO DATUM Z PLAKÁTU ČI POPISKU BEZ JAKÉHOKOLIV DOMÝŠLENÍ ČI POSOUVÁNÍ V ČASE!
-   - A TO I V PŘÍPADĚ, ŽE DATUM Z PLAKÁTU JE JIŽ V MINULOSTI VZHLEDEM K DNEŠKU ({now.strftime('%Y-%m-%d')})! Pokud je na plakátu 11.11.2026, MUSÍŠ vrátit 2026-11-11 a NIKDY ho neposouvat na 18.11. ani jiný nadcházející týden!
-2. POKUD JE NA PLAKÁTU NEBO V TEXTU UVEDEN POUZE DEN V TÝDNU NEBO OPAKOVÁNÍ (např. 'středy', 'každé úterý', 'čtvrtek') BEZ KONKRÉTNÍHO KALENDÁŘNÍHO DATA, VRAŤ "starts_at": null, PROTOŽE AKCE BEZ KONKRÉTNÍHO KALENDÁŘNÍHO DATA IGNORUJEME.
-3. Čas vyber dle plakátu a textu (např. 16:00 -> 16:00:00). Pokud čas chybí, použij 18:00:00.
+STRIKTNI PRAVIDLA PRO DATUM (starts_at):
+1. AKCI EXTRAHUJ POUZE V PRIPADE, ZE JE NA PLAKATU NEBO V POPISKU UVEDENO KONKRETNI KALENDARNI DATUM (napr. 11.11., 18.11., 25. listopadu, 4.3.2027).
+   - POUZIJ PRESNE TOTO DATUM Z PLAKATU CI POPISKU BEZ JAKEHOKOLIV DOMYSLENI CI POSOUVANI V CASE!
+   - Format data a casu: YYYY-MM-DD HH:MM:SS.
+   - A TO I V PRIPADE, ZE DATUM Z PLAKATU JE JIZ V MINULOSTI VZHLEDEM K DNESKU ({now.strftime('%Y-%m-%d')})! Pokud je na plakatu 11.11.2026, MUSIS vratit 2026-11-11 a NIKDY ho neposouvat!
+2. POKUD JE NA PLAKATU NEBO V TEXTU UVEDEN POUZE DEN V TYDNU NEBO OPAKOVANI (napr. 'stredy', 'kazde utery', 'ctvrtek') BEZ KONKRETNIHO KALENDARNIHO DATA, VRAT "starts_at": null, PROTOZE AKCE BEZ KONKRETNIHO KALENDARNIHO DATA IGNORUJEME.
+3. Cas vyber dle plakatu a textu (napr. 16:00 -> 16:00:00). Pokud cas chybi, pouzij 18:00:00.
 
 Popisek z Instagramu:
+<untrusted_event_text>
 {caption}
+</untrusted_event_text>
 """
-        url = "https://api.openai.com/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        }
-        payload = {
-            "model": "gpt-4o-mini",
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "Jsi asistent pro extrakci studentských akcí v Brně z plakátů do strukturovaného JSONu bez emoji. Striktně se drž explicitně uvedených dat na plakátu a v popisku a akce bez konkrétního kalendářního data ignoruj s starts_at: null.",
-                },
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{img_b64}",
-                                "detail": "high",
-                            },
-                        },
-                    ],
-                },
-            ],
-            "response_format": {"type": "json_object"},
-            "max_tokens": 1000,
-        }
+        cmd = [
+            "agy",
+            "-p", prompt,
+            "--model", model,
+            "--json-schema", json.dumps(AGY_VISION_SCHEMA, ensure_ascii=False),
+            "--output-format", "json",
+            "--print-timeout", f"{timeout_sec}s",
+            "--disable-slash-commands",
+            "--sandbox",
+        ]
 
-        with httpx.Client(timeout=25.0) as client:
-            resp = client.post(url, json=payload, headers=headers)
-            if resp.status_code == 200:
-                data = resp.json()
-                content = data["choices"][0]["message"]["content"]
-                extracted = json.loads(content)
-                if not extracted or not extracted.get("starts_at"):
-                    return None, False
-                extracted["title"] = clean_emoji(extracted.get("title", ""))
-                extracted["location_name"] = clean_emoji(extracted.get("location_name", "Brno"))
-                extracted["short_description"] = clean_emoji(extracted.get("short_description", ""))
-                if "description" in extracted:
-                    extracted["description"] = clean_emoji(extracted["description"])
-                return sanitize_extracted_event_date(extracted, caption, now=now), False
-            else:
-                sys.stderr.write(f"OpenAI error {resp.status_code}: {resp.text}\n")
-                is_fatal = resp.status_code in (401, 403, 429)
-                return None, is_fatal
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout_sec + 10)
+        if proc.returncode != 0:
+            sys.stderr.write(f"Warning: agy vision exited with code {proc.returncode}: {proc.stderr}\n")
+            return None
+
+        data = json.loads(proc.stdout)
+        extracted = data.get("structured_output")
+        if not extracted and "response" in data:
+            resp_text = data.get("response", "")
+            if "```json" in resp_text:
+                resp_text = resp_text.split("```json")[1].split("```")[0].strip()
+            extracted = json.loads(resp_text)
+
+        if not extracted or not extracted.get("starts_at"):
+            return None
+
+        extracted["title"] = clean_emoji(extracted.get("title", ""))
+        extracted["location_name"] = clean_emoji(extracted.get("location_name", "Brno"))
+        extracted["short_description"] = clean_emoji(extracted.get("short_description", ""))
+        if "description" in extracted:
+            extracted["description"] = clean_emoji(extracted["description"])
+
+        return sanitize_extracted_event_date(extracted, caption, now=now)
+
+    except subprocess.TimeoutExpired:
+        sys.stderr.write(f"Warning: agy vision timed out after {timeout_sec}s\n")
     except Exception as e:
-        sys.stderr.write(f"OpenAI vision extraction failed: {e}\n")
-
-    return None, False
-
-
-def extract_with_gemini_vision(image_path: str, caption: str, api_key: str) -> Optional[Dict[str, Any]]:
-    """Uses Gemini 2.0 / 1.5 Flash Vision to extract structured event details from poster image + caption."""
-    try:
-        with open(image_path, "rb") as f:
-            img_b64 = base64.b64encode(f.read()).decode("utf-8")
-
-        now = datetime.now()
-        today_cz = CZECH_WEEKDAY_NAMES.get(now.weekday(), "")
-
-        prompt = f"""Jsi expert na brněnský studentský život. Analyzuj přiložený grafický plakát a text příspěvku z Instagramu.
-Dnešní datum je: {now.strftime('%Y-%m-%d')} ({today_cz}).
-
-Extrahuj informace o události a vrať POUZE validní JSON ve formátu:
-{{
-  "title": "Přesný název akce z plakátu (bez emoji)",
-  "starts_at": "YYYY-MM-DD HH:MM:SS",
-  "ends_at": null nebo "YYYY-MM-DD HH:MM:SS",
-  "is_all_day": false,
-  "location_name": "Přesný název klubu, kavárny, fakulty nebo sálu v Brně",
-  "price_type": "free" nebo "paid" nebo "voluntary",
-  "price_amount": 150 nebo null,
-  "category_slug": "party-kluby" nebo "prednasky-workshopy" nebo "sport" nebo "kultura-umeni" nebo "kariera-networking",
-  "short_description": "Stručné shrnutí akce pro studenty na 1-2 věty bez emoji",
-  "description": "Kompletní popis a program"
-}}
-
-STRIKTNÍ PRAVIDLA PRO DATUM (starts_at):
-1. AKCI EXTRAHUJ POUZE V PŘÍPADĚ, ŽE JE NA PLAKÁTU NEBO V POPISKU UVEDENO KONKRÉTNÍ KALENDÁŘNÍ DATUM (např. 11.11., 18.11., 25. listopadu, 4.3.2027).
-   - POUŽIJ PŘESNĚ TOTO DATUM Z PLAKÁTU ČI POPISKU BEZ JAKÉHOKOLIV DOMÝŠLENÍ ČI POSOUVÁNÍ V ČASE!
-   - A TO I V PŘÍPADĚ, ŽE DATUM Z PLAKÁTU JE JIŽ V MINULOSTI VZHLEDEM K DNEŠKU ({now.strftime('%Y-%m-%d')})! Pokud je na plakátu 11.11.2026, MUSÍŠ vrátit 2026-11-11 a NIKDY ho neposouvat na 18.11. ani jiný nadcházející týden!
-2. POKUD JE NA PLAKÁTU NEBO V TEXTU UVEDEN POUZE DEN V TÝDNU NEBO OPAKOVÁNÍ (např. 'středy', 'každé úterý', 'čtvrtek') BEZ KONKRÉTNÍHO KALENDÁŘNÍHO DATA, VRAŤ "starts_at": null, PROTOŽE AKCE BEZ KONKRÉTNÍHO KALENDÁŘNÍHO DATA IGNORUJEME.
-3. Čas vyber dle plakátu a textu (např. 16:00 -> 16:00:00). Pokud čas chybí, použij 18:00:00.
-
-Popisek z Instagramu:
-{caption}
-"""
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
-        payload = {
-            "contents": [
-                {
-                    "parts": [
-                        {"text": prompt},
-                        {
-                            "inline_data": {
-                                "mime_type": "image/jpeg",
-                                "data": img_b64,
-                            }
-                        },
-                    ]
-                }
-            ],
-            "generationConfig": {
-                "response_mime_type": "application/json",
-            },
-        }
-
-        with httpx.Client(timeout=25.0) as client:
-            resp = client.post(url, json=payload)
-            if resp.status_code == 200:
-                data = resp.json()
-                text = data["candidates"][0]["content"]["parts"][0]["text"]
-                extracted = json.loads(text)
-                if not extracted or not extracted.get("starts_at"):
-                    return None
-                extracted["title"] = clean_emoji(extracted.get("title", ""))
-                extracted["location_name"] = clean_emoji(extracted.get("location_name", "Brno"))
-                extracted["short_description"] = clean_emoji(extracted.get("short_description", ""))
-                return sanitize_extracted_event_date(extracted, caption, now=now)
-    except Exception as e:
-        sys.stderr.write(f"Gemini vision extraction failed, falling back to NLP: {e}\n")
+        sys.stderr.write(f"Warning: agy vision extraction failed: {e}\n")
 
     return None
 
@@ -471,9 +393,6 @@ async def scrape_instagram_profile_async(
 
     os.makedirs(output_dir, exist_ok=True)
     events = []
-    gemini_key = get_gemini_api_key()
-    openai_key = get_openai_api_key()
-    openai_disabled = False
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -511,17 +430,12 @@ async def scrape_instagram_profile_async(
                     except Exception:
                         pass
 
-                # Extract event: Multimodal Vision (OpenAI or Gemini) if key is available, else NLP fallback
-                event = None
-                if openai_key and not openai_disabled and os.path.exists(dest_path):
-                    event, is_fatal = extract_with_openai_vision(dest_path, alt, openai_key)
-                    if is_fatal:
-                        openai_disabled = True
-                if not event and gemini_key and os.path.exists(dest_path):
-                    event = extract_with_gemini_vision(dest_path, alt, gemini_key)
+                # 1. Fast path: extract structured event from caption if explicit date/details exist
+                event = extract_event_from_caption(alt, base_url=profile_url)
 
-                if not event:
-                    event = extract_event_from_caption(alt, base_url=profile_url)
+                # 2. Vision path: if caption lacks explicit date or venue, use local agy multimodal vision on the flyer image
+                if not event and os.path.exists(dest_path):
+                    event = extract_with_agy_vision(dest_path, alt)
 
                 if not event:
                     continue

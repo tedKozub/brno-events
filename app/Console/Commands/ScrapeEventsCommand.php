@@ -100,7 +100,7 @@ class ScrapeEventsCommand extends Command
                 $cmd[] = '--dry-run';
             }
 
-            $result = Process::path(base_path('scrapers'))->run($cmd);
+            $result = Process::path(base_path('scrapers'))->timeout(300)->run($cmd);
 
             if ($result->failed()) {
                 $err = $result->errorOutput() ?: $result->output();

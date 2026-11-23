@@ -36,7 +36,7 @@ flowchart TD
     subgraph Scrapers ["Scraping & AI Pipeline"]
         PY["Python 3.11 Scraper Engine"]
         PW["Playwright (Instagram / FB Headless)"]
-        AI["OpenAI gpt-4o-mini & Gemini 2.0 Flash Vision"]
+        AI["Gemini Flash via agy CLI (Multimodal Vision & NLP)"]
         ICAL["iCal / RSS / HTML Parsers"]
     end
 
@@ -99,7 +99,7 @@ flowchart TD
 ### 1. Parsování datumu a českých dnů v týdnu
 * Pokud je na plakátu nebo v popisku uveden pouze den v týdnu (např. *„STŘEDY 19:30“*, *„každou středu“*, *„ve čtvrtek“*):
   * **Musí se vypočítat nejbližší nadcházející konkrétní datum tohoto dne počínaje dneškem.**
-  * V promptu pro AI Vision (OpenAI/Gemini) je výslovný příkaz a v Pythonu post-processing funkce `sanitize_extracted_event_date()`, která případnou chybu LLM (např. pondělí místo středy) automaticky opraví na správný den.
+  * V promptu pro AI Vision (Gemini via agy) je výslovný příkaz a v Pythonu post-processing funkce `sanitize_extracted_event_date()`, která případnou chybu LLM (např. pondělí místo středy) automaticky opraví na správný den.
 * **Odstranění emojis:** Z názvů i popisů akcí se pomocí `clean_emoji()` odstraňují emojis dle standardu projektu.
 
 ### 2. Rozdíl mezi Smazáním (Soft Delete) a Zamítnutím (Rejected)
