@@ -119,15 +119,25 @@ class ScrapeEventsCommand extends Command
                 continue;
             }
 
-            $json = json_decode($result->output(), true);
+            $rawOutput = trim($result->output());
+            $json = json_decode($rawOutput, true);
+            if ($json === null) {
+                // Robust extraction: isolate JSON object if stdout has extraneous output
+                $startPos = strpos($rawOutput, '{');
+                $endPos = strrpos($rawOutput, '}');
+                if ($startPos !== false && $endPos !== false && $endPos > $startPos) {
+                    $json = json_decode(substr($rawOutput, $startPos, $endPos - $startPos + 1), true);
+                }
+            }
+
             if (!$json || ($json['status'] ?? '') !== 'success') {
-                $err = $json['error'] ?? 'Neplatná JSON odpověď ze scraperu.';
+                $err = $json['error'] ?? ('Neplatná JSON odpověď ze scraperu: ' . ($rawOutput ? Str::limit($rawOutput, 250) : 'prázdný výstup'));
                 $this->error("Chyba výstupu scraperu: {$err}");
                 if (!$isDryRun) {
                     $source->update([
                         'last_scraped_at' => now(),
                         'last_status' => 'error',
-                        'last_error' => $err,
+                        'last_error' => Str::limit($err, 1000),
                     ]);
                 }
                 $errorsList[] = [

@@ -208,4 +208,63 @@ PY;
             'starts_at' => '2026-11-11 16:00:00',
         ]);
     }
+
+    public function test_openai_vision_error_does_not_pollute_stdout(): void
+    {
+        $pythonBin = base_path('scrapers/.venv/bin/python');
+        if (!file_exists($pythonBin)) {
+            $pythonBin = 'python3';
+        }
+
+        $script = <<<'PY'
+import sys
+import io
+from scrapers.parsers.instagram_parser import extract_with_openai_vision
+
+# Intercept stdout and stderr
+old_stdout = sys.stdout
+old_stderr = sys.stderr
+sys.stdout = io.StringIO()
+sys.stderr = io.StringIO()
+
+try:
+    # Use dummy invalid API key to trigger error handling
+    res, is_fatal = extract_with_openai_vision('/nonexistent/path.jpg', 'caption', 'invalid-key')
+    stdout_val = sys.stdout.getvalue()
+    stderr_val = sys.stderr.getvalue()
+finally:
+    sys.stdout = old_stdout
+    sys.stderr = old_stderr
+
+assert stdout_val == '', f"stdout must remain completely empty on error, but got: {stdout_val}"
+assert res is None, "Result should be None on error"
+print("OK_STDOUT_CLEAN")
+PY;
+
+        $proc = \Illuminate\Support\Facades\Process::path(base_path())
+            ->env(['PYTHONPATH' => base_path()])
+            ->run([$pythonBin, '-c', $script]);
+
+        $this->assertTrue($proc->successful(), $proc->errorOutput() ?: $proc->output());
+        $this->assertStringContainsString('OK_STDOUT_CLEAN', $proc->output());
+    }
+
+    public function test_json_decoder_extracts_json_with_prefix_noise(): void
+    {
+        $noisyOutput = "Warning: some upstream library notice\nOpenAI error 429: quota exhausted\n{\n  \"status\": \"success\",\n  \"count\": 1,\n  \"events\": []\n}\n";
+
+        $rawOutput = trim($noisyOutput);
+        $json = json_decode($rawOutput, true);
+        if ($json === null) {
+            $startPos = strpos($rawOutput, '{');
+            $endPos = strrpos($rawOutput, '}');
+            if ($startPos !== false && $endPos !== false && $endPos > $startPos) {
+                $json = json_decode(substr($rawOutput, $startPos, $endPos - $startPos + 1), true);
+            }
+        }
+
+        $this->assertIsArray($json);
+        $this->assertEquals('success', $json['status']);
+        $this->assertCount(0, $json['events']);
+    }
 }

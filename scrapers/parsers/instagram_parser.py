@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import re
+import sys
 import urllib.request
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
@@ -218,8 +219,10 @@ def get_openai_api_key() -> Optional[str]:
     return None
 
 
-def extract_with_openai_vision(image_path: str, caption: str, api_key: str) -> Optional[Dict[str, Any]]:
-    """Uses OpenAI gpt-4o-mini Vision to extract structured event details from poster image + caption."""
+def extract_with_openai_vision(image_path: str, caption: str, api_key: str) -> Tuple[Optional[Dict[str, Any]], bool]:
+    """Uses OpenAI gpt-4o-mini Vision to extract structured event details from poster image + caption.
+    Returns (extracted_event_or_none, is_fatal_auth_or_quota_error).
+    """
     try:
         with open(image_path, "rb") as f:
             img_b64 = base64.b64encode(f.read()).decode("utf-8")
@@ -291,19 +294,21 @@ Popisek z Instagramu:
                 content = data["choices"][0]["message"]["content"]
                 extracted = json.loads(content)
                 if not extracted or not extracted.get("starts_at"):
-                    return None
+                    return None, False
                 extracted["title"] = clean_emoji(extracted.get("title", ""))
                 extracted["location_name"] = clean_emoji(extracted.get("location_name", "Brno"))
                 extracted["short_description"] = clean_emoji(extracted.get("short_description", ""))
                 if "description" in extracted:
                     extracted["description"] = clean_emoji(extracted["description"])
-                return sanitize_extracted_event_date(extracted, caption, now=now)
+                return sanitize_extracted_event_date(extracted, caption, now=now), False
             else:
-                print(f"OpenAI error {resp.status_code}: {resp.text}", flush=True)
+                sys.stderr.write(f"OpenAI error {resp.status_code}: {resp.text}\n")
+                is_fatal = resp.status_code in (401, 403, 429)
+                return None, is_fatal
     except Exception as e:
-        print(f"OpenAI vision extraction failed: {e}", flush=True)
+        sys.stderr.write(f"OpenAI vision extraction failed: {e}\n")
 
-    return None
+    return None, False
 
 
 def extract_with_gemini_vision(image_path: str, caption: str, api_key: str) -> Optional[Dict[str, Any]]:
@@ -375,7 +380,7 @@ Popisek z Instagramu:
                 extracted["short_description"] = clean_emoji(extracted.get("short_description", ""))
                 return sanitize_extracted_event_date(extracted, caption, now=now)
     except Exception as e:
-        print(f"Gemini vision extraction failed, falling back to NLP: {e}", flush=True)
+        sys.stderr.write(f"Gemini vision extraction failed, falling back to NLP: {e}\n")
 
     return None
 
@@ -468,6 +473,7 @@ async def scrape_instagram_profile_async(
     events = []
     gemini_key = get_gemini_api_key()
     openai_key = get_openai_api_key()
+    openai_disabled = False
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -507,9 +513,11 @@ async def scrape_instagram_profile_async(
 
                 # Extract event: Multimodal Vision (OpenAI or Gemini) if key is available, else NLP fallback
                 event = None
-                if openai_key and os.path.exists(dest_path):
-                    event = extract_with_openai_vision(dest_path, alt, openai_key)
-                elif gemini_key and os.path.exists(dest_path):
+                if openai_key and not openai_disabled and os.path.exists(dest_path):
+                    event, is_fatal = extract_with_openai_vision(dest_path, alt, openai_key)
+                    if is_fatal:
+                        openai_disabled = True
+                if not event and gemini_key and os.path.exists(dest_path):
                     event = extract_with_gemini_vision(dest_path, alt, gemini_key)
 
                 if not event:
